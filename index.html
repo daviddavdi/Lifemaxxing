@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LIFEMAXXING — Level Up Your Life</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= HEADER ================= -->
+  <header class="topbar">
+    <div class="brand">⚡ LIFE<span>MAXXING</span></div>
+
+    <div class="level-badge">
+      <span class="level-num">LV. <b id="levelNum">1</b></span>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar" id="xpBar"></div>
+      </div>
+      <span class="xp-text" id="xpText">0 / 100 XP</span>
+    </div>
+
+    <button class="btn-ghost" id="previewPremiumBtn" title="Toggle a local preview of the Premium experience. No purchase made.">
+      🎭 Preview Premium
+    </button>
+  </header>
+
+  <!-- ================= MAIN GRID ================= -->
+  <main class="grid">
+
+    <!-- LEFT COLUMN: PROFILE / STATS / LOCKED INSIGHTS -->
+    <section class="col col-left">
+
+      <div class="card">
+        <h2>Your Stats</h2>
+        <div class="stat-row" data-stat="strength">
+          <span class="stat-icon">🔴</span>
+          <div class="stat-info">
+            <div class="stat-top">
+              <span class="stat-label">Strength</span>
+              <span class="stat-level" id="lvl-strength">Lv.1</span>
+            </div>
+            <div class="stat-bar-wrap"><div class="stat-bar-fill" id="bar-strength"></div></div>
+          </div>
+          <span class="stat-value" id="val-strength">0</span>
+        </div>
+
+        <div class="stat-row" data-stat="intelligence">
+          <span class="stat-icon">🔵</span>
+          <div class="stat-info">
+            <div class="stat-top">
+              <span class="stat-label">Intelligence</span>
+              <span class="stat-level" id="lvl-intelligence">Lv.1</span>
+            </div>
+            <div class="stat-bar-wrap"><div class="stat-bar-fill" id="bar-intelligence"></div></div>
+          </div>
+          <span class="stat-value" id="val-intelligence">0</span>
+        </div>
+
+        <div class="stat-row" data-stat="aesthetics">
+          <span class="stat-icon">🟢</span>
+          <div class="stat-info">
+            <div class="stat-top">
+              <span class="stat-label">Aesthetics</span>
+              <span class="stat-level" id="lvl-aesthetics">Lv.1</span>
+            </div>
+            <div class="stat-bar-wrap"><div class="stat-bar-fill" id="bar-aesthetics"></div></div>
+          </div>
+          <span class="stat-value" id="val-aesthetics">0</span>
+        </div>
+
+        <div class="stat-row" data-stat="finance">
+          <span class="stat-icon">🟡</span>
+          <div class="stat-info">
+            <div class="stat-top">
+              <span class="stat-label">Finance</span>
+              <span class="stat-level" id="lvl-finance">Lv.1</span>
+            </div>
+            <div class="stat-bar-wrap"><div class="stat-bar-fill" id="bar-finance"></div></div>
+          </div>
+          <span class="stat-value" id="val-finance">0</span>
+        </div>
+      </div>
+
+      <!-- AI CHARACTER ANALYSIS (LOCKED UPSELL) -->
+      <div class="card upsell-card" id="aiAnalysisCard">
+        <div class="card-header">
+          <h2>🧠 AI Character Analysis</h2>
+          <span class="premium-tag">PREMIUM</span>
+        </div>
+
+        <div class="upsell-body">
+          <p class="ai-text blurred" id="aiAnalysisText">
+            Your attributes indicate strong physical discipline but a massive vulnerability in Finance.
+            Our model has identified 3 behavioral patterns limiting your growth velocity and a 14-day
+            plan to correct them before they compound further.
+          </p>
+
+          <div class="lock-overlay">
+            <div class="lock-icon">🔒</div>
+            <p class="lock-copy">Upgrade to Premium to unlock your real-time AI behavior profile and optimization tips.</p>
+            <button class="btn-upgrade" data-modal="ai">Unlock AI Analysis</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREDICTIVE STAT VELOCITY (LOCKED UPSELL) -->
+      <div class="card upsell-card" id="velocityCard">
+        <h2>📈 Predictive Stat Velocity &amp; Top 10 Rank Timeline</h2>
+
+        <div class="upsell-body">
+          <canvas id="velocityChart" width="480" height="200" class="velocity-canvas"></canvas>
+
+          <div class="lock-overlay">
+            <button class="btn-upgrade btn-upgrade-main" data-modal="velocity">
+              Unlock Advanced Analytics &amp; AI Coaching (€9.99/mo)
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- MIDDLE COLUMN: QUESTS + SKILL TREES -->
+    <section class="col col-mid">
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Daily Quests</h2>
+          <button class="btn-ghost btn-small" id="addQuestBtn">+ Add Quest</button>
+        </div>
+        <div id="habitsList" class="habits-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Monk Mode Skill Trees</h2>
+        <div class="skilltrees">
+          <button class="skilltree" data-tree="finance">
+            <span class="skilltree-icon">🟡</span>
+            <span class="skilltree-name">30-Day Financial Engine</span>
+            <span class="skilltree-lock">🔒</span>
+          </button>
+          <button class="skilltree" data-tree="aesthetics">
+            <span class="skilltree-icon">🟢</span>
+            <span class="skilltree-name">Elite Aesthetic Glow-Up</span>
+            <span class="skilltree-lock">🔒</span>
+          </button>
+          <button class="skilltree" data-tree="focus">
+            <span class="skilltree-icon">🟣</span>
+            <span class="skilltree-name">Monk Mode Focus</span>
+            <span class="skilltree-lock">🔒</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: LEADERBOARD -->
+    <section class="col col-right">
+      <div class="card leaderboard-card">
+        <h2>🏆 Global Rankings</h2>
+
+        <div class="tabs" id="leaderboardTabs">
+          <button class="tab active" data-cat="strength">🔴 Strength</button>
+          <button class="tab" data-cat="intelligence">🔵 Intelligence</button>
+          <button class="tab" data-cat="aesthetics">🟢 Aesthetics</button>
+          <button class="tab" data-cat="finance">🟡 Finance</button>
+        </div>
+
+        <ol class="leaderboard-list" id="leaderboardList"></ol>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <button class="link-btn" id="legalBtn">Legal &amp; Disclaimer</button>
+    <span class="footer-sep">·</span>
+    <span>Progress is self-reported and stored only in your browser.</span>
+  </footer>
+
+  <!-- ================= OVERLAYS / MODALS ================= -->
+
+  <!-- LEVEL UP FULLSCREEN OVERLAY -->
+  <div class="level-up-overlay" id="levelUpOverlay">
+    <div class="level-up-content">
+      <div class="level-up-rays"></div>
+      <div class="level-up-burst"></div>
+      <h1 class="level-up-title">LEVEL UP!</h1>
+      <p class="level-up-sub" id="levelUpText">You reached Level 2</p>
+    </div>
+  </div>
+
+  <!-- PARTICLE CELEBRATION LAYER -->
+  <div class="particles-container" id="particlesContainer"></div>
+
+  <!-- GENERIC PREMIUM MODAL -->
+  <div class="modal-backdrop" id="premiumModal">
+    <div class="modal">
+      <button class="modal-close" id="premiumModalClose">×</button>
+      <div class="modal-badge">PREMIUM</div>
+      <h2 id="modalTitle">Unlock Premium</h2>
+      <div id="modalBody" class="modal-body"></div>
+      <button class="btn-upgrade btn-upgrade-main" id="modalUpgradeBtn">Upgrade to Premium — €9.99/mo</button>
+      <p class="modal-fineprint">Cancel anytime. Billed monthly. See Legal &amp; Disclaimer for terms.</p>
+    </div>
+  </div>
+
+  <!-- ADD QUEST MODAL -->
+  <div class="modal-backdrop" id="addQuestModal">
+    <div class="modal">
+      <button class="modal-close" id="addQuestModalClose">×</button>
+      <h2>New Custom Quest</h2>
+      <div class="modal-body">
+        <label class="form-field">
+          <span>Quest name</span>
+          <input type="text" id="questNameInput" maxlength="40" placeholder="e.g. Cold shower" />
+        </label>
+        <label class="form-field">
+          <span>Category</span>
+          <select id="questCategoryInput">
+            <option value="strength">🔴 Strength</option>
+            <option value="intelligence">🔵 Intelligence</option>
+            <option value="aesthetics">🟢 Aesthetics</option>
+            <option value="finance">🟡 Finance</option>
+          </select>
+        </label>
+        <label class="form-field">
+          <span>Difficulty</span>
+          <select id="questXpInput">
+            <option value="10">Easy · 10 XP</option>
+            <option value="20" selected>Medium · 20 XP</option>
+            <option value="35">Hard · 35 XP</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn-upgrade btn-upgrade-main" id="questSubmitBtn">Add Quest</button>
+    </div>
+  </div>
+
+  <!-- LEGAL MODAL -->
+  <div class="modal-backdrop" id="legalModal">
+    <div class="modal modal-legal">
+      <button class="modal-close" id="legalModalClose">×</button>
+      <h2>Legal &amp; Disclaimer</h2>
+      <div class="modal-body legal-body">
+        <p><strong>Not professional advice.</strong> LIFEMAXXING is a motivational, gamified habit tracker
+        provided for entertainment and self-improvement purposes only. Nothing in this app constitutes
+        medical, financial, legal, fitness, or professional advice of any kind. Always consult a qualified
+        professional before making decisions about your health, finances, or wellbeing.</p>
+
+        <p><strong>No guaranteed results.</strong> Stats, levels, ranks, and "AI" analysis are generated from
+        your own self-reported inputs using simple local heuristics. They are illustrative and motivational
+        devices, not a measurement of your real-world abilities, health, or net worth.</p>
+
+        <p><strong>Local data only.</strong> All progress, quests, and stats are stored in your browser's
+        LocalStorage. Clearing your browser data, switching devices, or using private/incognito mode will
+        erase your progress. We do not currently transmit your habit data to any server.</p>
+
+        <p><strong>Premium subscription.</strong> Premium is an optional paid upgrade billed on a recurring
+        basis until cancelled. Pricing, billing cycle, and cancellation are handled by our payment
+        processor at checkout. No refunds are provided for partial billing periods except where required
+        by law.</p>
+
+        <p><strong>Leaderboard.</strong> "Rival" leaderboard entries are illustrative sample profiles used to
+        create a sense of competition and are not real third-party users.</p>
+
+        <p><strong>Liability.</strong> This app is provided "as is" without warranties of any kind. To the
+        maximum extent permitted by law, we are not liable for any damages arising from your use of, or
+        inability to use, this app.</p>
+
+        <p class="legal-meta">This is placeholder legal copy for a demo/MVP. Replace with counsel-reviewed
+        Terms of Service, Privacy Policy, and Refund Policy before accepting real payments.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
