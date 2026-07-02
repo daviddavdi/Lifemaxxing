@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lifemaxxing · Wienerisch — Learn Austrian Viennese German</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>🇦🇹 Wienerisch</h1>
+    <span class="tagline">Your fast track to Austrian Viennese German</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-view="dashboard" class="active">Dashboard</button>
+  <button data-view="roadmap">Roadmap</button>
+  <button data-view="grammar">Grammar</button>
+  <button data-view="pronunciation">Pronunciation</button>
+  <button data-view="vocab">Vocabulary</button>
+  <button data-view="flashcards">Flashcards</button>
+  <button data-view="quiz">Quiz</button>
+  <button data-view="culture">Culture &amp; Slang</button>
+</nav>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section id="view-dashboard" class="view active">
+    <h2 class="view-title">Servus! 👋</h2>
+    <p class="view-sub">Coming from Serbian and English, you already have an edge — Serbian's case system means German grammar will feel far more familiar than it does to most English speakers. This site is built specifically to get you speaking confident, natural <strong>Austrian Viennese German</strong>, not textbook Germany-German.</p>
+
+    <div class="stat-grid" id="dash-stats"></div>
+
+    <div class="card">
+      <strong>How to use this site</strong>
+      <p style="margin-bottom:0">Start with the <em>Roadmap</em> for a week-by-week plan. Read <em>Grammar</em> and <em>Pronunciation</em> once early on. Then drill daily with <em>Flashcards</em> (spaced repetition — cards you struggle with come back sooner) and test yourself with <em>Quiz</em>. Everything in <em>Vocabulary</em> is tagged with the real Austrian word, its Germany-standard equivalent (if different), and a Serbian anchor translation.</p>
+    </div>
+
+    <div class="quicklinks">
+      <button class="quicklink-btn" data-goto="roadmap"><span class="ql-emoji">🗺️</span><span class="ql-title">View your roadmap</span><span class="ql-desc">A structured, aggressive plan from zero to conversational.</span></button>
+      <button class="quicklink-btn" data-goto="flashcards"><span class="ql-emoji">🧠</span><span class="ql-title">Study flashcards</span><span class="ql-desc">Spaced repetition drilling, due cards prioritized.</span></button>
+      <button class="quicklink-btn" data-goto="quiz"><span class="ql-emoji">📝</span><span class="ql-title">Take a quiz</span><span class="ql-desc">Multiple choice, both directions.</span></button>
+      <button class="quicklink-btn" data-goto="culture"><span class="ql-emoji">😎</span><span class="ql-title">Wienerisch slang</span><span class="ql-desc">Sound like you're actually from Vienna.</span></button>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section id="view-roadmap" class="view">
+    <h2 class="view-title">Your fast-track roadmap</h2>
+    <p class="view-sub">Honest expectation-setting: true native-level command of a language takes years of immersion. But following this plan seriously — daily practice, speaking from week one — will get you to confident, natural-sounding conversational Viennese German fast. Check items off as you go; your progress is saved automatically.</p>
+    <div id="roadmap-content"></div>
+  </section>
+
+  <!-- GRAMMAR -->
+  <section id="view-grammar" class="view">
+    <h2 class="view-title">Grammar, explained through Serbian</h2>
+    <p class="view-sub">German grammar maps onto concepts you already know from Serbian far more than it does for English speakers. Use that.</p>
+    <div id="grammar-content"></div>
+  </section>
+
+  <!-- PRONUNCIATION -->
+  <section id="view-pronunciation" class="view">
+    <h2 class="view-title">Pronunciation &amp; the Viennese accent</h2>
+    <p class="view-sub">Learn standard German sounds first, then layer in what actually makes speech sound Viennese.</p>
+    <div id="pron-content"></div>
+  </section>
+
+  <!-- VOCAB -->
+  <section id="view-vocab" class="view">
+    <h2 class="view-title">Vocabulary browser</h2>
+    <p class="view-sub">Every word shown is what you'd actually say in Vienna. Where Germany uses a different word, it's noted. Tap 🔊 to hear it spoken (uses your browser's German voice, if installed).</p>
+    <div class="vocab-controls">
+      <input type="text" id="vocab-search" placeholder="Search German or English..." />
+      <select id="vocab-cat"></select>
+    </div>
+    <div class="word-list" id="vocab-list"></div>
+  </section>
+
+  <!-- FLASHCARDS -->
+  <section id="view-flashcards" class="view">
+    <h2 class="view-title">Flashcards (spaced repetition)</h2>
+    <p class="view-sub">Grade yourself honestly: "Again" resets the card, "Good" pushes it further out, "Easy" pushes it out even further. Cards you struggle with come back sooner.</p>
+    <div class="fc-setup">
+      <select id="fc-cat"></select>
+      <select id="fc-dir">
+        <option value="de-en">German → English</option>
+        <option value="en-de">English → German</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.9rem;">
+        <input type="checkbox" id="fc-due-only" checked /> Due cards only
+      </label>
+      <button class="btn-primary" id="fc-start">Start studying</button>
+    </div>
+    <div id="fc-body"></div>
+    <div class="fc-progress" id="fc-progress"></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="view-quiz" class="view">
+    <h2 class="view-title">Quiz</h2>
+    <p class="view-sub">Multiple choice, quick self-test. Doesn't affect your flashcard schedule — just a check-in.</p>
+    <div class="fc-setup">
+      <select id="quiz-cat"></select>
+      <select id="quiz-dir">
+        <option value="de-en">German → English</option>
+        <option value="en-de">English → German</option>
+      </select>
+      <select id="quiz-count">
+        <option value="10">10 questions</option>
+        <option value="20">20 questions</option>
+        <option value="40">40 questions</option>
+      </select>
+      <button class="btn-primary" id="quiz-start">Start quiz</button>
+    </div>
+    <div class="quiz-progress" id="quiz-progress"></div>
+    <div id="quiz-body"></div>
+  </section>
+
+  <!-- CULTURE -->
+  <section id="view-culture" class="view">
+    <h2 class="view-title">Culture &amp; the Viennese Schmäh</h2>
+    <p class="view-sub">Vocabulary alone won't make you sound Viennese — a bit of cultural context will.</p>
+
+    <div class="card">
+      <h3>Der Schmäh</h3>
+      <p>The single hardest-to-translate Viennese concept: a mix of dry wit, charm, irony, and a slightly world-weary sense of humor used in everyday small talk — with shopkeepers, taxi drivers, bureaucrats. "Er hat an Schmäh" (he's got that Viennese charm/wit) is high praise. Don't try to force it early; just notice it in how locals talk, especially the way complaints are delivered with a smile.</p>
+    </div>
+
+    <div class="card">
+      <h3>Kaffeehaus culture</h3>
+      <p>The Viennese coffee house is a genuine institution (UNESCO-listed intangible heritage) — you order one drink (try a <em>Melange</em>) and can sit for hours with a newspaper on a wooden stand. Waitstaff (the <em>Herr Ober</em>) are famously a little gruff — that's tradition, not rudeness.</p>
+    </div>
+
+    <div class="card">
+      <h3>Formality runs deeper than in Germany</h3>
+      <p>Austrians lean more formal than Germans: titles matter (Herr Doktor, Frau Magister — academic titles are used in address far more than in Germany), and <em>Sie</em> is the default with anyone you don't know well. Don't rush to <em>du</em> in professional settings.</p>
+    </div>
+
+    <div class="card">
+      <h3>Dialect pride</h3>
+      <p>Unlike some countries where standard language dominates media, Austrian dialect is proudly used in everyday broadcast, politics, and music (Austropop, Wienerlied). Don't treat Wienerisch as "incorrect German" — it's a living, respected variety. Understanding it is essential; speaking clean Austrian Standard German with local vocabulary is a great goal for the first year.</p>
+    </div>
+
+    <h2 class="view-title" style="margin-top:2rem;">Wienerisch slang cheat-sheet</h2>
+    <div class="word-list" id="culture-slang-list"></div>
+  </section>
+
+</main>
+
+<footer class="appfooter">Built for one learner, one language, one city: Wien. Viel Erfolg! 🍀</footer>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  // populate the culture-page slang cheat-sheet once data.js has loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    const slang = VOCAB.filter(w => w.cat === "slang");
+    document.getElementById("culture-slang-list").innerHTML = slang.map(w => `
+      <div class="word-row">
+        <button class="speak-btn" data-speak="${w.de.replace(/"/g, '&quot;')}" title="Pronounce">🔊</button>
+        <div class="de">${w.de}</div>
+        <div class="en">${w.en}</div>
+        <div class="sr">${w.sr}</div>
+        ${w.note ? `<div class="note">${w.note}</div>` : ""}
+      </div>
+    `).join("");
+    document.querySelectorAll("#culture-slang-list [data-speak]").forEach(btn => {
+      btn.addEventListener("click", () => speak(btn.dataset.speak));
+    });
+  });
+</script>
+</body>
+</html>
