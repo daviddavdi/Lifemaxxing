@@ -367,3 +367,168 @@ footer.appfooter {
   header.topbar h1 { font-size: 1.1rem; }
   .word-row { flex-wrap: wrap; }
 }
+
+/* ==========================================================================
+   Gamification
+   ========================================================================== */
+
+.gami-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #211a17;
+  color: #fff;
+  padding: 0.55rem 1.25rem;
+  flex-wrap: wrap;
+  position: sticky;
+  top: var(--nav-height, 0px);
+  z-index: 9;
+}
+.gami-rank { flex: 0 0 auto; line-height: 1.15; }
+.gami-rank-title { display: block; font-weight: 700; font-size: 0.85rem; }
+.gami-rank-sub { display: block; font-size: 0.7rem; color: #c9bfb8; }
+
+.gami-xp { flex: 1 1 160px; min-width: 140px; }
+.gami-xp-track {
+  background: rgba(255,255,255,0.15);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+.gami-xp-fill {
+  background: linear-gradient(90deg, var(--accent-gold), #ffd76a);
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.gami-xp-label { font-size: 0.68rem; color: #c9bfb8; margin-top: 0.15rem; }
+
+.gami-streak {
+  flex: 0 0 auto;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.gami-mute {
+  flex: 0 0 auto;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #fff;
+}
+.gami-mute:hover { background: rgba(255,255,255,0.2); }
+
+/* XP floating pop */
+.xp-pop {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  color: var(--accent-gold);
+  font-weight: 800;
+  font-size: 1rem;
+  pointer-events: none;
+  z-index: 999;
+  animation: xpFloat 0.9s ease-out forwards;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+@keyframes xpFloat {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  20% { opacity: 1; transform: translate(-50%, -80%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -160%) scale(1); }
+}
+
+/* Toasts */
+#toast-stack {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+.toast {
+  background: var(--ink);
+  color: #fff;
+  border-left: 4px solid var(--accent-gold);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  min-width: 220px;
+  max-width: 300px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toast.show { opacity: 1; transform: translateX(0); }
+.toast-title { font-weight: 700; font-size: 0.88rem; }
+.toast-sub { font-size: 0.76rem; color: #cfcfcf; margin-top: 0.1rem; }
+
+/* Confetti */
+#confetti-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1001;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  width: 8px;
+  height: 14px;
+  opacity: 0.9;
+  animation-name: confettiFall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+@keyframes confettiFall {
+  0% { top: -20px; opacity: 1; }
+  100% { top: 105vh; opacity: 0.2; }
+}
+
+/* Achievements */
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+.badge {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem 0.5rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.badge.locked { opacity: 0.45; }
+.badge.unlocked { border-color: var(--accent-gold); }
+.badge-emoji { font-size: 1.6rem; }
+.badge-title { font-size: 0.72rem; font-weight: 700; margin-top: 0.3rem; color: var(--ink-soft); }
+
+/* Quiz combo + feedback */
+.combo-badge {
+  text-align: center;
+  font-weight: 800;
+  color: var(--red);
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+  animation: comboPulse 0.35s ease;
+}
+@keyframes comboPulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.quiz-feedback {
+  text-align: center;
+  margin-top: 0.9rem;
+  font-weight: 700;
+  min-height: 1.2rem;
+}
+.quiz-feedback.good { color: var(--success); }
+.quiz-feedback.bad { color: var(--red); }
+.combo-summary { font-weight: 700; color: var(--accent-gold); }

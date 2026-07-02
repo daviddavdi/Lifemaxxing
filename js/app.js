@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   srs: "lm_srs_v1",
   roadmap: "lm_roadmap_v1",
   streak: "lm_streak_v1",
+  progress: "lm_progress_v1",
 };
 
 const LEITNER_INTERVAL_DAYS = [0, 1, 2, 4, 8, 16, 32];
@@ -62,6 +63,187 @@ function touchStreak() {
 }
 function getStreak() { return loadJSON(STORAGE_KEYS.streak, { count: 0, last: null }); }
 
+/* ---------- gamification: progress, XP, levels ---------- */
+const DEFAULT_PROGRESS = { xp: 0, achievements: [], quizzesTaken: 0, perfectQuizzes: 0, flashcardSessions: 0, maxCombo: 0, soundMuted: false };
+function getProgress() { return Object.assign({}, DEFAULT_PROGRESS, loadJSON(STORAGE_KEYS.progress, {})); }
+function setProgress(p) { saveJSON(STORAGE_KEYS.progress, p); }
+
+function getLevelInfo(xp) {
+  let idx = 0;
+  for (let i = 0; i < RANKS.length; i++) {
+    if (xp >= RANKS[i].threshold) idx = i;
+  }
+  const rank = RANKS[idx];
+  const isMax = idx === RANKS.length - 1;
+  const next = isMax ? null : RANKS[idx + 1];
+  const span = isMax ? 1 : next.threshold - rank.threshold;
+  const into = xp - rank.threshold;
+  const pct = isMax ? 100 : Math.min(100, Math.round((into / span) * 100));
+  return { idx, rank, next, pct, isMax, xp };
+}
+
+// Adds XP, detects level-ups, and fires the celebratory side-effects.
+function addXP(amount) {
+  const progress = getProgress();
+  const before = getLevelInfo(progress.xp);
+  progress.xp += amount;
+  setProgress(progress);
+  const after = getLevelInfo(progress.xp);
+  if (after.idx > before.idx) {
+    playLevelUp();
+    confettiBurst(60);
+    showToast(`⭐ Rank up! You're now a ${after.rank.title}`, after.rank.sub);
+  }
+  renderGamiBar();
+  return after;
+}
+
+function computeStats() {
+  const srs = getSRS();
+  let studied = 0, mastered = 0;
+  VOCAB.forEach(w => {
+    const c = srs[wordId(w)];
+    if (c) {
+      studied++;
+      if (c.box >= 4) mastered++;
+    }
+  });
+  return { studied, mastered, streak: getStreak(), progress: getProgress() };
+}
+
+function checkAchievements() {
+  const stats = computeStats();
+  const progress = getProgress();
+  let unlockedSomething = false;
+  ACHIEVEMENTS.forEach(a => {
+    if (progress.achievements.includes(a.id)) return;
+    if (a.test(stats)) {
+      progress.achievements.push(a.id);
+      unlockedSomething = true;
+      showToast(`${a.emoji} Achievement unlocked: ${a.title}`, a.desc);
+      confettiBurst(35);
+      playAchievement();
+    }
+  });
+  if (unlockedSomething) setProgress(progress);
+}
+
+/* ---------- sound effects (Web Audio, no external files) ---------- */
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  return audioCtx;
+}
+function playTone(freq, startTime, duration, type = "sine", volume = 0.16) {
+  if (getProgress().soundMuted) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(volume, ctx.currentTime + startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(ctx.currentTime + startTime);
+  osc.stop(ctx.currentTime + startTime + duration);
+}
+function playCorrect() { playTone(660, 0, 0.12); playTone(880, 0.1, 0.18); }
+function playWrong() { playTone(330, 0, 0.22, "triangle", 0.12); }
+function playNeutral() { playTone(440, 0, 0.1, "sine", 0.1); }
+function playLevelUp() {
+  [523, 659, 784, 1046].forEach((f, i) => playTone(f, i * 0.11, 0.22, "triangle", 0.15));
+}
+function playAchievement() {
+  [784, 988, 1175].forEach((f, i) => playTone(f, i * 0.09, 0.16, "sine", 0.14));
+}
+function toggleMute() {
+  const progress = getProgress();
+  progress.soundMuted = !progress.soundMuted;
+  setProgress(progress);
+  renderGamiBar();
+}
+
+/* ---------- confetti (lightweight, no dependencies) ---------- */
+function confettiBurst(count) {
+  let layer = document.getElementById("confetti-layer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "confetti-layer";
+    document.body.appendChild(layer);
+  }
+  const colors = ["#c8102e", "#ffffff", "#b8860b", "#2e7d4f", "#4a5158"];
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (1.4 + Math.random() * 1.2) + "s";
+    piece.style.animationDelay = (Math.random() * 0.3) + "s";
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    layer.appendChild(piece);
+    setTimeout(() => piece.remove(), 3200);
+  }
+}
+
+/* ---------- toast notifications ---------- */
+function showToast(title, sub) {
+  let stack = document.getElementById("toast-stack");
+  if (!stack) {
+    stack = document.createElement("div");
+    stack.id = "toast-stack";
+    document.body.appendChild(stack);
+  }
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `<div class="toast-title">${title}</div>${sub ? `<div class="toast-sub">${sub}</div>` : ""}`;
+  stack.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 350);
+  }, 3400);
+}
+
+/* ---------- gamification bar (level, XP, streak, mute) ---------- */
+function renderGamiBar() {
+  const bar = document.getElementById("gami-bar");
+  if (!bar) return;
+  const progress = getProgress();
+  const level = getLevelInfo(progress.xp);
+  const streak = getStreak();
+  bar.innerHTML = `
+    <div class="gami-rank">
+      <span class="gami-rank-title">${level.rank.title}</span>
+      <span class="gami-rank-sub">${level.rank.sub}</span>
+    </div>
+    <div class="gami-xp">
+      <div class="gami-xp-track"><div class="gami-xp-fill" style="width:${level.pct}%"></div></div>
+      <div class="gami-xp-label">${level.isMax ? `${progress.xp} XP · max rank` : `${progress.xp} / ${level.next.threshold} XP`}</div>
+    </div>
+    <div class="gami-streak" title="Day streak">🔥 ${streak.count}</div>
+    <button class="gami-mute" id="gami-mute-btn" title="${progress.soundMuted ? "Unmute" : "Mute"} sound">${progress.soundMuted ? "🔇" : "🔊"}</button>
+  `;
+  document.getElementById("gami-mute-btn").addEventListener("click", toggleMute);
+}
+
+/* ---------- achievements gallery ---------- */
+function renderAchievements() {
+  const container = document.getElementById("achievements-grid");
+  if (!container) return;
+  const progress = getProgress();
+  container.innerHTML = ACHIEVEMENTS.map(a => {
+    const unlocked = progress.achievements.includes(a.id);
+    return `<div class="badge ${unlocked ? "unlocked" : "locked"}" title="${a.desc}">
+      <div class="badge-emoji">${unlocked ? a.emoji : "🔒"}</div>
+      <div class="badge-title">${a.title}</div>
+    </div>`;
+  }).join("");
+}
+
 /* ---------- TTS ---------- */
 function speak(text) {
   if (!("speechSynthesis" in window)) return;
@@ -92,6 +274,7 @@ function showView(id) {
   if (id === "vocab") renderVocab();
   if (id === "flashcards") renderFlashcardSetup();
   if (id === "quiz") renderQuizSetup();
+  renderGamiBar();
 }
 
 /* ---------- Dashboard ---------- */
@@ -118,6 +301,7 @@ function renderDashboard() {
     <div class="stat"><div class="num">${mastered}</div><div class="lbl">Mastered</div></div>
     <div class="stat"><div class="num">${total}</div><div class="lbl">Total words</div></div>
   `;
+  renderAchievements();
 }
 
 /* ---------- Roadmap ---------- */
@@ -235,7 +419,11 @@ function startFlashcards() {
   shuffle(pool);
   fcState = { queue: pool, index: 0, flipped: false, direction: document.getElementById("fc-dir").value };
   touchStreak();
+  const progress = getProgress();
+  progress.flashcardSessions++;
+  setProgress(progress);
   renderDashboardIfVisible();
+  renderGamiBar();
   drawFlashcard();
 }
 
@@ -287,7 +475,14 @@ function drawFlashcard() {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const srs = getSRS();
-      gradeCard(srs, wordId(w), btn.dataset.grade);
+      const grade = btn.dataset.grade;
+      gradeCard(srs, wordId(w), grade);
+      const xpMap = { again: 2, good: 5, easy: 8 };
+      xpPop(xpMap[grade], e.clientX, e.clientY);
+      if (grade === "again") playNeutral(); else playCorrect();
+      addXP(xpMap[grade]);
+      checkAchievements();
+      renderDashboardIfVisible();
       fcState.index++;
       fcState.flipped = false;
       drawFlashcard();
@@ -296,7 +491,7 @@ function drawFlashcard() {
 }
 
 /* ---------- Quiz ---------- */
-let quizState = { questions: [], index: 0, score: 0, direction: "de-en" };
+let quizState = { questions: [], index: 0, score: 0, direction: "de-en", combo: 0, maxCombo: 0 };
 
 function renderQuizSetup() {
   const catSel = document.getElementById("quiz-cat");
@@ -323,9 +518,10 @@ function startQuiz() {
     const options = shuffle([w, ...distractors]);
     return { correct: w, options, direction };
   });
-  quizState = { questions, index: 0, score: 0, direction };
+  quizState = { questions, index: 0, score: 0, direction, combo: 0, maxCombo: 0 };
   touchStreak();
   renderDashboardIfVisible();
+  renderGamiBar();
   drawQuiz();
 }
 
@@ -334,10 +530,27 @@ function drawQuiz() {
   const progressEl = document.getElementById("quiz-progress");
   if (quizState.index >= quizState.questions.length) {
     const pct = Math.round((quizState.score / quizState.questions.length) * 100);
+    const isPerfect = quizState.score === quizState.questions.length;
+
+    const progress = getProgress();
+    progress.quizzesTaken++;
+    if (isPerfect) progress.perfectQuizzes++;
+    progress.maxCombo = Math.max(progress.maxCombo, quizState.maxCombo);
+    setProgress(progress);
+    if (isPerfect) {
+      addXP(25);
+      playLevelUp();
+      confettiBurst(80);
+    }
+    checkAchievements();
+    renderDashboardIfVisible();
+    renderGamiBar();
+
     body.innerHTML = `
       <div class="card quiz-result">
         <div class="score">${quizState.score} / ${quizState.questions.length}</div>
-        <p>${pct}% correct</p>
+        <p>${pct}% correct${isPerfect ? " — perfect run! +25 bonus XP 🎉" : ""}</p>
+        ${quizState.maxCombo >= 3 ? `<p class="combo-summary">🔥 Best combo: ${quizState.maxCombo} in a row</p>` : ""}
       </div>`;
     progressEl.textContent = "";
     return;
@@ -345,6 +558,7 @@ function drawQuiz() {
   const q = quizState.questions[quizState.index];
   const prompt = q.direction === "de-en" ? q.correct.de : q.correct.en;
   body.innerHTML = `
+    ${quizState.combo >= 2 ? `<div class="combo-badge">🔥 Combo x${quizState.combo}</div>` : ""}
     <div class="card">
       <div class="quiz-question">${prompt}</div>
       <div class="quiz-options">
@@ -353,28 +567,44 @@ function drawQuiz() {
           return `<button class="quiz-option" data-idx="${i}">${label}</button>`;
         }).join("")}
       </div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
     </div>
   `;
   progressEl.textContent = `Question ${quizState.index + 1} of ${quizState.questions.length} · Score: ${quizState.score}`;
 
   document.querySelectorAll(".quiz-option").forEach((btn, i) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
       document.querySelectorAll(".quiz-option").forEach(b => b.disabled = true);
       const isCorrect = q.options[i] === q.correct;
       btn.classList.add(isCorrect ? "correct" : "wrong");
-      if (!isCorrect) {
+      const feedback = document.getElementById("quiz-feedback");
+      let xpGain;
+      if (isCorrect) {
+        quizState.score++;
+        quizState.combo++;
+        quizState.maxCombo = Math.max(quizState.maxCombo, quizState.combo);
+        xpGain = 8 + Math.min(quizState.combo, 10) * 2;
+        playCorrect();
+        feedback.textContent = CORRECT_PHRASES[Math.floor(Math.random() * CORRECT_PHRASES.length)];
+        feedback.className = "quiz-feedback good";
+      } else {
         document.querySelectorAll(".quiz-option").forEach(b => {
           const bi = parseInt(b.dataset.idx, 10);
           if (q.options[bi] === q.correct) b.classList.add("correct");
         });
-      } else {
-        quizState.score++;
+        quizState.combo = 0;
+        xpGain = 1;
+        playWrong();
+        feedback.textContent = WRONG_PHRASES[Math.floor(Math.random() * WRONG_PHRASES.length)];
+        feedback.className = "quiz-feedback bad";
       }
+      xpPop(xpGain, e.clientX, e.clientY);
+      addXP(xpGain);
       speak(q.correct.de);
       setTimeout(() => {
         quizState.index++;
         drawQuiz();
-      }, 1100);
+      }, 1200);
     });
   });
 }
@@ -384,8 +614,25 @@ function renderDashboardIfVisible() {
   if (document.getElementById("view-dashboard").classList.contains("active")) renderDashboard();
 }
 
+function xpPop(amount, x, y) {
+  const pop = document.createElement("div");
+  pop.className = "xp-pop";
+  pop.textContent = `+${amount} XP`;
+  pop.style.left = (x || window.innerWidth / 2) + "px";
+  pop.style.top = (y || window.innerHeight / 2) + "px";
+  document.body.appendChild(pop);
+  setTimeout(() => pop.remove(), 900);
+}
+
+function syncNavHeight() {
+  const nav = document.querySelector("nav.tabs");
+  if (nav) document.documentElement.style.setProperty("--nav-height", nav.offsetHeight + "px");
+}
+
 /* ---------- boot ---------- */
 document.addEventListener("DOMContentLoaded", () => {
+  syncNavHeight();
+  window.addEventListener("resize", syncNavHeight);
   document.querySelectorAll("nav.tabs button").forEach(btn => {
     btn.addEventListener("click", () => showView(btn.dataset.view));
   });
@@ -402,4 +649,5 @@ document.addEventListener("DOMContentLoaded", () => {
   showView("dashboard");
   touchStreak();
   renderDashboard();
+  renderGamiBar();
 });

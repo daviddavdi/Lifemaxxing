@@ -388,6 +388,42 @@ const PRONUNCIATION_SECTIONS = [
   },
 ];
 
+/* ==========================================================================
+   Gamification: ranks, achievements, encouragement phrases
+   ========================================================================== */
+
+// Cumulative XP thresholds with Viennese-flavored rank titles.
+const RANKS = [
+  { title: "Frischling", sub: "total beginner", threshold: 0 },
+  { title: "Zuagraster", sub: "the newcomer in town", threshold: 100 },
+  { title: "Grüß-Gott-Sager", sub: "greetings on lock", threshold: 250 },
+  { title: "Kaffeehausgänger", sub: "coffee house regular", threshold: 500 },
+  { title: "Beisl-Kenner", sub: "knows the local tavern", threshold: 900 },
+  { title: "Schmäh-Meister", sub: "master of Viennese wit", threshold: 1400 },
+  { title: "Ur-Weaner", sub: "true Viennese", threshold: 2000 },
+  { title: "Wienerisch-Champion", sub: "basically native", threshold: 3000 },
+];
+
+const ACHIEVEMENTS = [
+  { id: "first_card", emoji: "🌱", title: "Erste Schritte", desc: "Study your first flashcard", test: s => s.studied >= 1 },
+  { id: "ten_words", emoji: "📚", title: "Erste Wörter", desc: "Study 10 different words", test: s => s.studied >= 10 },
+  { id: "fifty_words", emoji: "🧠", title: "Wortschatz-Sammler", desc: "Study 50 different words", test: s => s.studied >= 50 },
+  { id: "all_words", emoji: "🏆", title: "Vollständig!", desc: "Study every word in the deck", test: s => s.studied >= VOCAB.length },
+  { id: "mastered_25", emoji: "💪", title: "Auswendig!", desc: "Master 25 words", test: s => s.mastered >= 25 },
+  { id: "mastered_100", emoji: "👑", title: "Wortschatz-Meister", desc: "Master 100 words", test: s => s.mastered >= 100 },
+  { id: "perfect_quiz", emoji: "🎯", title: "Perfekt!", desc: "Score 100% on a quiz", test: s => s.progress.perfectQuizzes >= 1 },
+  { id: "quizzes_10", emoji: "📝", title: "Quiz-Fan", desc: "Complete 10 quizzes", test: s => s.progress.quizzesTaken >= 10 },
+  { id: "streak_3", emoji: "🔥", title: "Dranbleiben!", desc: "3-day streak", test: s => s.streak.count >= 3 },
+  { id: "streak_7", emoji: "🔥🔥", title: "Oida, ned schlecht!", desc: "7-day streak", test: s => s.streak.count >= 7 },
+  { id: "streak_30", emoji: "🔥🔥🔥", title: "Ur-Weaner Ausdauer", desc: "30-day streak", test: s => s.streak.count >= 30 },
+  { id: "combo_10", emoji: "⚡", title: "Combo-König", desc: "Answer 10 quiz questions in a row correctly", test: s => s.progress.maxCombo >= 10 },
+  { id: "level_5", emoji: "🥉", title: "Kaffeehausgänger erreicht", desc: "Reach rank 5", test: s => s.progress.xp >= RANKS[4].threshold },
+  { id: "level_max", emoji: "🥇", title: "Wienerisch-Champion", desc: "Reach the top rank", test: s => s.progress.xp >= RANKS[RANKS.length - 1].threshold },
+];
+
+const CORRECT_PHRASES = ["Passt! ✅", "Leiwand!", "Genau so!", "Super gmacht!", "Perfekt!", "Stimmt genau!", "Bravo!", "Eh klar!"];
+const WRONG_PHRASES = ["Fast! Nächstes Mal.", "Kein Stress, weiter geht's.", "Ned schlecht probiert.", "Merk dir des für nächstes Mal.", "Passt scho, weiter geht's!"];
+
 const ROADMAP = [
   {
     phase: "Phase 0 — Foundations (Week 1)",
