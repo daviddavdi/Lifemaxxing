@@ -65,6 +65,17 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - **Staff:** assistant, scout, youth and fitness coaches. Retired players with the right mentality become staff; your club's legends ask to join you.
 - **Career dates:** career start date, date joined, days in charge, coach bio.
 
+## Transfer market & rumours (schema v4)
+
+- **Transfer List:** list your players from their profile. Clubs take notice, offers come faster (including "we'll take his whole contract"). AI clubs list unhappy or surplus players too, and those come cheaper in trades.
+- **Wanted (Squad tab):** clubs track your players and move from Monitoring to Interested to Keen. Keen clubs make offers. "Wanted by" shows on the player profile.
+- **Ambition:** when a bigger club is keen on an ambitious player, he asks to talk. You can let him go, promise a move next summer, or say he's not for sale. Refusing can leave him *Unsettled* (morale capped). Unsettled players hand in a transfer request to the specific club that wants them. Honouring wishes raises your Player's Coach rating; breaking promises lowers it.
+- **Rumour Mill (Market tab):**
+  - *Hot Seat:* every AI club now has a coach with board confidence. Bookmaker odds, mid-season sackings and appointments. You're on the list too.
+  - *Rumours:* scouting reports, keen clubs, deals being discussed.
+  - *Biggest Trades:* includes AI-to-AI trades.
+  - *Biggest Signings:* including the summer free-agency window.
+
 ## Code map
 
 - `js/data.js` — name pools, attributes, default teams, helpers
@@ -72,6 +83,7 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - `js/game.js` — season flow, schedule, playoffs, inbox, morale, injuries, board, trades, free agency, saves
 - `js/traits.js` — traits, archetypes, aging, bios, career logs, duos, staff
 - `js/court.js` — 2D court renderer for Key Highlights
+- `js/market.js` — transfer list, interest, ambition, hot seat, rumours, deals log
 - `js/model.js` — save schema version & migrations
 - `js/ui.js` — all screens & interactions
 - `css/style.css` — theme (re-colours to your club)

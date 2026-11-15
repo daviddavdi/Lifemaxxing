@@ -113,7 +113,7 @@ function journeymanOffers(db) {
 function newGame({ name, style, mode, teamId, db, length }) {
   db = JSON.parse(JSON.stringify(db));
   S = {
-    v: 3, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
+    v: 4, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
     coach: makeCoach(name, style, mode), userTeam: teamId,
     leagues: db.leagues.map((l) => ({ ...l, state: 'regular', po: null, final: [] })),
     teams: [], players: {}, schedule: [], inbox: [], nextPid: db.nextPid || 1, nextMid: 1, nextFx: 1,
@@ -139,6 +139,7 @@ function newGame({ name, style, mode, teamId, db, length }) {
   ut.tactics = DEFAULT_TACTICS(); ut.instr = {};
   ut.budget = Math.max(ut.budget, Math.round((teamPayroll(ut.id) * 1.06 + 1) * 10) / 10);
   S.schedule = buildAllSchedules();
+  ensureMarket();
   S.coach.start = { season: S.season, day: 0 }; S.coach.joined = { season: S.season, day: 0 }; S.coach.pcoach = 10; S.coach.badges = [];
   ensureUserStaff();
   setBoardExpectations();
@@ -298,10 +299,11 @@ function dailyTick(d) {
     }
   }
   S.day = d;
-  if (d % 7 === 0) weeklyDevelopment();
+  if (d % 7 === 0) { weeklyDevelopment(); marketWeekly(); }
+  marketDaily(d);
   if (userLeague().state === 'regular') {
     if (S.tradeCooldown > 0) S.tradeCooldown--;
-    else if (!deadlinePassed() && R.chance(0.04)) aiTradeOffer();
+    else if (!deadlinePassed() && R.chance(roster(S.userTeam).some((p) => p.listed) ? 0.07 : 0.035)) aiTradeOffer();
   }
   if (R.chance(0.13)) grapevine();
 }
@@ -385,8 +387,8 @@ function grapevine() {
   } else if (S.board.conf < 40) {
     mail('Club Chef', 'Something you should know', `The board had dinner in the private room last night. Your name came up. A lot. Thought you should know.`, { type: 'whisper' });
   } else {
-    const t = R.pick(S.teams.filter((x) => x.id !== S.userTeam && x.lg === userTeam().lg));
-    if (!t || (S.rumoured || []).includes(t.id)) return;
+    const t = lgTeams(userTeam().lg).filter((x) => x.id !== S.userTeam && x.coach).sort((a, b) => a.coach.conf - b.coach.conf)[0];
+    if (!t || t.coach.conf > 45 || (S.rumoured || []).includes(t.id)) return;
     mail('Your Agent', `Rumour: ${t.nick} coach on thin ice`, `People are saying the ${teamName(t)} board is losing patience with their coach. If that job opens up in the summer, it could be one to watch.`, { type: 'whisper' });
     (S.rumoured = S.rumoured || []).push(t.id);
   }
@@ -635,8 +637,7 @@ function endSeason() {
   else verdict = 'The board is disappointed. We expected more. Next season must be better.';
   if (diff >= 1) t.budget = Math.round(t.budget * 1.08 * 10) / 10;
   mail('Board of Directors', 'End of season review', `${S.coach.name},\n\nExpectation: <b>${S.board.exp.txt}</b>\nFinal standing: <b>${ordinal(teamRank(S.userTeam))}</b> (${t.w}-${t.l})${note ? ` · ${note}` : ''}\n\n${verdict}\n\nYour reputation: <b>${repLabel(S.coach.rep)}</b> (${Math.round(S.coach.rep)}/20)`, { type: 'board' });
-  const fired = S.teams.filter((x) => x.id !== S.userTeam && (R.chance(0.1) || ((S.rumoured || []).includes(x.id) && R.chance(0.6)) || (teamRank(x.id) > lgTeams(x.lg).length - 2 && R.chance(0.35))));
-  S.vacancies = fired.map((x) => x.id); S.applied = []; S.rumoured = [];
+  S.vacancies = marketSeasonEnd(); S.applied = []; S.rumoured = [];
   if (S.board.conf < 20) { sackCoach('Results have fallen well short of expectations.'); S.prevPhase = 'offseason'; return; }
   if (diff >= 0.5 || ach.L >= 4) {
     const up = S.teams.filter((x) => x.id !== S.userTeam && x.prestige > t.prestige && x.prestige <= S.coach.rep + 3);
@@ -684,7 +685,7 @@ function takeNewJob(tid) {
   const old = userTeam();
   if (old && old.id !== tid) {
     if (S.phase !== 'sacked' && S.coach.hist[0]) S.coach.hist[0].note = (S.coach.hist[0].note ? S.coach.hist[0].note + ' · ' : '') + 'Moved on';
-    S.userTeam = tid; autoRotation(S, old);
+    S.userTeam = tid; autoRotation(S, old); old.coach = aiCoach(old);
   }
   S.userTeam = tid;
   const t = team(tid);
@@ -764,6 +765,7 @@ function startNewSeason() {
   S.leagues.forEach((l) => { l.state = 'regular'; l.po = null; l.final = []; });
   for (const t of S.teams) { t.w = t.l = t.pf = t.pa = t.streak = 0; if (t.id !== S.userTeam) t.budget = Math.round(t.budget * 1.03 * 10) / 10; }
   for (const p of Object.values(S.players)) { p.st = emptyStats(); p.pst = null; p.cond = 100; p.techs = 0; p.susp = Math.min(p.susp || 0, 1); p.morale = clamp(p.morale * 0.5 + 32, 0, 100); p._complained = false; p.form = []; if (p.inj && p.inj.days > 30) p.inj.days -= 30; else p.inj = null; }
+  marketNewSeason();
   ensureRosters(true);
   for (let i = 0; freeAgents().length < 70 && i < 200; i++) { const np = genPlayer(S, R.f(6, 11), undefined, R.int(20, 32), null, R.pick(['USA', 'ESP', 'ITA', 'GER'])); S.players[np.id] = np; }
   S.teams.forEach((t) => { if (t.id !== S.userTeam) autoRotation(S, t); else cleanRotation(S, t); });
@@ -804,6 +806,7 @@ function ensureRosters(offseason) {
       if (!cands.length || (offseason && calcCA(cands.slice().sort((x, y) => playerValue(y) - playerValue(x))[0]) < leagueLevel(t.lg) - 2.5)) { const np = genPlayer(S, leagueLevel(t.lg) - 1.4 + R.gauss() * 0.8, need, undefined, null, league(t.lg).country); np.contract.sal = salaryFor(calcCA(np), np.age, np.pot); S.players[np.id] = np; cands = [np]; }
       const pick = cands.sort((a, b) => (playerValue(b) + (b.pos === need ? 2 : 0)) - (playerValue(a) + (a.pos === need ? 2 : 0)))[0];
       pick.team = t.id; pick.contract.yrs = R.int(1, 3); pick.rookie = false; pick.wantsOut = false;
+      logSigning(pick, t, pick.contract.sal, pick.contract.yrs);
       r = roster(t.id);
     }
     while (r.length > ROSTER_MAX) {
@@ -827,7 +830,7 @@ function tradeInterest(targetId, offerIds) {
   const tgt = S.players[targetId];
   const offer = offerIds.map((id) => S.players[id]);
   if (!offer.length) return 0;
-  return packageValue(offer) / (playerValue(tgt) * (tgt.wantsOut ? 0.85 : 1.1));
+  return packageValue(offer) / (playerValue(tgt) * (tgt.wantsOut || tgt.listed ? 0.85 : 1.1));
 }
 function tradeCheck(targetId, offerIds) {
   const tgt = S.players[targetId];
@@ -861,6 +864,9 @@ function proposeTrade(targetId, offerIds, duoTalked) {
 }
 function executeTrade(otherTeamId, incoming, outgoing, duoTalked) {
   incoming.concat(outgoing).forEach((id) => logStint(S.players[id]));
+  logTrade(userTeam(), team(otherTeamId), incoming, outgoing);
+  onUserTradeOut(outgoing, otherTeamId);
+  incoming.forEach((id) => { S.players[id].listed = false; S.players[id].unsettled = false; });
   outgoing.forEach((id) => dissolveDuo(id, duoTalked));
   incoming.forEach((id) => { const p = S.players[id]; p.team = S.userTeam; p.morale = 65; p.wantsOut = false; });
   outgoing.forEach((id) => { S.players[id].team = otherTeamId; });
@@ -901,6 +907,7 @@ function signFreeAgent(pid, years) {
   const sal = askingSalary(p);
   if (teamPayroll(ut.id) + sal > ut.budget) return { ok: false, msg: `Not enough wage budget. You have ${fmtMoney(Math.max(0, ut.budget - teamPayroll(ut.id)))} available.` };
   p.team = ut.id; p.contract = { sal, yrs: years + (S.phase === 'offseason' ? 1 : 0) }; p.morale = 70; p.rookie = false;
+  logSigning(p, ut, sal, years);
   cleanRotation(S, ut);
   revealKnown([p]);
   return { ok: true, msg: `${pname(p)} signed for ${fmtMoney(sal)}/yr over ${years} year${years > 1 ? 's' : ''}.` };
@@ -921,6 +928,7 @@ function releasePlayer(pid) {
   if (roster(S.userTeam).length <= 8) return { ok: false, msg: 'You need at least 8 players.' };
   logStint(p);
   dissolveDuo(p.id);
+  p.listed = false; p.unsettled = false; S.interest = (S.interest || []).filter((i) => i.pid !== p.id);
   p.team = null; p.contract.yrs = 0;
   cleanRotation(S, userTeam());
   return { ok: true, msg: `${pname(p)} has been released.` };
@@ -961,13 +969,16 @@ function mailAction(mid, act) {
     const tr = m.trade;
     const valid = tr.give.every((id) => S.players[id]?.team === S.userTeam) && tr.get.every((id) => S.players[id]?.team === tr.team);
     if (!valid) msg = 'This offer is no longer valid.';
+    else if (roster(tr.team).length - tr.get.length + tr.give.length > ROSTER_MAX) msg = 'They no longer have roster space.';
+    else if (roster(S.userTeam).length - tr.give.length + tr.get.length < 8) msg = 'You need at least 8 players.';
     else if (userLeague().state === 'playoffs') msg = 'Trades are closed.';
     else { executeTrade(tr.team, tr.get, tr.give, m.duoTalked); msg = 'Trade completed!'; }
   } else if (act === 'acceptJob') {
     if (S.phase === 'season') msg = 'You can only switch clubs in the off-season.';
     else { m.done = `You took the ${teamName(team(m.job))} job.`; takeNewJob(m.job); return { msg: m.done, job: true }; }
   } else if (act === 'hireStaff') msg = hireStaff(m.staffId);
-  else if (act === 'reject') msg = 'Declined.';
+  else if (['letTalk', 'promiseMove', 'notForSale', 'acceptReq', 'rejectReq'].includes(act)) msg = marketMailAction(m, act);
+  else if (act === 'reject') { msg = 'Declined.'; if (m.trade) onOfferRejected(m); }
   else if (act === 'renew') return { renew: m.pid };
   m.done = msg || true;
   save();

@@ -219,6 +219,8 @@ VIEWS.squad = () => {
     body = `<table class="tbl"><thead><tr><th class="l">Player</th><th>GP</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG%</th><th>Rat</th></tr></thead><tbody>
     ${r.map((p) => { const s = p.st; return `<tr data-act="player" data-id="${p.id}"><td class="l nm">${esc(pname(p, true))}</td><td>${s.gp}</td><td>${avg1(s.min, s.gp)}</td><td class="b">${avg1(s.pts, s.gp)}</td><td>${avg1(s.reb, s.gp)}</td><td>${avg1(s.ast, s.gp)}</td><td>${s.fga ? Math.round((s.fgm / s.fga) * 100) : '-'}</td><td>${s.gp ? ratingPill(s.rat / s.gp) : '-'}</td></tr>`; }).join('')}
     </tbody></table>`;
+  } else if (tab === 'want') {
+    body = wantedView(r);
   } else if (tab === 'dyn') {
     const avgM = r.reduce((s, p) => s + p.morale, 0) / Math.max(1, r.length);
     const atm = avgM >= 75 ? ['Electric', 'pos'] : avgM >= 62 ? ['Positive', 'pos'] : avgM >= 50 ? ['Steady', ''] : avgM >= 38 ? ['Tense', 'warn-t'] : ['Toxic', 'neg'];
@@ -238,7 +240,7 @@ VIEWS.squad = () => {
     </tbody></table>
     <div class="pad"><div class="kv"><span>Payroll</span><b>${fmtMoney(teamPayroll(t.id))}</b></div><div class="kv"><span>Wage budget</span><b>${fmtMoney(t.budget)}</b></div><div class="kv"><span>Room</span><b class="${t.budget - teamPayroll(t.id) < 0 ? 'neg' : 'pos'}">${fmtMoney(Math.max(0, t.budget - teamPayroll(t.id)))}</b></div></div>`;
   }
-  return `${header('Squad', { right: `<span class="muted sm">${r.length}/${ROSTER_MAX}</span>` })}${tabs('squad', [['ov', 'Overview'], ['st', 'Stats'], ['dyn', 'Dynamics'], ['ct', 'Contracts']])}<div class="scrollx">${body}</div>`;
+  return `${header('Squad', { right: `<span class="muted sm">${r.length}/${ROSTER_MAX}</span>` })}${tabs('squad', [['ov', 'Overview'], ['st', 'Stats'], ['dyn', 'Dynamics'], ['want', `Wanted${S.interest && S.interest.length ? ' (' + new Set(S.interest.map((i) => i.pid)).size + ')' : ''}`], ['ct', 'Contracts']])}<div class="scrollx">${body}</div>`;
 };
 
 /* Player */
@@ -279,7 +281,7 @@ VIEWS.player = ({ id }) => {
   }
   let actions = '';
   if (mine) {
-    actions = `<button class="btn primary" data-act="renewModal" data-id="${p.id}" ${p.contract.yrs > 2 ? 'disabled' : ''}>Renew Contract</button><button class="btn danger" data-act="release" data-id="${p.id}">Release</button>`;
+    actions = `<button class="btn primary" data-act="renewModal" data-id="${p.id}" ${p.contract.yrs > 2 ? 'disabled' : ''}>Renew Contract</button><button class="btn" data-act="toggleList" data-id="${p.id}">${p.listed ? 'Remove from List' : 'Transfer List'}</button><button class="btn danger" data-act="release" data-id="${p.id}">Release</button>`;
     if (S.promises[p.id]) actions += `<span class="tagx">Promised minutes (${S.promises[p.id]} games left)</span>`;
   } else if (p.team == null) actions = `<button class="btn primary" data-act="signModal" data-id="${p.id}">Offer Contract</button>`;
   else actions = `<button class="btn primary" data-act="go" data-v="trade" data-id="${p.id}">Make Trade Offer</button>`;
@@ -290,7 +292,8 @@ VIEWS.player = ({ id }) => {
       <div class="ph-sub">${POS_NAME[p.pos]} · ${p.age} yrs · ${flag(p)} ${p.nat} · ${fmtHeight(p.h)}</div>
       <div class="ph-sub">${t ? `<a data-act="go" data-v="team" data-id="${t.id}">${esc(teamName(t))}</a> · ${esc(league(t.lg).short)}` : 'Free Agent'}${p.inj ? ` · <span class="neg">Injured: ${esc(p.inj.name)} (${p.inj.days}d)</span>` : ''}${p.wantsOut ? ' · <span class="warn-t">Wants out</span>' : ''}</div>
       ${personalityVisible(p) ? `<div class="ph-sub">Personality: <b>${esc(personality(p))}</b></div>` : ''}
-      <div class="ph-sub">${archVisible(p) ? p.arch.map((k) => `<span class="atag">${ARCHETYPES[k].ic} ${ARCHETYPES[k].n}</span>`).join('') : ''}${duoPartner(p.id) && S.players[duoPartner(p.id)] ? `<span class="atag duo">⚡ Duo: ${esc(S.players[duoPartner(p.id)].last)}</span>` : ''}${p.susp > 0 ? `<span class="atag bad">Suspended (${p.susp})</span>` : ''}</div></div></div>
+      <div class="ph-sub">${archVisible(p) ? p.arch.map((k) => `<span class="atag">${ARCHETYPES[k].ic} ${ARCHETYPES[k].n}</span>`).join('') : ''}${duoPartner(p.id) && S.players[duoPartner(p.id)] ? `<span class="atag duo">⚡ Duo: ${esc(S.players[duoPartner(p.id)].last)}</span>` : ''}${p.susp > 0 ? `<span class="atag bad">Suspended (${p.susp})</span>` : ''}${p.listed ? '<span class="atag tl">Transfer Listed</span>' : ''}${p.unsettled && isMine(p) ? '<span class="atag bad">Unsettled</span>' : ''}${p.wantsTo && isMine(p) && team(p.wantsTo) ? `<span class="atag bad">Wants ${esc(team(p.wantsTo).nick)}</span>` : ''}${p.movePromise != null && isMine(p) ? '<span class="atag">Promised a move</span>' : ''}</div>
+      ${isMine(p) && interestFor(p.id).length ? `<div class="ph-sub wantedby">Wanted by: ${interestFor(p.id).slice(0, 4).map((i) => `${badge(team(i.tid))} <span class="ilv ${INTEREST_LVL[i.lvl][1]}">${INTEREST_LVL[i.lvl][0]}</span>`).join(' ')}</div>` : ''}</div></div>
     <div class="ph-stats">
       <div><span>Ability</span>${starsHTML(stars(seenCA(p)))}</div>
       <div><span>Potential</span>${starsHTML(stars(seenPot(p)))}</div>
@@ -397,6 +400,8 @@ function playoffBracket(lg) {
 /* Market */
 VIEWS.market = () => {
   const tab = curTab('market', 'fa');
+  if (tab === 'tl') return transferListView();
+  if (tab === 'rm') return rumourMillView();
   const pos = UI.tab.mpos || 'ALL', sort = UI.tab.msort || 'ca', ml = UI.tab.mlg || 'ALL';
   let pl = tab === 'fa' ? freeAgents() : Object.values(S.players).filter((p) => p.team != null && p.team !== S.userTeam);
   if (pos !== 'ALL') pl = pl.filter((p) => p.pos === pos);
@@ -407,7 +412,7 @@ VIEWS.market = () => {
   pl.sort((a, b) => key(a) - key(b));
   const ut = userTeam();
   const room = ut.budget - teamPayroll(ut.id);
-  return `${header('Market')}${tabs('market', [['fa', 'Free Agents'], ['tr', 'Trade Targets']])}
+  return `${header('Market')}${tabs('market', [['fa', 'Free Agents'], ['tr', 'Trade Targets']].concat(MARKET_EXTRA))}
   <div class="pad filters">
     ${tab === 'tr' ? leagueChips(ml, 'mlg', true) : ''}
     <div class="chips">${['ALL', ...POS].map((p) => `<button class="chip ${pos === p ? 'on' : ''}" data-act="tab" data-k="mpos" data-v="${p}">${p}</button>`).join('')}${tab === 'tr' ? `<button class="chip ${UI.tab.mout === '1' ? 'on' : ''}" data-act="tab" data-k="mout" data-v="${UI.tab.mout === '1' ? '0' : '1'}">Wants out</button>` : ''}</div>
@@ -415,7 +420,7 @@ VIEWS.market = () => {
     <div class="muted sm">Wage room: <b class="${room < 0 ? 'neg' : 'pos'}">${fmtMoney(Math.max(0, room))}</b> · Roster ${roster(ut.id).length}/${ROSTER_MAX}${S.phase === 'season' && deadlinePassed() ? ' · <span class="neg">Trade window closed</span>' : ''}</div>
   </div>
   <div class="scrollx"><table class="tbl"><thead><tr><th>Pos</th><th class="l">Player</th><th>Age</th><th>Ability</th><th>Pot.</th><th>${tab === 'fa' ? 'Asks' : 'Club'}</th></tr></thead><tbody>
-  ${pl.slice(0, 80).map((p) => `<tr data-act="player" data-id="${p.id}"><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}${p.rookie ? ' <span class="tagx">NEW</span>' : ''}${p.wantsOut ? ' <span class="tagx">OUT</span>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(cache.get(p.id).ca))}</td><td>${starsHTML(stars(cache.get(p.id).pot))}</td><td>${tab === 'fa' ? fmtMoney(askingSalary(p)) : badge(team(p.team))}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nobody matches.</td></tr>'}
+  ${pl.slice(0, 80).map((p) => `<tr data-act="player" data-id="${p.id}"><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}${p.rookie ? ' <span class="tagx">NEW</span>' : ''}${p.listed ? ' <span class="tagx tl">LISTED</span>' : p.wantsOut ? ' <span class="tagx">OUT</span>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(cache.get(p.id).ca))}</td><td>${starsHTML(stars(cache.get(p.id).pot))}</td><td>${tab === 'fa' ? fmtMoney(askingSalary(p)) : badge(team(p.team))}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nobody matches.</td></tr>'}
   </tbody></table></div>`;
 };
 
@@ -446,6 +451,7 @@ VIEWS.trade = ({ id }) => {
 VIEWS.more = () => `${header('More')}
   <div class="list menu-list">
     <button class="li" data-act="go" data-v="coach"><span class="grow"><b>Coach Profile</b><div class="muted sm">${esc(S.coach.name)} · ${repLabel(S.coach.rep)} reputation</div></span>›</button>
+    <button class="li" data-act="rumours"><span class="grow"><b>Rumour Mill</b><div class="muted sm">Hot seat, rumours, biggest trades & signings</div></span>›</button>
     <button class="li" data-act="go" data-v="staff"><span class="grow"><b>Staff</b><div class="muted sm">Assistant, scout, youth & fitness coaches · former players</div></span>›</button>
     <button class="li" data-act="go" data-v="club"><span class="grow"><b>Club & Board</b><div class="muted sm">Board confidence, finances</div></span>›</button>
     <button class="li" data-act="go" data-v="jobs"><span class="grow"><b>Job Centre</b><div class="muted sm">${S.phase === 'offseason' && S.vacancies.length ? `<span class="pos">${S.vacancies.length} vacancies open</span>` : 'Opens at the end of each season'}</div></span>›</button>
@@ -874,6 +880,13 @@ const ACT = {
     else { const idx = t.rotation.indexOf(+d.id); const cur = i.min != null ? i.min : (idx < MIN_PLAN.length ? MIN_PLAN[idx] : 0); i.min = clamp(cur + +d.d, 0, 44); }
     save(); render();
   },
+  toggleList: (d) => {
+    const p = S.players[+d.id]; p.listed = !p.listed;
+    if (p.listed) { toast(`${esc(pname(p))} is on the transfer list. Clubs will be told he is available.`); if (p.hid.amb < 12 && p.hid.loy >= 14) { p.morale = clamp(p.morale - 12, 0, 100); mail(pname(p), 'Transfer listed?', `Coach, I just saw I'm on the transfer list. I thought I was part of this club. That hurts.`, { type: 'player', pid: p.id }); } }
+    else { toast(`${esc(pname(p))} removed from the transfer list.`); if (p.unsettled) p.morale = clamp(p.morale - 8, 0, 100); }
+    save(); render();
+  },
+  rumours: () => { UI.tab.market = 'rm'; go('market'); },
   liveHL: () => { Live.hlOn = Live.hlOn === false; Live.paint(true); },
   applyJob: (d) => { const r = applyJob(+d.id); toast(esc(r.msg), r.ok ? '' : 'bad'); render(); },
   takeJob: (d) => { takeNewJob(+d.id); UI.stack = []; toast(`Welcome to ${esc(teamName(team(+d.id)))}!`); go('inbox'); },
@@ -1083,3 +1096,58 @@ VIEWS.staffProfile = ({ sid }) => {
   <div class="attr-grid"><div class="attr-box" style="grid-column:1/-1"><h3>Attributes</h3>${STAFF_ATTRS.map((a) => `<div class="arow"><span>${a.n}</span>${attrCell(st.a[a.k])}</div>`).join('')}</div></div>
   ${st.ex ? `<h3 class="sec pad">Playing career</h3><div class="scrollx">${historyTable(st.ex.career, st.ex.awards)}</div>` : ''}`;
 };
+
+/* ---------- v4: transfer list, wanted, rumour mill ---------- */
+const MARKET_EXTRA = [['tl', 'Transfer List'], ['rm', 'Rumour Mill']];
+function marketHeader(tab) { return `${header('Market')}${tabs('market', [['fa', 'Free Agents'], ['tr', 'Trade Targets']].concat(MARKET_EXTRA), tab)}`; }
+function wantedView(r) {
+  const wanted = r.filter((p) => interestFor(p.id).length);
+  return `<div class="pad"><p class="hint">Clubs tracking your players. Interest grows from <span class="ilv i1">Monitoring</span> to <span class="ilv i2">Interested</span> to <span class="ilv i3">Keen</span> — keen clubs make offers. Ambitious players notice when bigger clubs come calling.</p></div>
+  ${wanted.length ? `<div class="list">${wanted.map((p) => `<div class="li wantrow"><div class="grow" data-act="player" data-id="${p.id}"><b>${esc(pname(p))}</b> <span class="muted sm">${p.pos} · ${p.age}</span>${p.listed ? ' <span class="tagx tl">LISTED</span>' : ''}${p.unsettled ? ' <span class="tagx">UNSETTLED</span>' : ''}
+    <div class="wchips">${interestFor(p.id).map((i) => `<span class="wchip">${badge(team(i.tid))}<span class="ilv ${INTEREST_LVL[i.lvl][1]}">${INTEREST_LVL[i.lvl][0]}</span></span>`).join('')}</div></div>${starsHTML(stars(calcCA(p)))}</div>`).join('')}</div>` : '<p class="empty">No clubs are tracking your players right now. Transfer listing a player makes clubs take notice.</p>'}`;
+}
+function transferListView() {
+  const ut = userTeam();
+  const mine = roster(ut.id).filter((p) => p.listed);
+  const lf = UI.tab.tllg || 'ALL';
+  let others = Object.values(S.players).filter((p) => p.listed && p.team != null && p.team !== ut.id);
+  if (lf !== 'ALL') others = others.filter((p) => team(p.team).lg === lf);
+  others.sort((a, b) => seenCA(b) - seenCA(a));
+  return `${marketHeader('tl')}
+  <h3 class="sec pad">Your transfer list</h3>
+  ${mine.length ? `<div class="list">${mine.map((p) => `<div class="li"><span class="ps">${p.pos}</span><span class="grow nm" data-act="player" data-id="${p.id}"><b>${esc(pname(p))}</b><div class="muted sm">${p.age} yrs · ${fmtMoney(p.contract.sal)} × ${p.contract.yrs}y · ${interestFor(p.id).length} club${interestFor(p.id).length === 1 ? '' : 's'} interested</div></span>${starsHTML(stars(calcCA(p)))}<button class="btn sm" data-act="toggleList" data-id="${p.id}">Remove</button></div>`).join('')}</div>` : '<p class="empty">Nobody listed. Use “Transfer List” on a player profile to tell clubs he is available.</p>'}
+  <h3 class="sec pad">Listed around the world</h3>
+  <div class="pad tight">${leagueChips(lf, 'tllg', true)}</div>
+  <div class="scrollx"><table class="tbl"><thead><tr><th>Pos</th><th class="l">Player</th><th>Age</th><th>Ability</th><th>Salary</th><th>Club</th></tr></thead><tbody>
+  ${others.slice(0, 60).map((p) => `<tr data-act="player" data-id="${p.id}"><td><span class="ps">${p.pos}</span></td><td class="l nm">${esc(pname(p, true))}${p.wantsOut ? ' <span class="tagx">OUT</span>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(seenCA(p)))}</td><td>${fmtMoney(p.contract.sal)}</td><td>${badge(team(p.team))}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">No listed players.</td></tr>'}
+  </tbody></table></div><p class="hint pad">Listed players come cheaper in trades.</p>`;
+}
+function rumourMillView() {
+  const sub = UI.tab.rm || 'hot';
+  const lf = UI.tab.rmlg || userTeam().lg;
+  const inLg = (lg) => lf === 'ALL' || lg === lf;
+  let body = '';
+  if (sub === 'hot') {
+    const list = hotSeat(lf).slice(0, 12);
+    const all = hotSeat(lf), myPos = all.findIndex((x) => x.t.id === S.userTeam) + 1;
+    body = `${myPos ? `<div class="pad"><div class="card ${S.board.conf < 30 ? 'warn' : ''}"><div class="kv"><span>Your position on the sack race</span><b>${ordinal(myPos)} of ${all.length}</b></div><div class="kv"><span>Odds</span><b>${oddsFor(S.board.conf)}</b></div></div></div>` : ''}
+    <div class="scrollx"><table class="tbl"><thead><tr><th>#</th><th class="l">Coach</th><th>Board</th><th>Odds</th></tr></thead><tbody>
+    ${list.map((x, i) => `<tr class="${x.t.id === S.userTeam ? 'me' : ''}" data-act="go" data-v="team" data-id="${x.t.id}"><td>${i + 1}</td><td class="l nm">${badge(x.t)} <b>${esc(coachName(x.t))}</b>${x.t.id === S.userTeam ? ' <span class="tagx">YOU</span>' : ''}<div class="muted sm">${esc(x.t.nick)} · ${x.t.w}-${x.t.l} · ${esc(league(x.t.lg).short)}</div></td><td><div class="meter mini"><div class="${x.conf >= 50 ? 'ok' : x.conf >= 25 ? 'mid' : 'bad'}" style="width:${x.conf}%"></div></div></td><td class="b">${oddsFor(x.conf)}</td></tr>`).join('')}
+    </tbody></table></div><p class="hint pad">Next coach to leave his job — bookmaker odds based on board confidence.</p>`;
+  } else if (sub === 'news') {
+    const items = (S.news || []).filter((n) => inLg(n.lg) || n.mine).slice(0, 50);
+    const ic = { hot: '🔥', sack: '🪑', rumour: '🗞️', trade: '🔁', sign: '✍️' };
+    body = `<div class="list">${items.map((n) => `<div class="li newsrow ${n.mine ? 'mine' : ''}" ${n.pid && S.players[n.pid] ? `data-act="player" data-id="${n.pid}"` : ''}><span class="nic">${ic[n.kind] || '•'}</span><span class="grow"><span class="sm">${esc(n.text)}</span><div class="muted sm">${fmtDate(n.season, n.day, true)} ${n.season}${n.lg && league(n.lg) ? ' · ' + esc(league(n.lg).short) : ''}</div></span></div>`).join('') || '<p class="empty">Quiet out there. Rumours will start flying soon.</p>'}</div>`;
+  } else if (sub === 'trades') {
+    const ds = (S.deals || []).filter((d) => d.kind === 'trade' && (inLg(d.lg) || inLg(d.lg2)) && d.season >= S.season - 1).sort((a, b) => b.season - a.season || b.val - a.val).slice(0, 25);
+    const side = (arr) => arr.length ? arr.map((x) => `<div class="tp" ${S.players[x.pid] ? `data-act="player" data-id="${x.pid}"` : ''}><span class="ps">${x.pos}</span> ${esc(x.name)} ${starsHTML(x.st)}</div>`).join('') : '<div class="muted sm">Contract relief</div>';
+    body = `<div class="pad">${ds.map((d, i) => `<div class="card deal ${d.a === S.userTeam || d.b === S.userTeam ? 'me' : ''}"><div class="muted sm">#${i + 1} · ${fmtDate(d.season, d.day, true)} ${d.season}</div>
+      <div class="dealgrid"><div>${badge(team(d.a))} <b>${esc(team(d.a).nick)}</b> get${side(d.aGets)}</div><div>${badge(team(d.b))} <b>${esc(team(d.b).nick)}</b> get${side(d.bGets)}</div></div></div>`).join('') || '<p class="empty">No trades yet this season.</p>'}</div>`;
+  } else {
+    const ds = (S.deals || []).filter((d) => d.kind === 'sign' && inLg(d.lg) && d.season >= S.season - 1).sort((a, b) => b.season - a.season || b.sal - a.sal).slice(0, 30);
+    body = `<div class="scrollx"><table class="tbl"><thead><tr><th class="l">Player</th><th>Age</th><th>Ability</th><th>Club</th><th>Salary</th><th>Yrs</th></tr></thead><tbody>
+    ${ds.map((d) => `<tr class="${d.tid === S.userTeam ? 'me' : ''}" ${S.players[d.pid] ? `data-act="player" data-id="${d.pid}"` : ''}><td class="l nm"><span class="ps">${d.pos}</span> ${esc(d.name)}${d.day === 0 ? ' <span class="tagx">FA</span>' : ''}</td><td>${d.age}</td><td>${starsHTML(d.st)}</td><td>${badge(team(d.tid))}</td><td class="b">${fmtMoney(d.sal)}</td><td>${d.yrs}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">No signings yet.</td></tr>'}
+    </tbody></table></div><p class="hint pad">FA = signed in the summer free-agency window.</p>`;
+  }
+  return `${marketHeader('rm')}<div class="pad tight">${leagueChips(lf, 'rmlg', true)}</div>${tabs('rm', [['hot', 'Hot Seat'], ['news', 'Rumours'], ['trades', 'Biggest Trades'], ['signs', 'Biggest Signings']])}${body}`;
+}

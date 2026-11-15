@@ -378,3 +378,20 @@ body.live-on main { padding-bottom: 80px; }
 .mfrom-ic.staff { background: #1f6feb; }
 .ev.flag .evx { color: #ff7b7b; font-weight: 800; } .ev.flag { border-left-color: #ff3b3b !important; }
 .ev.trash .evx { color: #c9b8ff; }
+
+/* ===== v4 market ===== */
+.tagx.tl, .atag.tl { background: color-mix(in srgb, #4da3ff 22%, transparent); color: #9fd0ff; }
+.ilv { font-size: 11px; font-weight: 800; padding: 1px 6px; border-radius: 8px; margin-left: 4px; }
+.ilv.i1 { background: #2b2f3b; color: #cfd3dd; } .ilv.i2 { background: #5b4a1b; color: #f6dd96; } .ilv.i3 { background: #6b2525; color: #ffc4c4; }
+.wantedby { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.wantrow { align-items: flex-start; }
+.wchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.wchip { display: inline-flex; align-items: center; gap: 2px; background: var(--panel2); border-radius: 12px; padding: 2px 6px 2px 2px; }
+.meter.mini { height: 7px; width: 60px; margin: 0 auto; }
+.newsrow { align-items: flex-start; } .newsrow.mine { box-shadow: inset 3px 0 0 var(--team); }
+.nic { font-size: 18px; width: 24px; text-align: center; }
+.deal.me { border-color: var(--team); }
+.dealgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.dealgrid > div { font-size: 13px; }
+.tp { display: flex; gap: 4px; align-items: center; margin-top: 5px; flex-wrap: wrap; cursor: pointer; }
+.tp .stars { font-size: 9px; }
