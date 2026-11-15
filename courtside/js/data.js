@@ -290,3 +290,97 @@ const STAFF_ATTRS = [
   { k: 'coaching', n: 'Coaching' }, { k: 'tactics', n: 'Tactical Knowledge' }, { k: 'motivation', n: 'Motivating' },
   { k: 'judgeA', n: 'Judging Ability' }, { k: 'judgeP', n: 'Judging Potential' }, { k: 'fitness', n: 'Fitness' }, { k: 'youth', n: 'Working with Youth' },
 ];
+
+/* ======================= v8: real cities, original names, authentic colours ======================= */
+// Pro Hoops League — the 30 real NBA markets. Team names are original; colours follow each market's real scheme.
+const PHL_TEAMS = [
+  { city: 'Atlanta', nick: 'Embers', abbr: 'ATL', c1: '#E03A3E', c2: '#C1D32F' },
+  { city: 'Boston', nick: 'Colonials', abbr: 'BOS', c1: '#007A33', c2: '#BA9653' },
+  { city: 'Brooklyn', nick: 'Bridges', abbr: 'BKN', c1: '#000000', c2: '#FFFFFF' },
+  { city: 'Charlotte', nick: 'Queens', abbr: 'CHA', c1: '#1D1160', c2: '#00788C' },
+  { city: 'Chicago', nick: 'Gales', abbr: 'CHI', c1: '#CE1141', c2: '#000000' },
+  { city: 'Cleveland', nick: 'Forgemen', abbr: 'CLE', c1: '#860038', c2: '#FDBB30' },
+  { city: 'Dallas', nick: 'Lone Stars', abbr: 'DAL', c1: '#00538C', c2: '#B8C4CA' },
+  { city: 'Denver', nick: 'Summit', abbr: 'DEN', c1: '#0E2240', c2: '#FEC524' },
+  { city: 'Detroit', nick: 'Gears', abbr: 'DET', c1: '#C8102E', c2: '#1D42BA' },
+  { city: 'San Francisco', nick: 'Fog', abbr: 'SFO', c1: '#1D428A', c2: '#FFC72C' },
+  { city: 'Houston', nick: 'Orbiters', abbr: 'HOU', c1: '#CE1141', c2: '#C4CED4' },
+  { city: 'Indianapolis', nick: 'Speedsters', abbr: 'IND', c1: '#002D62', c2: '#FDBB30' },
+  { city: 'Los Angeles', nick: 'Breakers', abbr: 'LAB', c1: '#1D428A', c2: '#C8102E' },
+  { city: 'Los Angeles', nick: 'Royals', abbr: 'LAR', c1: '#552583', c2: '#FDB927' },
+  { city: 'Memphis', nick: 'Rhythm', abbr: 'MEM', c1: '#5D76A9', c2: '#12173F' },
+  { city: 'Miami', nick: 'Flamingos', abbr: 'MIA', c1: '#98002E', c2: '#000000' },
+  { city: 'Milwaukee', nick: 'Shores', abbr: 'MIL', c1: '#00471B', c2: '#EEE1C6' },
+  { city: 'Minneapolis', nick: 'Frost', abbr: 'MIN', c1: '#0C2340', c2: '#78BE20' },
+  { city: 'New Orleans', nick: 'Krewe', abbr: 'NOL', c1: '#0C2340', c2: '#C8102E' },
+  { city: 'New York', nick: 'Skyliners', abbr: 'NYS', c1: '#006BB6', c2: '#F58426' },
+  { city: 'Oklahoma City', nick: 'Twisters', abbr: 'OKC', c1: '#007AC1', c2: '#EF3B24' },
+  { city: 'Orlando', nick: 'Orbit', abbr: 'ORL', c1: '#0077C0', c2: '#C4CED4' },
+  { city: 'Philadelphia', nick: 'Founders', abbr: 'PHI', c1: '#006BB6', c2: '#ED174C' },
+  { city: 'Phoenix', nick: 'Scorchers', abbr: 'PHX', c1: '#1D1160', c2: '#E56020' },
+  { city: 'Portland', nick: 'Roses', abbr: 'POR', c1: '#E03A3E', c2: '#000000' },
+  { city: 'Sacramento', nick: 'Miners', abbr: 'SAC', c1: '#5A2D81', c2: '#63727A' },
+  { city: 'San Antonio', nick: 'Alamos', abbr: 'SAN', c1: '#000000', c2: '#C4CED4' },
+  { city: 'Toronto', nick: 'Northmen', abbr: 'TOR', c1: '#CE1141', c2: '#000000' },
+  { city: 'Salt Lake City', nick: 'Canyons', abbr: 'SLC', c1: '#002B5C', c2: '#F9A01B' },
+  { city: 'Washington', nick: 'Federals', abbr: 'WAS', c1: '#002B5C', c2: '#E31837' },
+];
+// Europe — a two-tier pan-European pyramid of real basketball cities with local colours and original club names.
+const EURO_TEAMS = {
+  EUR1: [
+    { city: 'Madrid', nick: 'Osos', abbr: 'MAD', c1: '#C8102E', c2: '#FFFFFF', nat: 'ESP' },
+    { city: 'Barcelona', nick: 'Dracs', abbr: 'BAR', c1: '#DA121A', c2: '#FCDD09', nat: 'ESP' },
+    { city: 'Belgrade', nick: 'Sokolovi', abbr: 'BEL', c1: '#C6363C', c2: '#0C4076', nat: 'SRB' },
+    { city: 'Athens', nick: 'Owls', abbr: 'ATH', c1: '#0D5EAF', c2: '#FFFFFF', nat: 'GRE' },
+    { city: 'Piraeus', nick: 'Mariners', abbr: 'PIR', c1: '#B3001B', c2: '#FFFFFF', nat: 'GRE' },
+    { city: 'Istanbul', nick: 'Tulips', abbr: 'IST', c1: '#0A2240', c2: '#F4C300', nat: 'TUR' },
+    { city: 'Munich', nick: 'Monks', abbr: 'MUN', c1: '#0098D4', c2: '#FFFFFF', nat: 'GER' },
+    { city: 'Milan', nick: 'Serpents', abbr: 'MLN', c1: '#FFFFFF', c2: '#C8102E', nat: 'ITA' },
+    { city: 'Vienna', nick: 'Waltzers', abbr: 'VIE', c1: '#ED2939', c2: '#FFFFFF', nat: 'GER' },
+    { city: 'Kaunas', nick: 'Aurochs', abbr: 'KAU', c1: '#00703C', c2: '#FFFFFF', nat: 'LTU' },
+    { city: 'Paris', nick: 'Lumières', abbr: 'PAR', c1: '#002395', c2: '#ED2939', nat: 'FRA' },
+    { city: 'Valencia', nick: 'Bats', abbr: 'VAL', c1: '#F18A00', c2: '#000000', nat: 'ESP' },
+    { city: 'Bologna', nick: 'Towers', abbr: 'BOL', c1: '#A6192E', c2: '#1A2A6C', nat: 'ITA' },
+    { city: 'Berlin', nick: 'Bears', abbr: 'BER', c1: '#FFD100', c2: '#003DA5', nat: 'GER' },
+    { city: 'Vitoria', nick: 'Lobos', abbr: 'VIT', c1: '#002F6C', c2: '#E4002B', nat: 'ESP' },
+    { city: 'Monaco', nick: 'Rocks', abbr: 'MON', c1: '#CE1126', c2: '#FFFFFF', nat: 'FRA' },
+  ],
+  EUR2: [
+    { city: 'Málaga', nick: 'Biznagas', abbr: 'MAL', c1: '#00843D', c2: '#6A2A8C', nat: 'ESP' },
+    { city: 'Zaragoza', nick: 'Leones', abbr: 'ZAR', c1: '#D0103A', c2: '#FFFFFF', nat: 'ESP' },
+    { city: 'Bilbao', nick: 'Ironworks', abbr: 'BIL', c1: '#111111', c2: '#E30613', nat: 'ESP' },
+    { city: 'Las Palmas', nick: 'Canaries', abbr: 'LPA', c1: '#FFD100', c2: '#0055A4', nat: 'ESP' },
+    { city: 'Venice', nick: 'Gondoliers', abbr: 'VEN', c1: '#6E1E2B', c2: '#C9A227', nat: 'ITA' },
+    { city: 'Rome', nick: 'Centurions', abbr: 'ROM', c1: '#8E1F2F', c2: '#F0BC42', nat: 'ITA' },
+    { city: 'Naples', nick: 'Vesuvio', abbr: 'NAP', c1: '#12A0D7', c2: '#FFFFFF', nat: 'ITA' },
+    { city: 'Thessaloniki', nick: 'Stars', abbr: 'THE', c1: '#FFD200', c2: '#000000', nat: 'GRE' },
+    { city: 'Ljubljana', nick: 'Dragons', abbr: 'LJU', c1: '#00843D', c2: '#FFFFFF', nat: 'SLO' },
+    { city: 'Zagreb', nick: 'Comets', abbr: 'ZAG', c1: '#0033A0', c2: '#FFFFFF', nat: 'CRO' },
+    { city: 'Riga', nick: 'Ambers', abbr: 'RIG', c1: '#9E3039', c2: '#FFFFFF', nat: 'LTU' },
+    { city: 'Vilnius', nick: 'Knights', abbr: 'VIL', c1: '#0057B8', c2: '#FFD100', nat: 'LTU' },
+    { city: 'Lyon', nick: 'Silkweavers', abbr: 'LYO', c1: '#E2001A', c2: '#0B2C7A', nat: 'FRA' },
+    { city: 'Bamberg', nick: 'Bishops', abbr: 'BAM', c1: '#7A1F2B', c2: '#FFFFFF', nat: 'GER' },
+    { city: 'Ulm', nick: 'Sparrows', abbr: 'ULM', c1: '#F28C00', c2: '#002D72', nat: 'GER' },
+    { city: 'Ankara', nick: 'Angoras', abbr: 'ANK', c1: '#002D72', c2: '#F7D117', nat: 'TUR' },
+  ],
+};
+LEAGUE_DEFS.length = 0;
+LEAGUE_DEFS.push(
+  { id: 'PHL', name: 'Pro Hoops League', short: 'PHL', country: 'USA', tier: 1, size: 30, lv: [10.4, 12.5], pr: [14, 19], teams: PHL_TEAMS },
+  { id: 'EUR1', name: 'Continental League', short: 'CONT', country: 'EUR', tier: 1, size: 16, lv: [9.3, 11.0], pr: [9, 14], teams: EURO_TEAMS.EUR1 },
+  { id: 'EUR2', name: 'Continental League Two', short: 'CONT2', country: 'EUR', tier: 2, size: 16, lv: [7.5, 9.2], pr: [3, 8], teams: EURO_TEAMS.EUR2 },
+);
+COUNTRY_FLAG.EUR = '🇪🇺';
+
+/* Colour helpers: pick readable text on a team colour, keep the secondary as trim */
+function hexLum(h) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return 0.5;
+  const n = parseInt(m[1], 16), c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function contrast(a, b) { const x = hexLum(a), y = hexLum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+function readableOn(bg, pref) { if (pref && contrast(bg, pref) >= 3) return pref; return contrast(bg, '#FFFFFF') >= contrast(bg, '#101418') ? '#FFFFFF' : '#101418'; }
+function colorDist(a, b) {
+  const p = (h) => { const n = parseInt((h || '#000000').slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const [x, y] = [p(a), p(b)]; return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+}

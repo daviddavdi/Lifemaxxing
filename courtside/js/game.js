@@ -19,14 +19,14 @@ function makeAbbr(city, used) {
 function generateWorld() {
   const tmp = { players: {}, nextPid: 1 };
   const db = { format: 'courtside-db', version: 2, leagues: [], teams: [], players: [] };
-  const usedAbbr = new Set(DEFAULT_TEAMS.map((t) => t.abbr));
+  const usedAbbr = new Set(LEAGUE_DEFS.flatMap((L) => (L.teams || []).map((t) => t.abbr)));
   const usedCity = {};
   let tid = 1;
   for (const L of LEAGUE_DEFS) {
     db.leagues.push({ id: L.id, name: L.name, short: L.short, country: L.country, tier: L.tier });
     const levels = R.shuffle(Array.from({ length: L.size }, (_, i) => L.lv[0] + (L.lv[1] - L.lv[0]) * (i / (L.size - 1))));
     let clubs;
-    if (L.country === 'USA') clubs = DEFAULT_TEAMS.slice(0, L.size).map((t) => ({ ...t }));
+    if (L.teams) clubs = L.teams.slice(0, L.size).map((t) => ({ ...t }));
     else {
       const pool = EURO_CLUBS[L.country];
       usedCity[L.country] = usedCity[L.country] || new Set();
@@ -38,10 +38,11 @@ function generateWorld() {
     clubs.forEach((c, i) => {
       const lv = levels[i];
       const prestige = Math.round(L.pr[0] + ((lv - L.lv[0]) / Math.max(0.01, L.lv[1] - L.lv[0])) * (L.pr[1] - L.pr[0]));
+      const nat = c.nat || L.country; delete c.nat;
       const team = { id: tid++, lg: L.id, ...c, budget: 0, prestige, cq: Math.round(clamp(prestige * 0.6 + 4 + R.gauss() * 2, 4, 19)) };
       db.teams.push(team);
       const n = L.size >= 14 ? 13 : 12;
-      for (let j = 0; j < n; j++) db.players.push(genPlayer(tmp, lv + SLOT_LV[j], SLOT_POS[j] || undefined, undefined, team.id, L.country));
+      for (let j = 0; j < n; j++) db.players.push(genPlayer(tmp, lv + SLOT_LV[j], SLOT_POS[j] || undefined, undefined, team.id, nat === 'EUR' ? R.pick(['ESP', 'ITA', 'GER', 'FRA', 'GRE', 'SRB']) : nat));
     });
   }
   for (let i = 0; i < 60; i++) db.players.push(genPlayer(tmp, R.f(6.5, 10.5), undefined, undefined, null, R.pick(['USA', 'ESP', 'ITA', 'GER'])));
@@ -194,7 +195,9 @@ function buildLeagueSchedule(lid, cycles, startDay) {
   all.forEach((games, ri) => { for (const [h, a] of games) fx.push({ id: S.nextFx++, lg: lid, day: startDay + 3 + ri * gap, h, a, played: false, type: 'reg' }); });
   return fx;
 }
-function buildAllSchedules() { return S.leagues.flatMap((l) => buildLeagueSchedule(l.id, S.cycles, 0)); }
+function leagueCycles(lid) { const n = lgTeams(lid).length; return n >= 20 ? Math.max(1, S.cycles / 2) : S.cycles; }
+function gamesPerTeamLg(lid) { return (lgTeams(lid).length - 1) * leagueCycles(lid); }
+function buildAllSchedules() { return S.leagues.flatMap((l) => buildLeagueSchedule(l.id, leagueCycles(l.id), 0)); }
 function lastRegDay(lid) { const d = S.schedule.filter((f) => f.type === 'reg' && f.lg === lid).map((f) => f.day); return d.length ? Math.max(...d) : 0; }
 function deadlinePassed() { const lg = userLeague(); return lg.state !== 'regular' || S.day > lastRegDay(lg.id) * 0.75; }
 
@@ -502,7 +505,7 @@ function userPostMatch(f, res) {
   });
   if (res.ot && won) mail('Assistant Coach', `Overtime thriller vs ${opp.nick}`, `What a game coach! We got it done in ${res.ot > 1 ? res.ot + ' overtimes' : 'overtime'}. The players are buzzing.`, { type: 'staff' });
   const played = t.w + t.l;
-  const total = (lgTeams(t.lg).length - 1) * S.cycles;
+  const total = gamesPerTeamLg(t.lg);
   if (f.type === 'reg' && played > 0 && played % 8 === 0) {
     const c = S.board.conf;
     const mood = c >= 75 ? 'delighted with' : c >= 55 ? 'pleased with' : c >= 35 ? 'concerned about' : 'very unhappy with';
@@ -596,7 +599,7 @@ function progressPlayoffs(lg) {
 function seasonScore(p) {
   const s = p.st; if (!s.gp) return 0;
   const t = team(p.team); const wp = t ? t.w / Math.max(1, t.w + t.l) : 0.3;
-  const gpt = t ? (lgTeams(t.lg).length - 1) * S.cycles : 30;
+  const gpt = t ? gamesPerTeamLg(t.lg) : 30;
   return (s.pts + 1.2 * s.reb + 1.5 * s.ast + 2 * s.stl + 2 * s.blk - s.tov) / s.gp * (0.75 + wp * 0.5) * Math.min(1, s.gp / (gpt * 0.6));
 }
 function userAchievement() {

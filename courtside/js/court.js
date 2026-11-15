@@ -63,9 +63,10 @@ const Court = {
       gr.addColorStop(0, col + (0.55 * k + 0.25) + ')'); gr.addColorStop(1, col + '0)');
       c.fillStyle = gr; c.beginPath(); c.arc(px, py, rr, 0, Math.PI * 2); c.fill();
     }
-    c.fillStyle = team.c1; c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
-    c.lineWidth = opts.focus ? 2.5 : 1.2; c.strokeStyle = opts.focus ? '#f2c94c' : 'rgba(255,255,255,.55)'; c.stroke();
-    c.fillStyle = team.c2; c.font = `800 ${Math.round(r * (label.length > 1 ? 0.92 : 1.05))}px -apple-system, Segoe UI, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const fill = opts.fill || team.c1, trim = opts.trim || team.c2;
+    c.fillStyle = fill; c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
+    c.lineWidth = opts.focus ? 2.5 : 2; c.strokeStyle = opts.focus ? '#f2c94c' : (colorDist(trim, fill) > 60 ? trim : 'rgba(255,255,255,.55)'); c.stroke();
+    c.fillStyle = readableOn(fill, trim); c.font = `800 ${Math.round(r * (label.length > 1 ? 0.92 : 1.05))}px -apple-system, Segoe UI, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(label, px, py + 0.5);
     c.globalAlpha = 1;
   },
@@ -81,6 +82,13 @@ const Court = {
     const w = c.measureText(txt).width + 22;
     c.fillStyle = 'rgba(10,12,16,.85)'; c.beginPath(); if (c.roundRect) c.roundRect(this.W / 2 - w / 2, 6, w, 20, 6); else c.rect(this.W / 2 - w / 2, 6, w, 20); c.fill();
     c.fillStyle = '#f2c94c'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, this.W / 2, 16);
+  },
+  kit(m, si) { // away team wears its alternate when colours clash
+    const H = m.sides[0].team, A = m.sides[1].team;
+    if (si === 0) return [H.c1, H.c2];
+    if (colorDist(H.c1, A.c1) > 90) return [A.c1, A.c2];
+    const alt = colorDist(H.c1, A.c2) > 90 ? A.c2 : '#F4F4F4';
+    return [alt, A.c1];
   },
   initials(p) { return p ? (Number.isInteger(p.num) ? String(p.num) : p.last.slice(0, 2)) : '?'; },
 
@@ -199,7 +207,8 @@ const Court = {
       const d = this.dots[id]; if (d.a < 0.03) continue;
       const si = sideOf[id]; if (si == null) continue;
       const s = m.sides[si], p = S.players[id];
-      this.dot(d.x, Math.min(d.y, 49.5), s.team, this.initials(p), s.heat[id] || 0, { alpha: d.a * (m.ej[id] ? 0.35 : 1), focus: focus === +id });
+      const kit = this.kit(m, si);
+      this.dot(d.x, Math.min(d.y, 49.5), s.team, this.initials(p), s.heat[id] || 0, { alpha: d.a * (m.ej[id] ? 0.35 : 1), focus: focus === +id, fill: kit[0], trim: kit[1] });
     }
     if (ballT) {
       if (!this.ball || ballExact) this.ball = { x: ballT[0], y: ballT[1] };

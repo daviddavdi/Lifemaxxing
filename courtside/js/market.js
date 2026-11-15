@@ -41,7 +41,7 @@ function weeklyHotSeat() {
     if (lg.state !== 'regular') continue;
     const ts = lgTeams(lg.id);
     const exp = ts.map((t) => ({ id: t.id, s: teamStrength(t.id) })).sort((a, b) => b.s - a.s).map((x) => x.id);
-    const total = (ts.length - 1) * S.cycles;
+    const total = gamesPerTeamLg(lg.id);
     for (const t of ts) {
       if (t.id === S.userTeam || t.w + t.l < 3) continue;
       const before = t.coach.conf;

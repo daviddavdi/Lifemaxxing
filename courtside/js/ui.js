@@ -40,7 +40,7 @@ const starsHTML = (v) => `<span class="stars"><span class="on" style="width:${(v
 const tier = (v) => (v >= 16 ? 4 : v >= 11 ? 3 : v >= 6 ? 2 : 1);
 const attrCell = (v) => `<span class="av t${tier(Math.round(v))}">${Math.round(v)}</span>`;
 const attrRangeCell = ([lo, hi]) => lo === hi ? attrCell(lo) : `<span class="av rng t${tier((lo + hi) / 2)}">${lo}-${hi}</span>`;
-const badge = (t, cls = '') => t ? `<span class="badge ${cls}" style="background:${t.c1};color:${t.c2}">${esc(t.abbr)}</span>` : `<span class="badge fa ${cls}">FA</span>`;
+const badge = (t, cls = '') => t ? `<span class="badge ${cls}" style="background:${t.c1};color:${readableOn(t.c1, t.c2)};--trim:${t.c2}">${esc(t.abbr)}</span>` : `<span class="badge fa ${cls}">FA</span>`;
 const ratingPill = (r) => r == null ? '<span class="rp">–</span>' : `<span class="rp ${r >= 8 ? 'r4' : r >= 7 ? 'r3' : r >= 6 ? 'r2' : 'r1'}">${r.toFixed(1)}</span>`;
 function moraleLabel(m) { return m >= 85 ? ['Superb', 'm5'] : m >= 70 ? ['Very Good', 'm4'] : m >= 55 ? ['Good', 'm3'] : m >= 40 ? ['Okay', 'm2'] : m >= 25 ? ['Poor', 'm1'] : ['Very Poor', 'm0']; }
 const moraleHTML = (m, short) => { const [l, c] = moraleLabel(m); return `<span class="mor ${c}">${short ? l.replace('Very ', 'V.') : l}</span>`; };
@@ -105,7 +105,8 @@ function render() {
   if (S && userTeam()) {
     const t = userTeam();
     document.documentElement.style.setProperty('--team', t.c1);
-    document.documentElement.style.setProperty('--team2', t.c2);
+    document.documentElement.style.setProperty('--team2', readableOn(t.c1, t.c2));
+    document.documentElement.style.setProperty('--trim', t.c2);
   }
   $('#top').innerHTML = inGame ? topBar() : '';
   $('#nav').innerHTML = inGame ? navBar() : '';
@@ -167,7 +168,7 @@ VIEWS.newgame = () => {
         <button class="pick ${NG.ironman ? 'on' : ''}" data-act="ngSet" data-k="ironman" data-v="1" ${NG.custom ? 'disabled' : ''}><b>🛡️ Ironman</b><span>${NG.custom ? 'Not available with a custom database.' : 'One save, no reloading matches, no editor, no restoring backups. Earn achievements.'}</span></button>
       </div>
       <h2 class="sec">Season length</h2>
-      <div class="seg">${[['short', 'Short (18–30 games)'], ['long', 'Long (36–60 games)']].map(([v, l]) => `<button class="${NG.length === v ? 'on' : ''}" data-act="ngSet" data-k="length" data-v="${v}">${l}</button>`).join('')}</div>
+      <div class="seg">${[['short', 'Short (~30 games)'], ['long', 'Long (~60 games)']].map(([v, l]) => `<button class="${NG.length === v ? 'on' : ''}" data-act="ngSet" data-k="length" data-v="${v}">${l}</button>`).join('')}</div>
       <p class="hint">${db.leagues.length} leagues · ${db.teams.length} clubs${NG.custom ? ' · custom database' : ''}</p>
     </div>
     <div class="sticky-cta"><button class="btn primary big" data-act="ngNext">Next: Choose Club</button></div>`;
@@ -1257,7 +1258,7 @@ VIEWS.clubHistory = () => {
   <div class="pad">
     <div class="card"><h3>${esc(teamName(t))}</h3><div class="kv"><span>League</span><b>${esc(league(t.lg).name)}</b></div><div class="kv"><span>Titles in your era</span><b>${titles.length}</b></div></div>
     <h3 class="sec">Retired numbers</h3>
-    ${ret.length ? `<div class="banners">${ret.map((r) => `<div class="banner" style="--bc:${t.c1};--bt:${t.c2}"><div class="bnum">${r.num}</div><div class="bname">${esc(r.name)}</div><div class="bmeta">${r.pos} · ${r.seasons} seasons · ${r.gp} games<br>${r.gp ? (r.pts / r.gp).toFixed(1) : '0'} ppg · ${r.gp ? (r.rat / r.gp).toFixed(2) : '-'} avg rating${r.titles ? `<br>🏆 ${r.titles}` : ''}</div><div class="bseason">Retired ${r.season}</div></div>`).join('')}</div>` : '<p class="empty">No numbers retired yet. When a club legend hangs up his sneakers, the board can raise his number to the rafters.</p>'}
+    ${ret.length ? `<div class="banners">${ret.map((r) => `<div class="banner" style="--bc:${t.c1};--bt:${readableOn(t.c1, t.c2)}"><div class="bnum">${r.num}</div><div class="bname">${esc(r.name)}</div><div class="bmeta">${r.pos} · ${r.seasons} seasons · ${r.gp} games<br>${r.gp ? (r.pts / r.gp).toFixed(1) : '0'} ppg · ${r.gp ? (r.rat / r.gp).toFixed(2) : '-'} avg rating${r.titles ? `<br>🏆 ${r.titles}` : ''}</div><div class="bseason">Retired ${r.season}</div></div>`).join('')}</div>` : '<p class="empty">No numbers retired yet. When a club legend hangs up his sneakers, the board can raise his number to the rafters.</p>'}
     <h3 class="sec">Championships</h3>
     ${titles.length ? titles.map((h) => `<div class="lrow"><span>🏆</span><span class="grow">${h.season}/${String(h.season + 1).slice(2)} ${esc(league(h.lg)?.name || '')}</span><span class="muted sm">MVP ${esc(h.mvp)}</span></div>`).join('') : '<p class="muted">No titles yet.</p>'}
     <h3 class="sec">Your seasons here</h3>

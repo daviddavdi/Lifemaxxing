@@ -442,3 +442,9 @@ body.live-on main { padding-bottom: 80px; }
 .rivalcard { border-color: color-mix(in srgb, #ff5252 40%, var(--line)); }
 .press.done { opacity: .75; }
 .pq { font-size: 18px; line-height: 1.35; margin: 8px 0; }
+
+/* ===== v8 authentic colours ===== */
+.badge { box-shadow: inset 0 0 0 1.5px var(--trim, rgba(255,255,255,.12)); }
+.badge.lg, .badge.xl { box-shadow: inset 0 0 0 2.5px var(--trim, rgba(255,255,255,.12)); }
+.continue { box-shadow: 0 0 0 2px var(--trim, rgba(255,255,255,.18)) inset, 0 4px 14px rgba(0,0,0,.35); }
+.topbar { border-bottom: 2px solid var(--trim, var(--team)); }

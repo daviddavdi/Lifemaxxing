@@ -95,6 +95,16 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - **Player rivalries:** trash talkers and hotheads who battle opponents at their position, or former teammates who leave on bad terms (clashing egos, unsettled exits), become personal rivals. When both are on court they trash talk far more, swing harder between On Fire and Cold, and are much likelier to get technicals and flagrants. They're marked with red rings on the court and listed in the preview.
 - **Press conferences:** before and after every game, three questions each about rivals, your star, expectations, the result, ejections and the player of the match. Answers move morale, board confidence and rivalries, and blaming the refs can get you fined. Your Media Handling attribute matters. Delegate pre-game, post-game or both to your assistant in Settings (or per game) and he keeps it measured.
 
+## Default world: real cities, original names, real colours
+
+- **Pro Hoops League:** the 30 real NBA markets (Atlanta through Washington, with two Los Angeles clubs) under original names, e.g. Boston Colonials, Los Angeles Royals, Chicago Gales, New York Skyliners, Miami Flamingos and San Francisco Fog. Each uses its market's real primary and secondary colours. The short season is a 29-game round robin; long is 58. Top 8 make the playoffs.
+- **Europe:** a pan-European two-tier pyramid with promotion and relegation (2 up, 2 down).
+  - *Continental League:* Madrid, Barcelona, Belgrade, Athens, Piraeus, Istanbul, Munich, Milan, Vienna, Kaunas, Paris, Valencia, Bologna, Berlin, Vitoria and Monaco.
+  - *Continental League Two:* Málaga, Zaragoza, Bilbao, Las Palmas, Venice, Rome, Naples, Thessaloniki, Ljubljana, Zagreb, Riga, Vilnius, Lyon, Bamberg, Ulm and Ankara.
+  - Rosters lean toward local nationalities.
+- **Colours everywhere:** text on team colours is chosen to stay readable, and the secondary colour appears as trim on badges, the header and the Continue button. On the court, players wear the primary colour with secondary trim, and the away team switches to its alternate kit when the colours clash.
+- Existing careers keep their world. New careers use the new database.
+
 ## Code map
 
 - `js/data.js` — name pools, attributes, default teams, helpers

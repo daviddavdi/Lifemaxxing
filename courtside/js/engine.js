@@ -37,6 +37,8 @@ function playerValue(p) {
 
 function genName(nat) { const n = NATS[nat]; return { first: R.pick(n.first), last: R.pick(n.last) }; }
 function randNat(bias) {
+  if (bias === 'EUR') bias = R.pick(['ESP', 'ITA', 'GER', 'FRA', 'GRE', 'SRB', 'LTU', 'TUR', 'CRO', 'SLO']);
+  if (bias && !NATS[bias]) bias = null;
   if (bias && bias !== 'USA' && R.chance(0.5)) return bias;
   if (bias === 'USA' && R.chance(0.35)) return 'USA';
   return R.wpick(NAT_KEYS, (k) => NATS[k].w);
