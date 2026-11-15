@@ -1,4 +1,4 @@
-const C = 'courtside-v1';
+const C = 'courtside-v2';
 const FILES = ['./', 'index.html', 'css/style.css', 'js/data.js', 'js/engine.js', 'js/game.js', 'js/ui.js', 'icon.svg', 'manifest.webmanifest'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(C).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== C).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });

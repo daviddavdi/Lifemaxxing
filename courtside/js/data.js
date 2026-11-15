@@ -154,3 +154,108 @@ function fmtHeight(cm) {
   const inches = Math.round(cm / 2.54);
   return `${Math.floor(inches / 12)}'${inches % 12}" (${cm}cm)`;
 }
+
+/* ======================= v2 additions ======================= */
+
+// Hidden mental attributes (1-20). Never shown as numbers in-game — revealed through personality & the grapevine.
+const HIDDEN = [
+  { k: 'cons', n: 'Consistency' }, { k: 'clutch', n: 'Big Moments' }, { k: 'injp', n: 'Injury Proneness' },
+  { k: 'prof', n: 'Professionalism' }, { k: 'amb', n: 'Ambition' }, { k: 'loy', n: 'Loyalty' },
+  { k: 'temp', n: 'Temperament' }, { k: 'coach', n: 'Coachability' }, { k: 'ego', n: 'Ego' },
+];
+// What your staff writes in "Coach's Notes" once a trait has been discovered
+const TRAIT_NOTES = {
+  cons: { hi: 'Remarkably steady — you know exactly what you get every night.', lo: 'Wildly up and down. Nobody knows which version will show up.' },
+  clutch: { hi: 'Wants the ball when the game is on the line.', lo: 'Tends to shrink when the stakes are highest.' },
+  injp: { hi: 'His body breaks down more often than it should.', lo: 'Rarely misses a game. Built like a tank.' },
+  prof: { hi: 'Model professional — first in, last out.', lo: 'Cuts corners in training and recovery.' },
+  amb: { hi: 'Hungry to play at the very highest level.', lo: 'Happy where he is. Not chasing the spotlight.' },
+  loy: { hi: 'Fiercely loyal to the club that backs him.', lo: 'Loyal to his next paycheck.' },
+  temp: { hi: 'Ice cool. Never loses his head.', lo: 'Short fuse. Criticism can set him off.' },
+  coach: { hi: 'A sponge — takes instructions on board instantly.', lo: 'Stubborn. Tends to do his own thing.' },
+  ego: { hi: 'Big ego. Needs touches and the spotlight.', lo: 'Selfless. Happy to do the dirty work.' },
+};
+
+// Coach attributes (1-20)
+const COACH_ATTRS = [
+  { k: 'off', n: 'Offensive Coaching', g: 'Coaching' }, { k: 'def', n: 'Defensive Coaching', g: 'Coaching' },
+  { k: 'tac', n: 'Tactical Knowledge', g: 'Coaching' }, { k: 'dev', n: 'Player Development', g: 'Coaching' },
+  { k: 'fit', n: 'Conditioning', g: 'Coaching' },
+  { k: 'mot', n: 'Motivating', g: 'Mental' }, { k: 'man', n: 'Man Management', g: 'Mental' },
+  { k: 'dis', n: 'Discipline', g: 'Mental' }, { k: 'det', n: 'Determination', g: 'Mental' }, { k: 'ada', n: 'Adaptability', g: 'Mental' },
+  { k: 'ja', n: 'Judging Ability', g: 'Knowledge' }, { k: 'jp', n: 'Judging Potential', g: 'Knowledge' }, { k: 'med', n: 'Media Handling', g: 'Knowledge' },
+];
+const COACH_GROUPS = ['Coaching', 'Mental', 'Knowledge'];
+const COACH_STYLES = {
+  tactician: { n: 'Tactician', d: 'X\'s and O\'s first. Schemes and systems work better.', plus: ['off', 'def', 'tac'], minus: ['mot', 'med'] },
+  motivator: { n: 'Motivator', d: 'Players run through walls for you. Team talks land harder.', plus: ['mot', 'man', 'det'], minus: ['tac', 'ja'] },
+  developer: { n: 'Developer', d: 'Turns raw prospects into players. Sharp eye for talent.', plus: ['dev', 'jp', 'ja'], minus: ['def', 'med'] },
+  allround: { n: 'All-Rounder', d: 'No glaring weaknesses, no standout strengths.', plus: [], minus: [] },
+};
+const REP_LABELS = [[17, 'Legendary'], [14, 'International'], [11, 'National'], [8, 'Regional'], [5, 'Local'], [0, 'Unknown']];
+const repLabel = (r) => REP_LABELS.find(([v]) => r >= v)[1];
+
+// Player roles (individual instructions)
+const ROLES = {
+  bal: { n: 'Balanced', d: 'No special role. Plays within the team system.', w: null },
+  fg: { n: 'Floor General', d: 'Pass-first organiser. Fewer shots, more assists, fewer turnovers.', w: { pas: 3, han: 2, iq: 3, cmp: 1 }, use: 0.75, ast: 1.6, tov: -0.012 },
+  sc: { n: 'Shot Creator', d: 'Creates his own shot. High usage, lots of pull-ups.', w: { han: 2, mid: 3, thr: 2, cmp: 1 }, use: 1.35, mid: 1.4 },
+  td: { n: '3&D Wing', d: 'Spots up from three and locks down on defense.', w: { thr: 3, pdef: 3, stl: 1 }, use: 0.8, thr: 1.7, inn: 0.6, defb: 1 },
+  sl: { n: 'Slasher', d: 'Attacks the rim relentlessly, draws fouls.', w: { fin: 3, spd: 2, jmp: 2, han: 1 }, use: 1.15, inn: 1.6, thr: 0.6, foul: 1.3 },
+  sb: { n: 'Stretch Big', d: 'Big who pulls defenders out to the three-point line.', w: { thr: 3, mid: 2, reb: 1 }, use: 0.95, thr: 2, inn: 0.7, reb: 0.85 },
+  ps: { n: 'Post Scorer', d: 'Back-to-the-basket scorer. Lives in the paint.', w: { fin: 3, str: 3, mid: 1 }, use: 1.25, inn: 1.5, thr: 0.3, foul: 1.2 },
+  rp: { n: 'Rim Protector', d: 'Anchors the defense. Blocks, rebounds, few shots.', w: { idef: 3, blk: 3, reb: 2, jmp: 1 }, use: 0.6, blk: 1.5, reb: 1.15, defb: 1 },
+  rr: { n: 'Rim Runner', d: 'Rolls hard, finishes lobs, crashes the glass.', w: { fin: 2, jmp: 3, spd: 2 }, use: 0.8, inn: 1.8, thr: 0.2, mid: 0.4, eff: 0.03, reb: 1.1 },
+};
+
+const TACTIC_OPTS = {
+  pace: [['slow', 'Slow'], ['normal', 'Balanced'], ['fast', 'Fast']],
+  system: [['motion', 'Motion'], ['pnr', 'Pick & Roll'], ['iso', 'Isolation'], ['post', 'Post-Up'], ['run', 'Run & Gun']],
+  focus: [['inside', 'Inside'], ['balanced', 'Balanced'], ['outside', 'Perimeter']],
+  oreb: [['back', 'Get Back'], ['normal', 'Balanced'], ['crash', 'Crash Glass']],
+  defense: [['man', 'Man'], ['zone', 'Zone'], ['switch', 'Switch All'], ['press', 'Press']],
+  help: [['paint', 'Pack Paint'], ['balanced', 'Balanced'], ['perimeter', 'Run Shooters']],
+  intensity: [['low', 'Conservative'], ['normal', 'Normal'], ['high', 'Aggressive']],
+};
+const TACTIC_LABEL = { pace: 'Pace', system: 'Offensive system', focus: 'Shot focus', oreb: 'Offensive rebounding', defense: 'Defensive scheme', help: 'Help defense', intensity: 'Intensity' };
+const TACTIC_DESC = {
+  motion: 'Ball and player movement. Spreads shots around; rewards high Basketball IQ.',
+  pnr: 'Ball handlers and roll men run the show. Great with a creative guard and an athletic big.',
+  iso: 'Clear out for your stars. They take far more shots — only as good as your best scorer.',
+  post: 'Feed the bigs on the block. Slower pace, more fouls drawn.',
+  run: 'Push in transition and fire early threes. More possessions, more turnovers.',
+  man: 'Solid, honest defense. No obvious weaknesses.',
+  zone: 'Protects the paint but concedes more three-point looks.',
+  switch: 'Switch every screen. Kills threes if you have versatile defenders, but bigs get exposed inside.',
+  press: 'Full-court pressure. Forces turnovers, burns stamina, gives up easy layups when broken.',
+};
+const DEFAULT_TACTICS = () => ({ pace: 'normal', system: 'motion', focus: 'balanced', oreb: 'normal', defense: 'man', help: 'balanced', intensity: 'normal' });
+
+const TONES = {
+  praise: { n: 'Praise', d: 'Tell them they\'re doing great.' },
+  encourage: { n: 'Encourage', d: 'Tell them you believe in them.' },
+  calm: { n: 'Calm', d: 'Tell them to relax and stay composed.' },
+  demand: { n: 'Demand More', d: 'Tell them you expect more.' },
+  berate: { n: 'Berate', d: 'Lose your temper. High risk, high reward.' },
+};
+
+// Leagues of the world. Clubs and leagues are fictional.
+const LEAGUE_DEFS = [
+  { id: 'PHL', name: 'Pro Hoops League', short: 'PHL', country: 'USA', tier: 1, size: 16, lv: [10.4, 12.5], pr: [14, 19] },
+  { id: 'ESP1', name: 'Liga Sol', short: 'SOL', country: 'ESP', tier: 1, size: 10, lv: [9.3, 10.9], pr: [9, 13] },
+  { id: 'ESP2', name: 'Liga Sol Plata', short: 'SOL2', country: 'ESP', tier: 2, size: 10, lv: [7.5, 9.1], pr: [3, 7] },
+  { id: 'ITA1', name: 'Lega Azzurra', short: 'LAZ', country: 'ITA', tier: 1, size: 10, lv: [9.2, 10.8], pr: [9, 13] },
+  { id: 'ITA2', name: 'Lega Azzurra Due', short: 'LAZ2', country: 'ITA', tier: 2, size: 10, lv: [7.4, 9.0], pr: [3, 7] },
+  { id: 'GER1', name: 'Korbliga', short: 'KBL', country: 'GER', tier: 1, size: 10, lv: [9.1, 10.7], pr: [8, 12] },
+  { id: 'GER2', name: 'Korbliga Zwei', short: 'KBL2', country: 'GER', tier: 2, size: 10, lv: [7.3, 8.9], pr: [2, 6] },
+];
+const COUNTRY_FLAG = { USA: '🇺🇸', ESP: '🇪🇸', ITA: '🇮🇹', GER: '🇩🇪' };
+const EURO_CLUBS = {
+  ESP: { cities: ['Valdemora', 'Castellar', 'Puerto Alba', 'Montelinde', 'Villaroja', 'Peñafría', 'Arenas Blancas', 'Costaverde', 'Torremar', 'Río Claro', 'Sierra Leal', 'Navalcruz', 'Bellamar', 'Almendral', 'Cabo Dorado', 'Fuentesol', 'Lomaverde', 'Santa Brisa', 'Aguasol', 'Mirabal'],
+    nicks: ['Delfines', 'Lobos', 'Toros', 'Halcones', 'Piratas', 'Leones', 'Tiburones', 'Águilas', 'Corsarios', 'Zorros', 'Linces', 'Cóndores'] },
+  ITA: { cities: ['Roccabella', 'Valfiora', 'Portosole', 'Castelverde', 'Lagonero', 'Borgomare', 'Pianalta', 'Colledoro', 'Fontechiara', 'Torrenova', 'Ventimare', 'Montealto', 'San Vito Alto', 'Acquaviva Sud', 'Pietrafina', 'Vallebruna', 'Marepiano', 'Rivalta Nuova', 'Serravento', 'Campolargo'],
+    nicks: ['Aquile', 'Lupi', 'Leoni', 'Falchi', 'Tori', 'Vipere', 'Orsi', 'Volpi', 'Grifoni', 'Squali', 'Draghi', 'Cervi'] },
+  GER: { cities: ['Steinhafen', 'Lindenau', 'Falkenbrück', 'Rabenstedt', 'Eichenfeld', 'Neuwalden', 'Hohenmark', 'Ostbrücken', 'Kaltenbach', 'Wolfsheim', 'Silberberg', 'Grünhafen', 'Bergstadt', 'Mühlental', 'Rotenau', 'Sonnfeld', 'Tannreuth', 'Weißenbrunn', 'Kronfeld', 'Seeburg'],
+    nicks: ['Falken', 'Wölfe', 'Bären', 'Adler', 'Löwen', 'Füchse', 'Haie', 'Riesen', 'Ritter', 'Drachen', 'Hirsche', 'Stiere'] },
+};
+const CLUB_COLORS = [['#c92a2a', '#ffffff'], ['#1864ab', '#ffffff'], ['#2b8a3e', '#ffffff'], ['#e67700', '#101418'], ['#5f3dc4', '#ffffff'], ['#0b7285', '#ffffff'], ['#212529', '#ffd43b'], ['#a61e4d', '#ffffff'], ['#f59f00', '#101418'], ['#364fc7', '#ffd43b'], ['#087f5b', '#ffffff'], ['#862e9c', '#ffffff'], ['#d9480f', '#ffffff'], ['#495057', '#ffffff'], ['#74c0fc', '#101418'], ['#ffffff', '#c92a2a']];
