@@ -352,3 +352,29 @@ body.live-on main { padding-bottom: 80px; }
 .tbl tr.oncourt td { background: color-mix(in srgb, var(--team) 10%, transparent); }
 .ev.tech .evx { color: #ff9b9b; font-weight: 700; }
 .ev.tech { border-left-color: #f06a6a !important; }
+
+/* ===== v3 ===== */
+.courtwrap { padding: 8px 12px 0; }
+.courtwrap canvas { display: block; width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #1a212c; }
+.clegend { display: flex; gap: 12px; padding: 6px 14px 0; font-size: 12px; font-weight: 600; flex-wrap: wrap; }
+.clegend .fire { color: #ff9a5a; } .clegend .ice { color: #8fd3ff; }
+.archi { margin-left: 4px; font-size: 11px; } .archi i, .duoi { font-style: normal; margin-left: 2px; }
+.atag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: rgba(255,255,255,.08); margin: 4px 6px 0 0; }
+.atag.duo { background: color-mix(in srgb, #f2c94c 22%, transparent); color: #f6dd96; } .atag.bad { background: color-mix(in srgb, var(--neg) 25%, transparent); color: #ffb3b3; }
+.inj.susp { background: #b8761e; }
+.arch-ic { font-size: 20px; width: 28px; text-align: center; }
+.card.duo { border-color: #b8952e; background: color-mix(in srgb, #f2c94c 7%, var(--panel)); }
+.bio { line-height: 1.6; color: #d4d8e2; margin: 0; }
+.minv { min-width: 44px; text-align: center; font-weight: 800; font-size: 13px; }
+.tbl.hist .badge { min-width: 26px; height: 16px; font-size: 9px; }
+.tbl.hist .nm { max-width: 200px; }
+.tbl tr.tot td { border-top: 2px solid var(--line); background: var(--panel); }
+.aw { font-size: 10px; font-weight: 800; color: var(--gold); margin-left: 3px; }
+.tones.compact { grid-template-columns: repeat(4, 1fr); }
+.tones.one { grid-template-columns: 1fr; }
+.t-fireup { border-left-color: #ff7a2f; } .t-focus { border-left-color: #8fd3ff; }
+.talk-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.quote { font-size: 16px; line-height: 1.5; font-style: italic; color: #e7e9ef; background: var(--panel2); border-left: 3px solid #b8952e; padding: 10px 12px; border-radius: 0 10px 10px 0; }
+.mfrom-ic.staff { background: #1f6feb; }
+.ev.flag .evx { color: #ff7b7b; font-weight: 800; } .ev.flag { border-left-color: #ff3b3b !important; }
+.ev.trash .evx { color: #c9b8ff; }

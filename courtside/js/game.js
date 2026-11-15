@@ -113,7 +113,7 @@ function journeymanOffers(db) {
 function newGame({ name, style, mode, teamId, db, length }) {
   db = JSON.parse(JSON.stringify(db));
   S = {
-    v: 2, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2,
+    v: 3, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
     coach: makeCoach(name, style, mode), userTeam: teamId,
     leagues: db.leagues.map((l) => ({ ...l, state: 'regular', po: null, final: [] })),
     teams: [], players: {}, schedule: [], inbox: [], nextPid: db.nextPid || 1, nextMid: 1, nextFx: 1,
@@ -127,7 +127,7 @@ function newGame({ name, style, mode, teamId, db, length }) {
       tactics: { ...DEFAULT_TACTICS(), pace: R.pick(['slow', 'normal', 'normal', 'fast']), system: R.pick(['motion', 'motion', 'pnr', 'pnr', 'iso', 'post', 'run']), focus: R.pick(['inside', 'balanced', 'balanced', 'outside']), defense: R.pick(['man', 'man', 'man', 'zone', 'switch']) } });
   }
   for (const p of db.players) {
-    S.players[p.id] = ensureHidden({ ...p, morale: 65, cond: 100, inj: null, st: emptyStats(), career: p.career || [], form: [], known: [] });
+    S.players[p.id] = ensureTraits({ ...p, morale: 65, cond: 100, inj: null, st: emptyStats(), career: p.career || [], form: [], known: [] });
     S.nextPid = Math.max(S.nextPid, p.id + 1);
   }
   for (const t of S.teams) {
@@ -139,6 +139,8 @@ function newGame({ name, style, mode, teamId, db, length }) {
   ut.tactics = DEFAULT_TACTICS(); ut.instr = {};
   ut.budget = Math.max(ut.budget, Math.round((teamPayroll(ut.id) * 1.06 + 1) * 10) / 10);
   S.schedule = buildAllSchedules();
+  S.coach.start = { season: S.season, day: 0 }; S.coach.joined = { season: S.season, day: 0 }; S.coach.pcoach = 10; S.coach.badges = [];
+  ensureUserStaff();
   setBoardExpectations();
   revealKnown(roster(ut.id));
   welcomeEmails(mode);
@@ -281,9 +283,11 @@ function advanceDay() {
 function dailyTick(d) {
   const ut = S.userTeam;
   const fit = S.coach.a.fit;
+  const fitCoach = userStaff('fitness');
   for (const p of Object.values(S.players)) {
     const mine = p.team === ut;
-    p.cond = clamp(p.cond + 7 + p.a.sta * 0.25 + (mine ? (fit - 10) * 0.2 + (S.training === 'physical' ? 2 : 0) : 0), 0, 100);
+    p.cond = clamp(p.cond + 7 + p.a.sta * 0.25 + (p.hid.nfit - 10) * 0.15 + (mine ? (fit - 10) * 0.2 + (S.training === 'physical' ? 2 : 0) + (fitCoach ? (fitCoach.a.fitness - 10) * 0.15 : 0) : 0), 0, 100);
+    if (p.inj && hasArch(p, 'iron') && R.chance(0.3)) p.inj.days--;
     p.morale += (62 - p.morale) * (0.012 + p.hid.prof * 0.0012);
     if (p.inj) {
       p.inj.days--;
@@ -304,6 +308,7 @@ function dailyTick(d) {
 
 function weeklyDevelopment() {
   const cdev = S.coach.a.dev;
+  const glue = teamsWithGlue();
   for (const p of Object.values(S.players)) {
     if (p.team == null) continue;
     const ca = calcCA(p);
@@ -314,6 +319,7 @@ function weeklyDevelopment() {
       if (mine && S.training === 'youth' && p.age <= 23) g *= 1.6;
       const mins = p.st.gp ? p.st.min / p.st.gp : 0;
       g *= 0.7 + Math.min(1, mins / 25) * 0.6;
+      g *= devMult(p, glue);
       growPlayer(p, g * ATTRS.length * 0.35, mine ? S.training : 'balanced');
     }
   }
@@ -347,6 +353,9 @@ const WHISPERS = {
   loy: { hi: ['{p} told a local reporter he\'d love to finish his career in this jersey.'], lo: ['{p}\'s agent was asking around about which clubs are paying the most next summer.'] },
   temp: { hi: ['Someone shoved {p} in practice. He just smiled and hit the next three shots.'], lo: ['There was shouting after practice. Apparently {p} threw a water bottle at a teammate.', '{p} got into it with a referee during a scrimmage. A scrimmage.'] },
   coach: { hi: ['The assistants say {p} soaks up everything in film sessions. Asks great questions.'], lo: ['{p} keeps freelancing in drills. The assistants are getting frustrated.'] },
+  res: { hi: ['{p} went 1-for-12 last night and was laughing in the shower afterwards. Water off a duck\'s back.'], lo: ['{p} sat alone on the bus for an hour after his bad game. Still looked shaken the next morning.'] },
+  nfit: { hi: ['The strength coach says {p}\'s recovery numbers are freakish. Body of a 22-year-old.'], lo: ['{p} was blowing hard after the first sprint drill. The fitness guys are worried about the next few years.'] },
+  trash: { hi: ['{p} spent the whole scrimmage telling the second unit exactly what he was going to do. Then did it.'], lo: ['I don\'t think I\'ve ever heard {p} say a word to an opponent.'] },
   ego: { hi: ['{p} was overheard complaining he doesn\'t get enough touches.', '{p} spent twenty minutes filming himself after the last game. Twenty.'], lo: ['{p} gave up his parking spot for a rookie. Little things, but the guys notice.'] },
 };
 function grapevine() {
@@ -396,6 +405,7 @@ function createUserMatch(pauses) {
   const m = createMatch(S, team(f.h), team(f.a), { imp: f.type === 'po' ? 1 : 0, pauses });
   m.fid = f.id;
   m.us = f.h === S.userTeam ? 0 : 1;
+  m.trackPairs = true;
   return m;
 }
 function finishUserMatch(m) {
@@ -405,6 +415,7 @@ function finishUserMatch(m) {
   S.pending = null;
   S.lastResult = { fid: f.id, hs: res.hs, as: res.as, box: res.box, ratings: res.ratings, pom: res.pom, quarters: res.quarters, h: f.h, a: f.a, talked: false };
   userPostMatch(f, res);
+  recordPairs(m); checkDuos();
   simDay(S.schedule.filter((x) => x.day === f.day && !x.played));
   save();
 }
@@ -421,6 +432,7 @@ function applyResult(f, res) {
     const s = league(f.lg).po.series.find((x) => x.id === f.series);
     if ((res.hs > res.as) === (f.h === s.a)) s.wa++; else s.wb++;
   }
+  for (const tid of [f.h, f.a]) for (const p of roster(tid)) if (p.susp > 0 && !res.box[p.id]) p.susp--;
   for (const id in res.box) {
     const p = S.players[id]; if (!p) continue;
     const b = res.box[id];
@@ -434,9 +446,17 @@ function applyResult(f, res) {
     p.cond = clamp(p.cond - b.min * 0.62 * (1.35 - p.a.sta / 40), 20, 100);
     p.morale = clamp(p.morale + (won ? 1.5 : -1.5), 0, 100);
     if (res.techs && res.techs[id] && p.team === S.userTeam && !p.known.includes('temp') && p.hid.temp <= 6) p.known.push('temp');
-    if (!p.inj && b.min > 0 && R.chance(b.min * 0.0005 * (1 + (100 - p.cond) / 60) * (0.45 + p.hid.injp / 13))) {
+    if (res.techs && res.techs[id]) {
+      const before = p.techs; p.techs += res.techs[id];
+      if (Math.floor(p.techs / 5) > Math.floor(before / 5)) { p.susp += 1; if (p.team === S.userTeam) mail('League Office', `Suspension: ${pname(p)}`, `${plink(p)} has reached ${p.techs} technical fouls this season and is suspended for <b>1 game</b>.`, { type: 'league' }); }
+    }
+    if (res.flags && res.flags[id] === 2) {
+      const g = R.int(1, 2); p.susp += g;
+      if (p.team === S.userTeam) { if (!p.known.includes('temp')) p.known.push('temp'); mail('League Office', `Suspension: ${pname(p)}`, `Following his Flagrant 2 ejection, ${plink(p)} has been suspended for <b>${g} game${g > 1 ? 's' : ''}</b>.`, { type: 'league' }); }
+    }
+    if (!p.inj && b.min > 0 && R.chance(b.min * 0.0005 * (1 + (100 - p.cond) / 60) * (0.45 + p.hid.injp / 13) * injuryMult(p))) {
       const [n, lo, hi] = R.pick(INJURIES);
-      p.inj = { name: n, days: Math.round(R.int(lo, hi) * (0.8 + p.hid.injp / 50)) };
+      p.inj = { name: n, days: Math.max(1, Math.round(R.int(lo, hi) * (0.8 + p.hid.injp / 50) * (hasArch(p, 'iron') ? 0.6 : hasArch(p, 'injury') ? 1.3 : 1))) };
       if (p.team === S.userTeam) mail('Physio', `Injury: ${pname(p)}`, `Coach, ${plink(p)} picked up a <b>${n.toLowerCase()}</b> against ${team(b.team === f.h ? f.a : f.h).nick}.\n\nExpected time out: <b>${p.inj.days} days</b>.`, { type: 'medical' });
     }
   }
@@ -453,18 +473,19 @@ function userPostMatch(f, res) {
   S.board.conf = clamp(S.board.conf + (won ? (expectWin ? 1 : 2.5) : (expectWin ? -2.5 : -1)) * (f.type === 'po' ? 1.5 : 1), 0, 100);
   const r = roster(t.id).sort((a, b) => calcCA(b) - calcCA(a));
   const man = S.coach.a.man;
+  const cushion = r.some((x) => hasArch(x, 'glue') && !x.inj) ? 0.7 : 1;
   r.forEach((p, i) => {
     const b = res.box[p.id];
     const mins = b ? b.min : 0;
     if (p.inj) return;
     const expected = i < 5 ? 26 : i < 8 ? 14 : 0;
-    const sens = (1 + (p.hid.ego - 10) * 0.06) * (1.25 - p.hid.prof / 40) * (1.25 - man / 40);
+    const sens = (1 + (p.hid.ego - 10) * 0.06) * (1.25 - p.hid.prof / 40) * (1.25 - man / 40) * cushion;
     if (expected && mins < expected * 0.5) p.morale = clamp(p.morale - (i < 5 ? 5 : 3) * sens, 0, 100);
     else if (mins >= expected) p.morale = clamp(p.morale + 1, 0, 100);
     if (S.promises[p.id] && S.promises[p.id] > 0) {
       S.promises[p.id]--;
-      if (mins >= 20) delete S.promises[p.id];
-      else if (S.promises[p.id] === 0) { delete S.promises[p.id]; p.morale = clamp(p.morale - 25, 0, 100); mail(pname(p), 'You broke your promise', `Coach, you told me I'd get more minutes. That hasn't happened. I'm really disappointed.`, { type: 'player', pid: p.id }); }
+      if (mins >= 20) { delete S.promises[p.id]; S.coach.pcoach = clamp((S.coach.pcoach ?? 10) + 0.5, 1, 20); }
+      else if (S.promises[p.id] === 0) { delete S.promises[p.id]; S.coach.pcoach = clamp((S.coach.pcoach ?? 10) - 1, 1, 20); p.morale = clamp(p.morale - 25, 0, 100); mail(pname(p), 'You broke your promise', `Coach, you told me I'd get more minutes. That hasn't happened. I'm really disappointed.`, { type: 'player', pid: p.id }); }
     }
     if (p.morale < 28 && !p._complained && expected > 0) {
       p._complained = true;
@@ -592,6 +613,8 @@ function endSeason() {
     const ps = Object.values(S.players).filter((p) => p.team != null && team(p.team).lg === lg.id && p.st.gp > 0);
     const mvp = ps.slice().sort((a, b) => seasonScore(b) - seasonScore(a))[0];
     S.history.unshift({ season: S.season, lg: lg.id, champ, champName: teamName(team(champ)), mvp: mvp ? pname(mvp) : '-', mvpId: mvp?.id });
+    if (mvp) mvp.awards.push({ s: S.season, k: 'MVP', lg: lg.short });
+    roster(champ).forEach((p) => p.awards.push({ s: S.season, k: 'Champion', lg: lg.short }));
     summary.push(`${COUNTRY_FLAG[lg.country] || ''} <b>${lg.name}</b>: ${teamName(team(champ))}${mvp ? ` · MVP ${plink(mvp, 1)}` : ''}`);
   }
   if (S.history.length > 140) S.history.length = 140;
@@ -666,6 +689,8 @@ function takeNewJob(tid) {
   S.userTeam = tid;
   const t = team(tid);
   t.instr = {}; cleanRotation(S, t);
+  S.coach.joined = { season: S.season, day: S.day };
+  ensureUserStaff();
   if (S.phase === 'sacked') S.phase = S.prevPhase === 'season' ? 'season' : 'offseason';
   S.board.conf = 60;
   S.vacancies = S.vacancies.filter((x) => x !== tid);
@@ -698,37 +723,27 @@ function startNewSeason() {
   const retirees = [];
   const cdev = S.coach.a.dev;
   for (const p of Object.values(S.players)) {
-    if (p.st.gp > 0 && p.team != null) p.career.push({ s: S.season, t: team(p.team)?.abbr || '-', gp: p.st.gp, pts: p.st.pts, reb: p.st.reb, ast: p.st.ast, rat: p.st.rat });
-    if (p.career.length > 20) p.career.shift();
+    ensureTraits(p);
+    logStint(p);
     p.age++;
-    const ca = calcCA(p);
-    let g;
-    if (p.age <= 20) g = (p.pot - ca) * R.f(0.25, 0.5);
-    else if (p.age <= 23) g = (p.pot - ca) * R.f(0.15, 0.4);
-    else if (p.age <= 26) g = (p.pot - ca) * R.f(0.05, 0.3);
-    else if (p.age <= 29) g = R.f(-0.2, 0.2);
-    else if (p.age <= 32) g = -R.f(0.2, 0.7) * (1.3 - p.hid.prof / 40);
-    else g = -R.f(0.5, 1.3) * (1.3 - p.hid.prof / 40);
-    g *= 0.8 + p.a.wrk / 50;
-    if (g > 0) g *= 0.7 + p.hid.prof / 35;
+    let g = seasonGrowth(p);
     const mine = p.team === S.userTeam;
     if (mine && g > 0) g *= 0.8 + cdev / 50;
     if (mine && S.training === 'youth') g += p.age <= 23 ? 0.25 : -0.15;
     growPlayer(p, g * ATTRS.length, mine ? S.training : 'balanced');
     const nca = calcCA(p);
     if (nca > p.pot) p.pot = Math.round(nca * 10) / 10;
-    const retireP = p.age >= 35 ? 0.35 + (p.age - 35) * 0.2 : p.age >= 32 ? (nca < 9 ? 0.25 : 0.05) : (p.age >= 29 && nca < 6.5 && p.team == null ? 0.3 : 0);
+    const over = p.age - p.peak;
+    const retireP = p.age >= 35 ? 0.3 + (p.age - 35) * 0.2 + Math.max(0, over - 5) * 0.05 : over >= 3 ? (nca < 9 ? 0.25 : 0.04) : (p.age >= 29 && nca < 6.5 && p.team == null ? 0.3 : 0);
     if (R.chance(retireP)) retirees.push(p);
   }
-  for (const p of retirees) {
-    if (p.team === S.userTeam) mail(pname(p), 'Retirement', `Coach, after ${p.age - 18} years in the game I've decided to hang up my sneakers. Thank you for everything.`, { type: 'player' });
-    delete S.players[p.id];
-  }
+  for (const p of retirees) { handleRetirement(p); delete S.players[p.id]; }
+  staffNewSeason();
   for (const p of Object.values(S.players)) {
     if (p.team == null) continue;
     p.contract.yrs--;
     if (p.contract.yrs <= 0) {
-      if (p.team === S.userTeam) { p.team = null; p.contract = { sal: salaryFor(calcCA(p), p.age, p.pot), yrs: 0 }; continue; }
+      if (p.team === S.userTeam) { dissolveDuo(p.id); p.team = null; p.contract = { sal: salaryFor(calcCA(p), p.age, p.pot), yrs: 0 }; continue; }
       const r = roster(p.team).sort((a, b) => calcCA(b) - calcCA(a));
       const ns = salaryFor(calcCA(p), p.age, p.pot);
       if (r.indexOf(p) < 10 && R.chance(0.65 + p.hid.loy * 0.015) && p.age < 34 && teamPayroll(p.team) - p.contract.sal + ns <= team(p.team).budget * 1.05) p.contract = { sal: ns, yrs: R.int(1, 4) };
@@ -748,12 +763,13 @@ function startNewSeason() {
   S.season++; S.day = 0; S.phase = 'season';
   S.leagues.forEach((l) => { l.state = 'regular'; l.po = null; l.final = []; });
   for (const t of S.teams) { t.w = t.l = t.pf = t.pa = t.streak = 0; if (t.id !== S.userTeam) t.budget = Math.round(t.budget * 1.03 * 10) / 10; }
-  for (const p of Object.values(S.players)) { p.st = emptyStats(); p.pst = null; p.cond = 100; p.morale = clamp(p.morale * 0.5 + 32, 0, 100); p._complained = false; p.form = []; if (p.inj && p.inj.days > 30) p.inj.days -= 30; else p.inj = null; }
+  for (const p of Object.values(S.players)) { p.st = emptyStats(); p.pst = null; p.cond = 100; p.techs = 0; p.susp = Math.min(p.susp || 0, 1); p.morale = clamp(p.morale * 0.5 + 32, 0, 100); p._complained = false; p.form = []; if (p.inj && p.inj.days > 30) p.inj.days -= 30; else p.inj = null; }
   ensureRosters(true);
   for (let i = 0; freeAgents().length < 70 && i < 200; i++) { const np = genPlayer(S, R.f(6, 11), undefined, R.int(20, 32), null, R.pick(['USA', 'ESP', 'ITA', 'GER'])); S.players[np.id] = np; }
   S.teams.forEach((t) => { if (t.id !== S.userTeam) autoRotation(S, t); else cleanRotation(S, t); });
   S.schedule = buildAllSchedules();
   S.vacancies = []; S.applied = []; S.sackOffers = [];
+  checkDuos();
   setBoardExpectations();
   S.board.conf = clamp(S.board.conf * 0.6 + 28, 0, 100);
   revealKnown(roster(S.userTeam));
@@ -792,6 +808,7 @@ function ensureRosters(offseason) {
     }
     while (r.length > ROSTER_MAX) {
       const worst = r.sort((a, b) => playerValue(a) - playerValue(b))[0];
+      logStint(worst);
       worst.team = null; worst.contract.yrs = 0;
       r = roster(t.id);
     }
@@ -825,7 +842,7 @@ function tradeCheck(targetId, offerIds) {
   if (teamPayroll(ut.id) - outSal + inSal > ut.budget && inSal > outSal) return { ok: false, msg: `This trade would put you over your wage budget (${fmtMoney(ut.budget)}).` };
   return { ok: true };
 }
-function proposeTrade(targetId, offerIds) {
+function proposeTrade(targetId, offerIds, duoTalked) {
   const chk = tradeCheck(targetId, offerIds);
   if (!chk.ok) return chk;
   const tgt = S.players[targetId];
@@ -835,14 +852,16 @@ function proposeTrade(targetId, offerIds) {
   if (refuse) { if (!tgt.known.includes('amb')) tgt.known.push('amb'); return { ok: false, msg: refuse }; }
   const interest = tradeInterest(targetId, offerIds);
   if (interest >= 1) {
-    executeTrade(tgt.team, [targetId], offerIds);
+    executeTrade(tgt.team, [targetId], offerIds, duoTalked);
     mail(`${t.nick} GM`, `Trade completed: ${pname(tgt)}`, `We have a deal. ${plink(tgt)} heads to the ${userTeam().nick}; ${offerIds.map((id) => pname(S.players[id])).join(', ')} join${offerIds.length > 1 ? '' : 's'} us.`, { type: 'transfer', read: true });
     return { ok: true, msg: `Trade accepted! ${pname(tgt)} has joined your team.` };
   }
   const txt = interest > 0.8 ? "We're close, but we need a bit more value." : interest > 0.5 ? "That's not enough for a player of his quality." : "Not interested. That offer isn't even close.";
   return { ok: false, msg: `${t.nick} GM: “${txt}”` };
 }
-function executeTrade(otherTeamId, incoming, outgoing) {
+function executeTrade(otherTeamId, incoming, outgoing, duoTalked) {
+  incoming.concat(outgoing).forEach((id) => logStint(S.players[id]));
+  outgoing.forEach((id) => dissolveDuo(id, duoTalked));
   incoming.forEach((id) => { const p = S.players[id]; p.team = S.userTeam; p.morale = 65; p.wantsOut = false; });
   outgoing.forEach((id) => { S.players[id].team = otherTeamId; });
   cleanRotation(S, userTeam());
@@ -900,6 +919,8 @@ function renewContract(pid, years) {
 function releasePlayer(pid) {
   const p = S.players[pid];
   if (roster(S.userTeam).length <= 8) return { ok: false, msg: 'You need at least 8 players.' };
+  logStint(p);
+  dissolveDuo(p.id);
   p.team = null; p.contract.yrs = 0;
   cleanRotation(S, userTeam());
   return { ok: true, msg: `${pname(p)} has been released.` };
@@ -941,11 +962,12 @@ function mailAction(mid, act) {
     const valid = tr.give.every((id) => S.players[id]?.team === S.userTeam) && tr.get.every((id) => S.players[id]?.team === tr.team);
     if (!valid) msg = 'This offer is no longer valid.';
     else if (userLeague().state === 'playoffs') msg = 'Trades are closed.';
-    else { executeTrade(tr.team, tr.get, tr.give); msg = 'Trade completed!'; }
+    else { executeTrade(tr.team, tr.get, tr.give, m.duoTalked); msg = 'Trade completed!'; }
   } else if (act === 'acceptJob') {
     if (S.phase === 'season') msg = 'You can only switch clubs in the off-season.';
     else { m.done = `You took the ${teamName(team(m.job))} job.`; takeNewJob(m.job); return { msg: m.done, job: true }; }
-  } else if (act === 'reject') msg = 'Declined.';
+  } else if (act === 'hireStaff') msg = hireStaff(m.staffId);
+  else if (act === 'reject') msg = 'Declined.';
   else if (act === 'renew') return { renew: m.pid };
   m.done = msg || true;
   save();
@@ -955,7 +977,7 @@ function mailAction(mid, act) {
 /* ---------- Save / load ---------- */
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { console.warn('save failed', e); } }
 function load() {
-  try { const s = localStorage.getItem(SAVE_KEY); if (s) { const o = JSON.parse(s); if (o.v === 2) { S = o; return true; } } } catch (e) { console.warn(e); }
+  try { const s = localStorage.getItem(SAVE_KEY); if (s) { const o = JSON.parse(s); if (o.v >= 2) { S = migrateSave(o); save(); return true; } } } catch (e) { console.warn(e); }
   return false;
 }
 function sanitizeSave(o) {
@@ -966,6 +988,8 @@ function sanitizeSave(o) {
   for (const m of o.inbox || []) { m.from = clean(m.from); m.subject = clean(m.subject, 80); m.body = String(m.body || '').replace(/<(?!\/?(b|i)>|br>)[^>]*>/gi, ''); }
   for (const h of o.history || []) { h.champName = clean(h.champName, 60); h.mvp = clean(h.mvp, 50); }
   for (const h of o.coach.hist || []) { h.club = clean(h.club, 60); h.lg = clean(h.lg, 8); }
+  for (const st of o.staff || []) { st.first = clean(st.first, 20); st.last = clean(st.last, 24); }
+  for (const p of Object.values(o.players)) for (const c of p.career || []) { c.club = clean(c.club, 60); c.t = clean(c.t, 4); }
   return o;
 }
 function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }

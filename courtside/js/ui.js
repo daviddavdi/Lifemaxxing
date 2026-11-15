@@ -24,12 +24,12 @@ const icon = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="
 /* ---------- Scouting fog (coach Judging Ability / Potential) ---------- */
 const hashN = (a, b) => { const x = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return x - Math.floor(x); };
 const isMine = (p) => S && p.team === S.userTeam;
-function seenCA(p) { const ca = calcCA(p); if (isMine(p)) return ca; return ca + (hashN(p.id, S.season) * 2 - 1) * ((20 - S.coach.a.ja) / 20) * 1.6; }
-function seenPot(p) { if (isMine(p) && S.coach.a.jp >= 16) return p.pot; return Math.max(seenCA(p), p.pot + (hashN(p.id, S.season + 7) * 2 - 1) * ((21 - S.coach.a.jp) / 20) * 2.4); }
+function seenCA(p) { const ca = calcCA(p); if (isMine(p)) return ca; return ca + (hashN(p.id, S.season) * 2 - 1) * ((20 - effJA()) / 20) * 1.6; }
+function seenPot(p) { if (isMine(p) && effJP() >= 16) return p.pot; return Math.max(seenCA(p), p.pot + (hashN(p.id, S.season + 7) * 2 - 1) * ((21 - effJP()) / 20) * 2.4); }
 function attrRange(p, k) {
   const v = p.a[k];
   if (isMine(p)) return [v, v];
-  const ja = S.coach.a.ja, w = ja >= 16 ? 0 : ja >= 12 ? 1 : ja >= 8 ? 2 : 3;
+  const ja = effJA(), w = ja >= 16 ? 0 : ja >= 12 ? 1 : ja >= 8 ? 2 : 3;
   const off = Math.floor(hashN(p.id * 31 + k.length * 7 + k.charCodeAt(0), 3) * (w + 1));
   const lo = clamp(v - off, 1, 20);
   return [lo, clamp(lo + w, 1, 20)];
@@ -45,7 +45,7 @@ const ratingPill = (r) => r == null ? '<span class="rp">–</span>' : `<span cla
 function moraleLabel(m) { return m >= 85 ? ['Superb', 'm5'] : m >= 70 ? ['Very Good', 'm4'] : m >= 55 ? ['Good', 'm3'] : m >= 40 ? ['Okay', 'm2'] : m >= 25 ? ['Poor', 'm1'] : ['Very Poor', 'm0']; }
 const moraleHTML = (m, short) => { const [l, c] = moraleLabel(m); return `<span class="mor ${c}">${short ? l.replace('Very ', 'V.') : l}</span>`; };
 const condHTML = (c) => `<span class="cond ${c >= 85 ? 'c3' : c >= 65 ? 'c2' : 'c1'}">${Math.round(c)}%</span>`;
-const injHTML = (p) => (p.inj ? `<span class="inj" title="${esc(p.inj.name)}">+</span>` : '');
+const injHTML = (p) => (p.inj ? `<span class="inj" title="${esc(p.inj.name)}">+</span>` : '') + (p.susp > 0 ? `<span class="inj susp" title="Suspended ${p.susp}">S</span>` : '');
 const flag = (p) => NATS[p.nat]?.flag || '';
 const avg1 = (a, b) => (b ? (a / b).toFixed(1) : '0.0');
 const lgFlag = (lg) => COUNTRY_FLAG[lg.country] || '';
@@ -203,7 +203,9 @@ VIEWS.mail = ({ id }) => {
 
 /* Squad */
 function sortedRoster(tid) { const t = team(tid); cleanRotation(S, t); return t.rotation.map((id) => S.players[id]); }
-function personalityVisible(p) { return isMine(p) || p.known.length >= 2 || S.coach.a.ja >= 16; }
+function personalityVisible(p) { return isMine(p) || p.known.length >= 2 || effJA() >= 16; }
+function archVisible(p) { return isMine(p) || p.known.includes('arch') || effJA() >= 15; }
+const archIcons = (p) => archVisible(p) && p.arch && p.arch.length ? `<span class="archi">${p.arch.map((k) => `<i title="${ARCHETYPES[k].n}">${ARCHETYPES[k].ic}</i>`).join('')}</span>` : '';
 VIEWS.squad = () => {
   const t = userTeam();
   const r = sortedRoster(t.id);
@@ -211,7 +213,7 @@ VIEWS.squad = () => {
   let body;
   if (tab === 'ov') {
     body = `<table class="tbl"><thead><tr><th>Pos</th><th class="l">Player</th><th>Age</th><th>Ability</th><th>Pot.</th><th>Cond</th><th>Morale</th></tr></thead><tbody>
-    ${r.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 ? 'sep' : ''}"><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
+    ${r.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 ? 'sep' : ''}"><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
     </tbody></table>`;
   } else if (tab === 'st') {
     body = `<table class="tbl"><thead><tr><th class="l">Player</th><th>GP</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG%</th><th>Rat</th></tr></thead><tbody>
@@ -226,6 +228,8 @@ VIEWS.squad = () => {
       <div class="card"><h3>Locker room atmosphere</h3><div class="big b ${atm[1]}">${atm[0]}</div><div class="meter"><div class="${avgM >= 60 ? 'ok' : avgM >= 45 ? 'mid' : 'bad'}" style="width:${avgM}%"></div></div></div>
       <div class="card"><h3>Team leaders</h3>${leaders.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="ps">${p.pos}</span><span class="grow">${esc(pname(p))}</span><span class="pers">${esc(personality(p))}</span></div>`).join('')}<p class="hint">Leaders set the tone. Keep them happy and the room follows.</p></div>
       <div class="card"><h3>Unhappy players</h3>${unhappy.length ? unhappy.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="grow">${esc(pname(p))}</span>${moraleHTML(p.morale)}</div>`).join('') : '<p class="muted">Nobody is unhappy right now.</p>'}</div>
+      <div class="card"><h3>⚡ Dynamic Duos</h3>${(S.duos || []).filter((d) => S.players[d.a]?.team === S.userTeam && S.players[d.b]?.team === S.userTeam).map((d) => `<div class="lrow"><span class="grow"><a data-act="player" data-id="${d.a}">${esc(pname(S.players[d.a], true))}</a> + <a data-act="player" data-id="${d.b}">${esc(pname(S.players[d.b], true))}</a></span><span class="muted sm">since ${fmtDate(d.since.season, d.since.day, true)} ${d.since.season}</span></div>`).join('') || '<p class="muted">None yet. Players who share the floor for a long time can — rarely — develop a special chemistry.</p>'}</div>
+      <div class="card"><h3>🤝 Glue guys</h3>${r.filter((p) => hasArch(p, 'glue')).map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="grow">${esc(pname(p))}</span><span class="muted sm">Cushions morale drops · mentors youth</span></div>`).join('') || '<p class="muted">No Locker Room Glue Guy on the roster.</p>'}</div>
       <div class="card"><h3>Personalities</h3>${r.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="grow">${esc(pname(p, true))}</span><span class="pers">${esc(personality(p))}</span><span class="muted sm">${p.known.length} note${p.known.length === 1 ? '' : 's'}</span></div>`).join('')}</div>
     </div>`;
   } else {
@@ -247,15 +251,20 @@ VIEWS.player = ({ id }) => {
   const tab = curTab('player', 'attr');
   let body = '';
   if (tab === 'attr') {
-    body = `${!mine && S.coach.a.ja < 16 ? `<p class="hint pad">Ranges reflect your Judging Ability (${S.coach.a.ja}). Sign him to see exact values.</p>` : ''}
+    body = `${!mine && effJA() < 16 ? `<p class="hint pad">Ranges reflect your Judging Ability (${effJA()}, incl. scout). Sign him to see exact values.</p>` : ''}
     <div class="attr-grid">${ATTR_GROUPS.map((g) => `<div class="attr-box"><h3>${g}</h3>${ATTRS.filter((a) => a.g === g).map((a) => `<div class="arow"><span>${a.n}</span>${attrRangeCell(attrRange(p, a.k))}</div>`).join('')}</div>`).join('')}</div>`;
   } else if (tab === 'notes') {
     const notes = p.known.map((k) => { const kind = traitKind(p, k); return kind ? `<li>${TRAIT_NOTES[k][kind]}</li>` : ''; }).join('');
     const ins = mine ? (userTeam().instr[p.id] || {}) : {};
     const br = bestRole(p);
+    const dp = duoPartner(p.id), dpp = dp ? S.players[dp] : null;
+    const peakNote = mine && p.age >= 27 && (p.known.includes('nfit') || S.coach.a.fit >= 13) ? `<li>Fitness staff expect him to hold his level until around age ${p.peak}.</li>` : '';
     body = `<div class="pad">
+      <div class="card"><h3>Bio</h3><p class="bio">${esc(playerBio(p, { pers: personalityVisible(p), arch: archVisible(p), ca: seenCA(p), pot: seenPot(p) }))}</p></div>
+      ${archVisible(p) && p.arch.length ? `<div class="card"><h3>Traits</h3>${p.arch.map((k) => `<div class="lrow"><span class="arch-ic">${ARCHETYPES[k].ic}</span><span class="grow"><b>${ARCHETYPES[k].n}</b><div class="muted sm">${ARCHETYPES[k].d}</div></span></div>`).join('')}</div>` : ''}
+      ${dpp ? `<div class="card duo"><h3>⚡ Dynamic Duo</h3><div class="lrow" data-act="player" data-id="${dpp.id}"><span class="grow"><b>${esc(pname(dpp))}</b><div class="muted sm">+1 to Finishing, Mid-Range, Three Point, Passing and IQ when they share the floor. They look for each other.</div></span></div></div>` : ''}
       <div class="card"><h3>Personality</h3><div class="big b">${personalityVisible(p) ? esc(personality(p)) : 'Unknown'}</div>${personalityVisible(p) ? '' : '<p class="hint">Your staff don\'t know him well enough yet.</p>'}</div>
-      <div class="card"><h3>Coach's notes</h3>${notes ? `<ul class="notes">${notes}</ul>` : `<p class="muted">${mine ? 'Staff are still getting to know him. Keep your ears open around the building.' : 'Nothing on file. Rumours and scouting will fill this in.'}</p>`}</div>
+      <div class="card"><h3>Coach's notes</h3>${notes || peakNote ? `<ul class="notes">${notes}${peakNote}</ul>` : `<p class="muted">${mine ? 'Staff are still getting to know him. Keep your ears open around the building.' : 'Nothing on file. Rumours and scouting will fill this in.'}</p>`}</div>
       <div class="card"><h3>Roles</h3>${Object.keys(ROLES).filter((r) => r !== 'bal').map((r) => ({ r, s: roleScore(p, r) })).sort((a, b) => b.s - a.s).slice(0, 4).map(({ r, s }) => `<div class="lrow"><span class="grow">${ROLES[r].n}${r === br ? ' <span class="tagx ok">Best</span>' : ''}${mine && ins.role === r ? ' <span class="tagx">Current</span>' : ''}</span>${starsHTML(stars(s))}</div>`).join('')}
       ${mine ? `<div class="row-btns"><button class="btn sm" data-act="go" data-v="tactics" data-keep="1" data-tab="roles">Set role in Tactics</button></div>` : ''}</div>
     </div>`;
@@ -264,8 +273,9 @@ VIEWS.player = ({ id }) => {
     body = `<div class="pad"><h3 class="sec">${S.season}/${String(S.season + 1).slice(2)} regular season</h3>${line(p.st)}${p.pst && p.pst.gp ? `<h3 class="sec">Playoffs</h3>${line(p.pst)}` : ''}
     <h3 class="sec">Form (last 5)</h3><div class="form">${p.form.length ? p.form.map(ratingPill).join('') : '<span class="muted">No games yet</span>'}</div></div>`;
   } else {
-    body = `<table class="tbl"><thead><tr><th class="l">Season</th><th>Team</th><th>GP</th><th>PPG</th><th>RPG</th><th>APG</th><th>Rat</th></tr></thead><tbody>
-    ${p.career.length ? p.career.slice().reverse().map((c) => `<tr><td class="l">${c.s}/${String(c.s + 1).slice(2)}</td><td>${esc(c.t)}</td><td>${c.gp}</td><td>${avg1(c.pts, c.gp)}</td><td>${avg1(c.reb, c.gp)}</td><td>${avg1(c.ast, c.gp)}</td><td>${c.gp ? (c.rat / c.gp).toFixed(2) : '-'}</td></tr>`).join('') : '<tr><td colspan="7" class="empty">No career history yet</td></tr>'}</tbody></table>`;
+    const rows = p.career.slice();
+    if (p.team != null && (p.st.gp || (p.pst && p.pst.gp))) rows.push({ ...careerRow(p), live: true });
+    body = historyTable(rows, p.awards);
   }
   let actions = '';
   if (mine) {
@@ -279,7 +289,8 @@ VIEWS.player = ({ id }) => {
     <div class="ph-top">${badge(t, 'xl')}<div class="grow"><div class="ph-name">${esc(p.first)} <b>${esc(p.last)}</b></div>
       <div class="ph-sub">${POS_NAME[p.pos]} · ${p.age} yrs · ${flag(p)} ${p.nat} · ${fmtHeight(p.h)}</div>
       <div class="ph-sub">${t ? `<a data-act="go" data-v="team" data-id="${t.id}">${esc(teamName(t))}</a> · ${esc(league(t.lg).short)}` : 'Free Agent'}${p.inj ? ` · <span class="neg">Injured: ${esc(p.inj.name)} (${p.inj.days}d)</span>` : ''}${p.wantsOut ? ' · <span class="warn-t">Wants out</span>' : ''}</div>
-      ${personalityVisible(p) ? `<div class="ph-sub">Personality: <b>${esc(personality(p))}</b></div>` : ''}</div></div>
+      ${personalityVisible(p) ? `<div class="ph-sub">Personality: <b>${esc(personality(p))}</b></div>` : ''}
+      <div class="ph-sub">${archVisible(p) ? p.arch.map((k) => `<span class="atag">${ARCHETYPES[k].ic} ${ARCHETYPES[k].n}</span>`).join('') : ''}${duoPartner(p.id) && S.players[duoPartner(p.id)] ? `<span class="atag duo">⚡ Duo: ${esc(S.players[duoPartner(p.id)].last)}</span>` : ''}${p.susp > 0 ? `<span class="atag bad">Suspended (${p.susp})</span>` : ''}</div></div></div>
     <div class="ph-stats">
       <div><span>Ability</span>${starsHTML(stars(seenCA(p)))}</div>
       <div><span>Potential</span>${starsHTML(stars(seenPot(p)))}</div>
@@ -289,7 +300,7 @@ VIEWS.player = ({ id }) => {
     </div>
     <div class="row-btns">${actions}</div>
   </div>
-  ${tabs('player', [['attr', 'Attributes'], ['notes', 'Personality'], ['stats', 'Stats'], ['career', 'History']])}
+  ${tabs('player', [['attr', 'Attributes'], ['notes', 'Profile'], ['stats', 'Stats'], ['career', 'History']])}
   <div class="scrollx">${body}</div>`;
 };
 
@@ -332,6 +343,7 @@ VIEWS.tactics = () => {
     <div class="list">${r.slice(0, 12).map((p, i) => { const ins = t.instr[p.id] || {}; const rk = ins.role || 'bal'; return `<div class="li rolecard ${i === 5 ? 'gap' : ''}">
       <div class="rc-top"><span class="ps">${p.pos}</span><b class="grow nm" data-act="player" data-id="${p.id}">${esc(pname(p, true))}</b>${starsHTML(stars(roleScore(p, rk)))}</div>
       <div class="rc-row"><select class="inp sm" data-chg="setRole" data-id="${p.id}">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}" ${k === rk ? 'selected' : ''}>${v.n}${k !== 'bal' ? ` (${stars(roleScore(p, k))}★)` : ''}</option>`).join('')}</select></div>
+      <div class="rc-row"><span class="muted sm grow">Minutes target</span><span class="stepper"><button data-act="setMin" data-id="${p.id}" data-d="-2">−</button><span class="minv">${ins.min != null ? ins.min + "'" : 'Auto'}</span><button data-act="setMin" data-id="${p.id}" data-d="2">+</button></span>${ins.min != null ? `<button class="chip" data-act="setMin" data-id="${p.id}" data-d="auto">Auto</button>` : ''}</div>
       <div class="rc-row"><div class="seg mini">${[[-1, 'Fewer shots'], [0, 'Normal'], [1, 'More shots']].map(([v, l]) => `<button class="${(ins.shots || 0) === v ? 'on' : ''}" data-act="setShots" data-id="${p.id}" data-v="${v}">${l}</button>`).join('')}</div>
       <button class="chip ${ins.lock ? 'on' : ''}" data-act="setLock" data-id="${p.id}">🔒 Stopper</button></div></div>`; }).join('')}</div>`;
   } else {
@@ -434,6 +446,7 @@ VIEWS.trade = ({ id }) => {
 VIEWS.more = () => `${header('More')}
   <div class="list menu-list">
     <button class="li" data-act="go" data-v="coach"><span class="grow"><b>Coach Profile</b><div class="muted sm">${esc(S.coach.name)} · ${repLabel(S.coach.rep)} reputation</div></span>›</button>
+    <button class="li" data-act="go" data-v="staff"><span class="grow"><b>Staff</b><div class="muted sm">Assistant, scout, youth & fitness coaches · former players</div></span>›</button>
     <button class="li" data-act="go" data-v="club"><span class="grow"><b>Club & Board</b><div class="muted sm">Board confidence, finances</div></span>›</button>
     <button class="li" data-act="go" data-v="jobs"><span class="grow"><b>Job Centre</b><div class="muted sm">${S.phase === 'offseason' && S.vacancies.length ? `<span class="pos">${S.vacancies.length} vacancies open</span>` : 'Opens at the end of each season'}</div></span>›</button>
     <button class="li" data-act="go" data-v="training"><span class="grow"><b>Training</b><div class="muted sm">Focus: ${TRAINING[S.training].n}</div></span>›</button>
@@ -446,7 +459,11 @@ VIEWS.coach = () => {
   return `${header('Coach Profile', { right: `<button class="btn sm" data-act="go" data-v="editCoach">${icon('edit')} Edit</button>` })}
   <div class="pad"><div class="card coachcard"><div class="big b">${esc(c.name)}</div><div class="muted">${COACH_STYLES[c.style]?.n || 'Coach'} · ${esc(teamName(userTeam()))}</div>
     <div class="kv"><span>Reputation</span><b>${repLabel(c.rep)} (${Math.round(c.rep)})</b></div><div class="meter"><div class="ok" style="width:${c.rep * 5}%"></div></div>
-    <div class="kv"><span>Record</span><b>${c.wins}-${c.games - c.wins}${c.games ? ` (${Math.round((c.wins / c.games) * 100)}%)` : ''}</b></div><div class="kv"><span>Titles</span><b>${c.titles}</b></div></div></div>
+    <div class="kv"><span>Record</span><b>${c.wins}-${c.games - c.wins}${c.games ? ` (${Math.round((c.wins / c.games) * 100)}%)` : ''}</b></div><div class="kv"><span>Titles</span><b>${c.titles}</b></div>
+    <div class="kv"><span>Career started</span><b>${fmtDate(c.start.season, c.start.day)}</b></div><div class="kv"><span>Joined club</span><b>${fmtDate(c.joined.season, c.joined.day)}</b></div>
+    <div class="kv"><span>Days in charge</span><b>${daysBetween(c.joined, { season: S.season, day: S.day })}</b></div>
+    <div class="kv"><span>Player's Coach</span><b>${attrCell(c.pcoach ?? 10)}</b></div></div>
+    <div class="card"><h3>Bio</h3><p class="bio">${esc(coachBio())}</p></div></div>
   <div class="attr-grid three">${COACH_GROUPS.map((g) => `<div class="attr-box"><h3>${g}</h3>${COACH_ATTRS.filter((a) => a.g === g).map((a) => `<div class="arow"><span>${a.n}</span>${attrCell(c.a[a.k])}</div>`).join('')}</div>`).join('')}</div>
   <div class="pad"><p class="hint">Coaching attributes shape matches (Offense, Defense, Tactical Knowledge), development (Player Development, Conditioning), team talks (Motivating, Man Management, Discipline) and how accurately you rate players (Judging Ability / Potential). They grow with experience and success.</p></div>
   <h3 class="sec pad">Career</h3>
@@ -601,9 +618,22 @@ const Live = {
     if (m.done) { if (!this.finished) this.finish(); return; }
     if (this.paused || document.querySelector('.modal-bg')) return;
     if (m.brk) { this.breakTime(); return; }
+    if (this.holdUntil && performance.now() < this.holdUntil) { this.paintLegend(); return; }
     this.t += { 1: 45, 2: 100, 4: 240 }[this.speed] * 0.1;
+    const n0 = m.events.length;
     simUntil(m, this.t);
+    if (this.hlOn !== false && $('#court')) {
+      const hl = m.events.slice(n0).filter((e) => e.hl && e.on).pop();
+      if (hl) { const dur = { 1: 2600, 2: 2100, 4: 1500 }[this.speed]; Court.play(hl, m, dur); this.holdUntil = performance.now() + dur + 120; }
+    }
     this.paint();
+  },
+  paintLegend() {
+    const m = this.m, el = $('#clegend'); if (!el || !m) return;
+    const hot = [], cold = [];
+    m.sides.forEach((s) => s.on.forEach((p) => { const h = s.heat[p.id] || 0; if (h > 0.45) hot.push(`${esc(s.team.abbr)} ${esc(p.last)}`); else if (h < -0.45) cold.push(`${esc(s.team.abbr)} ${esc(p.last)}`); }));
+    const html = `<span class="fire">🔥 ${hot.join(', ') || '—'}</span><span class="ice">🧊 ${cold.join(', ') || '—'}</span>`;
+    if (el._h !== html) { el._h = html; el.innerHTML = html; }
   },
   breakTime() {
     const m = this.m, q = m.brk;
@@ -623,14 +653,16 @@ const Live = {
     const H = m.sides[0].team, A = m.sides[1].team;
     const c = Math.max(0, m.clock);
     const clock = `${Math.floor(c / 60)}:${String(Math.floor(c % 60)).padStart(2, '0')}`;
+    const cv = $('#court'); if (cv && Court.cv !== cv) Court.attach(cv, m); Court.m = m;
+    this.paintLegend();
     $('#sb').innerHTML = `<div class="sbt">${badge(A, 'lg')}<span>${esc(A.abbr)}</span></div><div class="sbs"><b>${m.sides[1].pts}</b><span>–</span><b>${m.sides[0].pts}</b></div><div class="sbt r"><span>${esc(H.abbr)}</span>${badge(H, 'lg')}</div>
       <div class="sbq">${m.done ? 'FINAL' + (m.ot ? ' / OT' : '') : (m.q <= 4 ? 'Q' + m.q : 'OT' + (m.q - 4)) + ' · ' + clock}</div>`;
-    const ctlKey = [this.speed, this.paused, m.done, this.tab, m.gt === 0].join('|');
+    const ctlKey = [this.speed, this.paused, m.done, this.tab, m.gt === 0, this.hlOn].join('|');
     if (force || this._ctl !== ctlKey) {
       this._ctl = ctlKey;
       $('#lctl').innerHTML = m.done ? `<button class="btn primary big" data-act="toResult">Match Report ${icon('play')}</button>`
         : m.gt === 0 && this.paused ? `<button class="btn primary big" data-act="liveTipoff">${icon('mega')} Pre-match team talk & tip-off</button>`
-        : `<div class="seg">${[1, 2, 4].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
+        : `<div class="seg">${[1, 2, 4].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
       $('#ltabs').innerHTML = ['feed', 'box'].map((k) => `<button class="tab ${this.tab === k ? 'on' : ''}" data-act="liveTab" data-v="${k}">${k === 'feed' ? 'Commentary' : 'Live Stats'}</button>`).join('');
       $('#lbar').innerHTML = m.done ? '' : `<button class="btn" data-act="liveShout" ${m.gt === 0 ? 'disabled' : ''}>${icon('mega')} Shout</button><button class="btn" data-act="liveTac">Tactics</button><button class="btn" data-act="liveSubs">Subs</button>`;
     }
@@ -640,7 +672,7 @@ const Live = {
       $('#feed').innerHTML = m.events.slice().reverse().slice(0, 60).map((e) => { const tm = e.side >= 0 ? m.sides[e.side].team : null; return `<div class="ev ${e.type}" style="--ec:${tm ? tm.c1 : 'transparent'}"><span class="evt">${e.q <= 4 ? 'Q' + e.q : 'OT'} ${Math.floor(e.c / 60)}:${String(e.c % 60).padStart(2, '0')}</span><span class="evx">${esc(e.text)}</span><span class="evs">${e.as}-${e.hs}</span></div>`; }).join('');
     } else {
       const s = m.sides[m.us];
-      $('#feed').innerHTML = `<table class="tbl box"><thead><tr><th class="l">Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>Mood</th></tr></thead><tbody>${s.list.map((p) => { const b = m.box[p.id]; const md = s.mood[p.id] || 0; return `<tr class="${s.on.includes(p) ? 'oncourt' : ''}"><td class="l nm">${s.on.includes(p) ? '<i class="st-dot"></i>' : ''}${esc(pname(p, true))}</td><td>${Math.round(b.min / 60)}</td><td class="b">${b.pts}</td><td>${b.reb}</td><td>${b.ast}</td><td>${b.fgm}-${b.fga}</td><td>${moodIcon(md)}</td></tr>`; }).join('')}</tbody></table>`;
+      $('#feed').innerHTML = `<table class="tbl box"><thead><tr><th class="l">Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>Mood</th><th>Form</th></tr></thead><tbody>${s.list.map((p) => { const b = m.box[p.id]; const md = s.mood[p.id] || 0; const h = s.heat[p.id] || 0; return `<tr class="${s.on.includes(p) ? 'oncourt' : ''}"><td class="l nm">${s.on.includes(p) ? '<i class="st-dot"></i>' : ''}${esc(pname(p, true))}${m.ej[p.id] ? ' <span class="neg">EJ</span>' : m.techs[p.id] ? ' <span class="warn-t">T</span>' : ''}</td><td>${Math.round(b.min / 60)}</td><td class="b">${b.pts}</td><td>${b.reb}</td><td>${b.ast}</td><td>${b.fgm}-${b.fga}</td><td>${moodIcon(md)}</td><td>${h > 0.45 ? '🔥' : h < -0.45 ? '🧊' : h > 0.2 ? '<span class="pos">↑</span>' : h < -0.2 ? '<span class="neg">↓</span>' : '<span class="muted">·</span>'}</td></tr>`; }).join('')}</tbody></table>`;
     }
   },
 };
@@ -657,7 +689,7 @@ function reactionsHTML(list) {
   return `<div class="rsum">${Object.entries(counts).map(([l, n]) => `<span class="rchip ${list.find((r) => r.label === l).cls}">${n} ${l}</span>`).join('')}</div>
   <div class="rlist">${list.slice(0, 12).map((r) => `<div class="lrow"><span class="grow">${esc(pname(r.p, true))}</span><span class="rchip ${r.cls}">${r.label}</span></div>`).join('')}</div>`;
 }
-VIEWS.match = () => `<div id="live" class="live"><div id="sb" class="scoreboard"></div><div id="lctl" class="lctl"></div><div id="ltabs" class="tabs"></div><div id="feed" class="feed"></div><div id="lbar" class="lbar"></div></div>`;
+VIEWS.match = () => `<div id="live" class="live"><div id="sb" class="scoreboard"></div><div class="courtwrap"><canvas id="court"></canvas></div><div id="clegend" class="clegend"></div><div id="lctl" class="lctl"></div><div id="ltabs" class="tabs"></div><div id="feed" class="feed"></div><div id="lbar" class="lbar"></div></div>`;
 
 /* Result */
 VIEWS.result = () => {
@@ -719,7 +751,7 @@ function liveSide() { return Live.m.sides[Live.m.us]; }
 
 const ACT = {
   back: () => back(),
-  go: (d) => { if (d.tab) UI.tab.tac = d.tab; go(d.v, d.id ? { id: +d.id } : {}, { keep: !!d.keep }); },
+  go: (d) => { if (d.tab) UI.tab.tac = d.tab; go(d.v, d.sid ? { sid: d.sid } : d.id ? { id: +d.id } : {}, { keep: !!d.keep }); },
   tab: (d) => { UI.tab[d.k] = d.v; render(); },
   player: (d) => { closeModal(); go('player', { id: +d.id }); },
   loadGame: () => { if (load()) { UI.stack = []; go(S.pending ? 'prematch' : S.phase === 'sacked' ? 'sacked' : 'inbox'); } },
@@ -749,6 +781,11 @@ const ACT = {
   readAll: () => { S.inbox.forEach((m) => (m.read = true)); save(); render(); },
   mail: (d) => go('mail', { id: +d.id }),
   mailAct: (d) => {
+    const mm = S.inbox.find((x) => x.id === +d.id);
+    if (d.a === 'acceptTrade' && mm && mm.trade && !mm.duoTalked && !mm.done) {
+      const going = mm.trade.give.find((id) => { const pp = duoPartner(id); return pp && S.players[pp]?.team === S.userTeam && !mm.trade.give.includes(pp); });
+      if (going) return duoTalk(going, 'mail', mm.id);
+    }
     const r = mailAction(+d.id, d.a);
     if (r.renew) return ACT.renewModal({ id: r.renew, mail: d.id });
     if (r.msg) toast(esc(r.msg));
@@ -797,11 +834,47 @@ const ACT = {
   doRelease: (d) => { const r = releasePlayer(+d.id); closeModal(); toast(esc(r.msg), r.ok ? '' : 'bad'); save(); if (r.ok) back(); else render(); },
   closeModal: () => closeModal(),
   offerToggle: (d) => { const id = +d.id; const o = UI.offer.ids; const i = o.indexOf(id); if (i >= 0) o.splice(i, 1); else o.push(id); render(); },
-  proposeTrade: () => {
-    const r = proposeTrade(UI.offer.tid, UI.offer.ids.slice());
+  proposeTrade: (d) => {
+    const ids = UI.offer.ids.slice();
+    const going = ids.find((id) => { const pp = duoPartner(id); return pp && S.players[pp]?.team === S.userTeam && !ids.includes(pp); });
+    if (going && !d.talked) {
+      const tgt = S.players[UI.offer.tid];
+      const okNow = tradeCheck(UI.offer.tid, ids).ok && !(S.phase === 'season' && deadlinePassed()) && !moveRefusal(tgt, S.userTeam) && tradeInterest(UI.offer.tid, ids) >= 1;
+      if (okNow) return duoTalk(going, 'offer');
+    }
+    const r = proposeTrade(UI.offer.tid, ids, !!d.talked);
     toast(esc(r.msg), r.ok ? '' : 'bad');
     if (r.ok) { const id = UI.offer.tid; UI.offer = null; save(); UI.stack = []; go('player', { id }); }
   },
+  duoAnswer: (d) => {
+    const goingP = S.players[+d.g], partner = S.players[duoPartner(+d.g)];
+    closeModal();
+    if (d.a === 'cancel') {
+      partner.morale = clamp(partner.morale + 6, 0, 100); S.coach.pcoach = clamp((S.coach.pcoach ?? 10) + 0.5, 1, 20);
+      if (d.ctx === 'mail') { const mm = S.inbox.find((x) => x.id === +d.mail); if (mm) mm.done = `Rejected after talking with ${pname(partner)}.`; }
+      save(); toast(`Deal off. ${esc(pname(partner))} won't forget that.`); return render();
+    }
+    let msg;
+    if (d.a === 'business') {
+      partner.morale = clamp(partner.morale - (partner.hid.loy >= 15 ? 25 : 18), 0, 100);
+      msg = `${pname(partner)} walks out without a word.`;
+      if (partner.hid.amb >= 14 || partner.hid.temp <= 6) { partner.wantsOut = true; mail(pname(partner), 'I want out', `Coach, you traded ${pname(goingP)} after I told you what he means to me. I don't see a future for me here anymore. I'd like you to find me a new club.`, { type: 'player', pid: partner.id }); }
+    } else {
+      const ok = R.chance(clamp(0.35 + S.coach.a.man * 0.03 + (partner.hid.prof - 10) * 0.02, 0.1, 0.92));
+      partner.morale = clamp(partner.morale - (ok ? 5 : 15), 0, 100);
+      msg = ok ? `${pname(partner)}: "I don't like it, but I get it."` : `${pname(partner)} isn't buying it.`;
+    }
+    toast(esc(msg));
+    if (d.ctx === 'offer') ACT.proposeTrade({ talked: 1 });
+    else { const mm = S.inbox.find((x) => x.id === +d.mail); if (mm) { mm.duoTalked = true; ACT.mailAct({ id: d.mail, a: 'acceptTrade' }); } }
+  },
+  setMin: (d) => {
+    const t = userTeam(); const i = t.instr[d.id] || (t.instr[d.id] = {});
+    if (d.d === 'auto') delete i.min;
+    else { const idx = t.rotation.indexOf(+d.id); const cur = i.min != null ? i.min : (idx < MIN_PLAN.length ? MIN_PLAN[idx] : 0); i.min = clamp(cur + +d.d, 0, 44); }
+    save(); render();
+  },
+  liveHL: () => { Live.hlOn = Live.hlOn === false; Live.paint(true); },
   applyJob: (d) => { const r = applyJob(+d.id); toast(esc(r.msg), r.ok ? '' : 'bad'); render(); },
   takeJob: (d) => { takeNewJob(+d.id); UI.stack = []; toast(`Welcome to ${esc(teamName(team(+d.id)))}!`); go('inbox'); },
   /* match */
@@ -909,9 +982,11 @@ const ACT = {
   },
 };
 function modalTactics() {
+  const prev = document.querySelector('.modal'); const st = prev ? prev.scrollTop : 0;
   const tc = userTeam().tactics;
   const back = Live.m && Live.m.brk ? 'liveBreakBack' : 'closeModal';
   modal(`<h2>Tactics</h2><h3 class="sec">Offense</h3>${tacticsPanel(tc, 'off')}<h3 class="sec">Defense</h3>${tacticsPanel(tc, 'def')}<div class="row-btns"><button class="btn primary big" data-act="${back}">Done</button></div>`, { tall: true });
+  const nm = document.querySelector('.modal'); if (nm) nm.scrollTop = st;
 }
 function modalSubs() {
   const m = Live.m, s = liveSide();
@@ -947,3 +1022,64 @@ window.addEventListener('DOMContentLoaded', () => {
   render();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 });
+
+/* ---------- v3: shared history table, duo talk, staff ---------- */
+function historyTable(rows, awards = []) {
+  if (!rows.length) return '<p class="empty">No career history yet.</p>';
+  const aw = (r) => awards.filter((a) => a.s === r.s && (!a.lg || a.lg === r.lg)).map((a) => `<span class="aw" title="${a.k}">${a.k === 'MVP' ? 'MVP' : '🏆'}</span>`).join('');
+  const tot = rows.reduce((t, r) => { for (const k of ['gp', 'gs', 'min', 'pts', 'reb', 'ast', 'rat', 'pgp']) t[k] += r[k] || 0; return t; }, { gp: 0, gs: 0, min: 0, pts: 0, reb: 0, ast: 0, rat: 0, pgp: 0 });
+  const line = (r, cls = '') => `<tr class="${cls}"><td class="l">${r.live ? '<b>' : ''}${r.s}/${String(r.s + 1).slice(2)}${r.live ? '*</b>' : ''}</td>
+    <td class="l nm"><span class="badge" style="background:${r.c1};color:${r.c2}">${esc(r.t)}</span> ${esc(r.club)} ${aw(r)}</td><td>${esc(r.lg)}</td>
+    <td>${r.gp}${r.pgp ? ` <span class="muted">(${r.pgp})</span>` : ''}</td><td>${avg1(r.min, r.gp)}</td><td class="b">${avg1(r.pts, r.gp)}</td><td>${avg1(r.reb, r.gp)}</td><td>${avg1(r.ast, r.gp)}</td><td>${r.gp ? ratingPill(r.rat / r.gp) : '-'}</td></tr>`;
+  return `<table class="tbl hist"><thead><tr><th class="l">Season</th><th class="l">Club</th><th>Lg</th><th>Apps</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Av Rat</th></tr></thead><tbody>
+    ${rows.slice().reverse().map((r) => line(r)).join('')}
+    <tr class="tot"><td class="l" colspan="3"><b>Career</b> · ${new Set(rows.map((r) => r.s)).size} seasons</td><td><b>${tot.gp}</b>${tot.pgp ? ` <span class="muted">(${tot.pgp})</span>` : ''}</td><td>${avg1(tot.min, tot.gp)}</td><td class="b">${avg1(tot.pts, tot.gp)}</td><td>${avg1(tot.reb, tot.gp)}</td><td>${avg1(tot.ast, tot.gp)}</td><td>${tot.gp ? ratingPill(tot.rat / tot.gp) : '-'}</td></tr>
+  </tbody></table><p class="hint pad">Apps = regular-season games (playoff games in brackets). * = current season.</p>`;
+}
+function duoTalk(goingId, ctx, mailId) {
+  const going = S.players[goingId], partner = S.players[duoPartner(goingId)];
+  const h = partner.hid;
+  const quote = h.temp <= 6 ? `Are you serious? ${going.first} is the reason I'm playing like this. You move him and you'll regret it.`
+    : h.loy >= 15 ? `Coach, I've given everything to this club. ${going.first} and I have something special. Please tell me the rumours aren't true.`
+    : h.ego >= 15 ? `Look, I'll still get mine. But ${going.first} makes my life easy out there. Think about what you're doing.`
+    : `Coach, can we talk? I heard you might move ${going.first}. He's my guy — we just click. Are you really doing this?`;
+  modal(`<div class="talk-head"><span class="mfrom-ic player">${esc(partner.first[0])}</span><div><b>${esc(pname(partner))}</b><div class="muted sm">⚡ Dynamic Duo with ${esc(pname(going))} · ${personalityVisible(partner) ? esc(personality(partner)) : ''}</div></div></div>
+    <p class="quote">“${esc(quote)}”</p>
+    <div class="tones one">
+      <button class="tone t-demand" data-act="duoAnswer" data-a="business" data-g="${goingId}" data-ctx="${ctx}" data-mail="${mailId || ''}"><b>"It's a business decision."</b><span>Go ahead with the trade. He won't like it.</span></button>
+      <button class="tone t-encourage" data-act="duoAnswer" data-a="explain" data-g="${goingId}" data-ctx="${ctx}" data-mail="${mailId || ''}"><b>"I'll find you a new running mate."</b><span>Go ahead and try to talk him round (Man Management ${S.coach.a.man}).</span></button>
+      <button class="tone t-praise" data-act="duoAnswer" data-a="cancel" data-g="${goingId}" data-ctx="${ctx}" data-mail="${mailId || ''}"><b>"You're right. The deal is off."</b><span>Call off the trade. Earns respect in the locker room.</span></button>
+    </div>`, { locked: true, tall: true });
+}
+function staffBio(st) {
+  const club = st.team != null ? teamName(team(st.team)) : null;
+  const out = [`${st.first} ${st.last} (${st.age}) ${club ? `is the ${STAFF_ROLES[st.role].n} at ${club}` : `is a ${STAFF_ROLES[st.role].n} currently without a club`}.`];
+  const best = STAFF_ATTRS.slice().sort((a, b) => st.a[b.k] - st.a[a.k])[0];
+  out.push(`His strongest quality is ${best.n.toLowerCase()} (${st.a[best.k]}).`);
+  if (st.ex) {
+    const e = st.ex;
+    out.push(`A former ${POS_NAME[e.pos].toLowerCase()}, he played ${e.seasons} season${e.seasons === 1 ? '' : 's'} for ${joinList(e.clubs.slice(-4))}${e.gp ? ` — ${e.gp} games, ${(e.pts / e.gp).toFixed(1)} points per game, average rating ${(e.rat / e.gp).toFixed(2)}` : ''}.`);
+    const t = e.awards.filter((a) => a.k === 'Champion').length, mv = e.awards.filter((a) => a.k === 'MVP').length;
+    if (t || mv) out.push(`Won ${[t ? `${t} title${t > 1 ? 's' : ''}` : '', mv ? `${mv} MVP award${mv > 1 ? 's' : ''}` : ''].filter(Boolean).join(' and ')} as a player.`);
+  }
+  return out.join(' ');
+}
+VIEWS.staff = () => {
+  const mine = Object.keys(STAFF_ROLES).map((r) => userStaff(r)).filter(Boolean);
+  const ex = (S.staff || []).filter((s) => s.ex && s.team !== S.userTeam && s.team != null).slice(-20).reverse();
+  return `${header('Staff')}
+  <div class="pad"><p class="hint">Your backroom team. Retired players with the right mentality can become coaches and scouts — legends of your club will ask to join you.</p></div>
+  <div class="list">${mine.map((st) => `<button class="li" data-act="go" data-v="staffProfile" data-sid="${st.id}"><span class="mfrom-ic staff">${esc(st.first[0])}</span><span class="grow"><b>${esc(st.first)} ${esc(st.last)}</b>${st.ex ? ' <span class="tagx ok">Ex-player</span>' : ''}<div class="muted sm">${STAFF_ROLES[st.role].n} · ${STAFF_ROLES[st.role].d}</div></span>${attrCell(Math.round(staffScores(st.a)[st.role]))}</button>`).join('')}</div>
+  ${ex.length ? `<h3 class="sec pad">Former players coaching elsewhere</h3><div class="list">${ex.map((st) => `<button class="li" data-act="go" data-v="staffProfile" data-sid="${st.id}">${badge(team(st.team))}<span class="grow"><b>${esc(st.first)} ${esc(st.last)}</b><div class="muted sm">${STAFF_ROLES[st.role].n} · ${st.ex.gp} career games</div></span>${attrCell(Math.round(staffScores(st.a)[st.role]))}</button>`).join('')}</div>` : ''}`;
+};
+VIEWS.staffProfile = ({ sid }) => {
+  const st = (S.staff || []).find((s) => s.id === sid);
+  if (!st) return header('Staff') + '<p class="empty">No longer in the game.</p>';
+  const t = st.team != null ? team(st.team) : null;
+  return `${header('Staff Profile')}
+  <div class="phero" style="--pc:${t ? t.c1 : '#555'}"><div class="ph-top">${badge(t, 'xl')}<div class="grow"><div class="ph-name">${esc(st.first)} <b>${esc(st.last)}</b></div>
+    <div class="ph-sub">${STAFF_ROLES[st.role].n} · ${st.age} yrs · ${NATS[st.nat]?.flag || ''} ${st.nat}</div><div class="ph-sub">${t ? esc(teamName(t)) : 'Unattached'}${st.ex ? ' · <span class="atag">Former player</span>' : ''}</div></div></div></div>
+  <div class="pad"><div class="card"><h3>Bio</h3><p class="bio">${esc(staffBio(st))}</p></div></div>
+  <div class="attr-grid"><div class="attr-box" style="grid-column:1/-1"><h3>Attributes</h3>${STAFF_ATTRS.map((a) => `<div class="arow"><span>${a.n}</span>${attrCell(st.a[a.k])}</div>`).join('')}</div></div>
+  ${st.ex ? `<h3 class="sec pad">Playing career</h3><div class="scrollx">${historyTable(st.ex.career, st.ex.awards)}</div>` : ''}`;
+};

@@ -259,3 +259,34 @@ const EURO_CLUBS = {
     nicks: ['Falken', 'Wölfe', 'Bären', 'Adler', 'Löwen', 'Füchse', 'Haie', 'Riesen', 'Ritter', 'Drachen', 'Hirsche', 'Stiere'] },
 };
 const CLUB_COLORS = [['#c92a2a', '#ffffff'], ['#1864ab', '#ffffff'], ['#2b8a3e', '#ffffff'], ['#e67700', '#101418'], ['#5f3dc4', '#ffffff'], ['#0b7285', '#ffffff'], ['#212529', '#ffd43b'], ['#a61e4d', '#ffffff'], ['#f59f00', '#101418'], ['#364fc7', '#ffd43b'], ['#087f5b', '#ffffff'], ['#862e9c', '#ffffff'], ['#d9480f', '#ffffff'], ['#495057', '#ffffff'], ['#74c0fc', '#101418'], ['#ffffff', '#c92a2a']];
+
+/* ======================= v3 additions ======================= */
+HIDDEN.push({ k: 'res', n: 'Resilience' }, { k: 'nfit', n: 'Natural Fitness' }, { k: 'trash', n: 'Trash Talk' });
+Object.assign(TRAIT_NOTES, {
+  res: { hi: 'Bounces back from bad nights instantly. Nothing rattles him for long.', lo: 'One bad stretch and his head drops. Slow to recover.' },
+  nfit: { hi: 'Natural athlete. Recovers fast and should age gracefully.', lo: 'Has to work hard just to stay in shape. Could decline early.' },
+  trash: { hi: 'Talks constantly on the court — gets into opponents\' heads.', lo: 'Never says a word to opponents. Lets his game speak.' },
+});
+const ARCHETYPES = {
+  fast: { n: 'Fast Learner', ic: '⚡', d: 'Picks things up quickly — develops much faster than his peers.' },
+  slow: { n: 'Slow Learner', ic: '🐢', d: 'Takes his time to absorb coaching. Develops slowly.' },
+  injury: { n: 'Injury Prone', ic: '🩹', d: 'Gets hurt more often and stays out longer.' },
+  iron: { n: 'Ironman', ic: '🛡️', d: 'Rarely gets injured and recovers quickly when he does.' },
+  glue: { n: 'Locker Room Glue Guy', ic: '🤝', d: 'Cushions morale drops for the whole team and mentors young players.' },
+};
+Object.assign(TONES, {
+  fireup: { n: 'Fire Up', d: 'Get them pumped. Turns up the heat — hotheads may boil over.' },
+  focus: { n: 'Focus', d: 'Lock in. Thaws cold players, keeps tempers in check.' },
+});
+const NAT_ADJ = { USA: 'American', CAN: 'Canadian', FRA: 'French', SRB: 'Serbian', ESP: 'Spanish', LTU: 'Lithuanian', AUS: 'Australian', NGA: 'Nigerian', BRA: 'Brazilian', GRE: 'Greek', GER: 'German', TUR: 'Turkish', ARG: 'Argentine', SLO: 'Slovenian', CRO: 'Croatian', ITA: 'Italian' };
+const ATTR_PHRASE = { fin: 'finishing at the rim', mid: 'mid-range touch', thr: 'deep shooting', ft: 'free-throw shooting', pas: 'court vision', han: 'tight handle', pdef: 'perimeter defense', idef: 'rim protection', reb: 'work on the glass', blk: 'shot blocking', stl: 'quick hands', spd: 'speed', str: 'strength', jmp: 'explosive leaping', sta: 'endless motor', iq: 'basketball IQ', cmp: 'composure', wrk: 'work ethic', ldr: 'leadership' };
+const STAFF_ROLES = {
+  assistant: { n: 'Assistant Coach', d: 'Boosts your tactical, offensive and defensive coaching and team talks.' },
+  scout: { n: 'Chief Scout', d: 'Sharpens your Judging Ability and Potential — fewer attribute ranges.' },
+  youth: { n: 'Youth Coach', d: 'Players 23 and under develop faster.' },
+  fitness: { n: 'Fitness Coach', d: 'Faster recovery between games and fewer injuries.' },
+};
+const STAFF_ATTRS = [
+  { k: 'coaching', n: 'Coaching' }, { k: 'tactics', n: 'Tactical Knowledge' }, { k: 'motivation', n: 'Motivating' },
+  { k: 'judgeA', n: 'Judging Ability' }, { k: 'judgeP', n: 'Judging Potential' }, { k: 'fitness', n: 'Fitness' }, { k: 'youth', n: 'Working with Youth' },
+];

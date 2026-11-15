@@ -51,6 +51,7 @@ function genHidden(base, wrk, age) {
     cons: h20(10 + R.gauss() * 3.8 + (age - 25) * 0.15), clutch: h20(10 + R.gauss() * 4), injp: h20(8 + R.gauss() * 4),
     prof: h20(wrk + R.gauss() * 3), amb: h20(10 + R.gauss() * 4 + (base - 10) * 0.4), loy: h20(10 + R.gauss() * 4.5),
     temp: h20(11 + R.gauss() * 4), coach: h20(11 + R.gauss() * 3.8 - Math.max(0, age - 29) * 0.3), ego: h20(9 + R.gauss() * 4 + (base - 10) * 0.6),
+    res: h20(10.5 + R.gauss() * 3.8), nfit: h20(10 + R.gauss() * 4), trash: h20(8 + R.gauss() * 4.5),
   };
 }
 
@@ -78,9 +79,15 @@ function genPlayer(S, level, pos, age, teamId, natBias) {
   const youth = Math.max(0, 26 - age);
   p.pot = Math.round(clamp(ca + youth * R.f(0.15, 0.6) + Math.abs(R.gauss()) * 0.6, ca, 20) * 10) / 10;
   p.contract.sal = salaryFor(ca, age, p.pot);
+  if (typeof ensureTraits === 'function') ensureTraits(p);
   return p;
 }
-function ensureHidden(p) { if (!p.hid) p.hid = genHidden(calcCA(p), p.a.wrk || 10, p.age); if (!p.known) p.known = []; return p; }
+function ensureHidden(p) {
+  const g = genHidden(calcCA(p), p.a.wrk || 10, p.age);
+  if (!p.hid) p.hid = g; else for (const k in g) if (p.hid[k] == null) p.hid[k] = g[k];
+  if (!p.known) p.known = [];
+  return p;
+}
 function emptyStats() { return { gp: 0, gs: 0, min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0, rat: 0 }; }
 function pname(p, short) { return short ? `${p.first[0]}. ${p.last}` : `${p.first} ${p.last}`; }
 
@@ -103,7 +110,7 @@ function traitKind(p, k) { const v = p.hid[k]; return v >= 15 ? 'hi' : v <= 6 ? 
 /* ---------- Rotation ---------- */
 function autoRotation(S, team) {
   const roster = Object.values(S.players).filter((p) => p.team === team.id);
-  const avail = roster.filter((p) => !p.inj);
+  const avail = roster.filter((p) => !p.inj && !(p.susp > 0));
   const pool = avail.length >= 5 ? avail : roster;
   const used = new Set();
   const starters = [];
@@ -117,7 +124,7 @@ function autoRotation(S, team) {
     }
     if (best) { used.add(best.id); starters.push(best.id); }
   }
-  const rest = roster.filter((p) => !used.has(p.id)).sort((x, y) => (x.inj ? 1 : 0) - (y.inj ? 1 : 0) || calcCA(y) - calcCA(x));
+  const rest = roster.filter((p) => !used.has(p.id)).sort((x, y) => (x.inj || x.susp > 0 ? 1 : 0) - (y.inj || y.susp > 0 ? 1 : 0) || calcCA(y) - calcCA(x));
   team.rotation = starters.concat(rest.map((p) => p.id));
   if (team.id !== S.userTeam) {
     team.instr = {};
@@ -137,7 +144,7 @@ const MIN_PLAN = [34, 33, 32, 31, 30, 20, 18, 16, 14, 12];
 
 /* ---------- Match engine (stateful, possession by possession) ---------- */
 function teamCoachAttrs(S, team) {
-  if (team.id === S.userTeam && S.coach) return S.coach.a;
+  if (team.id === S.userTeam && S.coach) return typeof coachEffective === 'function' ? coachEffective() : S.coach.a;
   const q = team.cq || 10;
   const o = {}; COACH_ATTRS.forEach((a) => (o[a.k] = q)); return o;
 }
@@ -149,11 +156,13 @@ function blankBox(tid, gs) { return { min: 0, pts: 0, reb: 0, oreb: 0, ast: 0, s
 
 function createMatch(S, home, away, opts = {}) {
   const m = { home, away, imp: opts.imp || 0, box: {}, events: [], quarters: [], q: 1, clock: 720, gt: 0, done: false, brk: 0, pauses: !!opts.pauses,
-    run: { team: -1, pts: 0, said: 0 }, ot: 0, qs: [0, 0], sinceSub: 0, trans: [0, 0], lastTone: {}, shoutAt: -999, techs: {}, talks: 0 };
+    run: { team: -1, pts: 0, said: 0 }, ot: 0, qs: [0, 0], sinceSub: 0, trans: [0, 0], lastTone: {}, shoutAt: -999, techs: {}, talks: 0,
+    snap: !!opts.pauses, lastHL: -999, nextHL: null, ej: {}, flags: {}, pairT: {}, focus: [0, 0] };
   m.sides = [home, away].map((team, i) => {
     if (!team.tactics.system) Object.assign(team.tactics, { ...DEFAULT_TACTICS(), ...team.tactics });
     return { team, ctx: { home: i === 0 }, t: team.tactics, ins: team.instr || (team.instr = {}), coach: teamCoachAttrs(S, team), pts: 0,
-      hot: clamp(R.gauss() * 0.04, -0.09, 0.09), mood: {}, base: {}, form: {}, played: {}, list: [], plan: {}, on: [], user: team.id === S.userTeam };
+      hot: clamp(R.gauss() * 0.04, -0.09, 0.09), mood: {}, base: {}, form: {}, heat: {}, played: {}, list: [], plan: {}, on: [], user: team.id === S.userTeam,
+      duo: typeof duoMapFor === 'function' && team.id === S.userTeam ? duoMapFor(team.id) : {} };
   });
   m.fav = [strengthOf(S, home.id) - strengthOf(S, away.id), 0]; m.fav[1] = -m.fav[0];
   m.sides.forEach((s) => { rebuildPlan(S, m, s, true); s.on = s.list.slice(0, 5); s.on.forEach((p) => (m.box[p.id].gs = 1)); });
@@ -168,11 +177,15 @@ function createMatch(S, home, away, opts = {}) {
 function rebuildPlan(S, m, s, initial) {
   const team = s.team;
   cleanRotation(S, team);
-  let list = team.rotation.map((id) => S.players[id]).filter((p) => p && !p.inj);
-  if (list.length < 5) list = list.concat(team.rotation.map((id) => S.players[id]).filter((p) => p && p.inj)).slice(0, 5);
+  let list = team.rotation.map((id) => S.players[id]).filter((p) => p && !p.inj && !(p.susp > 0));
+  if (list.length < 5) list = list.concat(team.rotation.map((id) => S.players[id]).filter((p) => p && !list.includes(p) && !(p.susp > 0))).slice(0, 5);
+  if (list.length < 5) list = list.concat(team.rotation.map((id) => S.players[id]).filter((p) => p && !list.includes(p))).slice(0, 5);
   const remain = initial ? 1 : clamp((2880 - m.gt) / 2880, 0.02, 1);
   const plan = {};
-  list.forEach((p, idx) => { plan[p.id] = (s.played[p.id] || 0) + (idx < MIN_PLAN.length ? MIN_PLAN[idx] : 0) * 60 * remain; });
+  const target = list.map((p, idx) => { const o = s.ins[p.id] && s.ins[p.id].min; return o != null && o !== '' ? clamp(+o, 0, 44) : (idx < MIN_PLAN.length ? MIN_PLAN[idx] : 0); });
+  const sum = target.reduce((a, x) => a + x, 0);
+  if (list.length >= 10 && sum > 0 && Math.abs(sum - 240) > 1) target.forEach((x, i) => (target[i] = Math.min(44, x * 240 / sum)));
+  list.forEach((p, idx) => { plan[p.id] = (s.played[p.id] || 0) + target[idx] * 60 * remain; });
   if (list.length < 10) {
     const extra = MIN_PLAN.slice(list.length).reduce((a, x) => a + x, 0) * 60 * remain / Math.max(1, Math.min(list.length, 5));
     list.slice(0, 5).forEach((p) => (plan[p.id] += extra));
@@ -182,15 +195,29 @@ function rebuildPlan(S, m, s, initial) {
     if (s.played[p.id] == null) s.played[p.id] = 0;
     if (!m.box[p.id]) {
       m.box[p.id] = blankBox(team.id, 0);
-      const b = (p.morale - 60) / 110; s.base[p.id] = b; s.mood[p.id] = b; s.form[p.id] = R.gauss() * ((21 - p.hid.cons) / 20) * 0.045;
+      const b = (p.morale - 60) / 110; s.base[p.id] = b; s.mood[p.id] = b; s.form[p.id] = R.gauss() * ((21 - p.hid.cons) / 20) * 0.045; s.heat[p.id] = clamp(s.form[p.id] * 4, -0.2, 0.2);
     }
   }
   s.list = list; s.plan = plan;
   if (!initial) { s.on = s.on.filter((p) => list.includes(p)); pickLineup(m, s, true); }
 }
-function push(m, type, side, text) {
-  m.events.push({ g: m.gt, q: m.q, c: Math.max(0, Math.round(m.clock)), type, side, text, hs: m.sides[0].pts, as: m.sides[1].pts });
+function push(m, type, side, text, meta) {
+  const e = { g: m.gt, q: m.q, c: Math.max(0, Math.round(m.clock)), type, side, text, hs: m.sides[0].pts, as: m.sides[1].pts };
+  if (meta) Object.assign(e, meta);
+  if (m.nextHL && (type === 'score' || type === 'three')) { e.hl = true; e.lbl = m.nextHL; m.nextHL = null; }
+  if (e.hl && m.snap) {
+    if (!e.force && m.gt - m.lastHL < (e.lbl && e.lbl.startsWith('CLUTCH') ? 45 : 150)) e.hl = false;
+    else {
+      m.lastHL = m.gt;
+      e.on = m.sides.map((s) => ordered(s.on).map((p) => p.id));
+      e.heat = {}; m.sides.forEach((s) => s.on.forEach((p) => (e.heat[p.id] = Math.round((s.heat[p.id] || 0) * 100) / 100)));
+      e.ej = Object.keys(m.ej).map(Number);
+    }
+  }
+  m.events.push(e);
+  return e;
 }
+const heatAdd = (s, p, v) => { s.heat[p.id] = clamp((s.heat[p.id] || 0) + v, -1, 1); };
 
 function role(s, p) { const i = s.ins[p.id]; return ROLES[(i && i.role) || 'bal'] || ROLES.bal; }
 function roleMod(s, p, key) {
@@ -207,15 +234,19 @@ function eff(m, s, p, k) {
   if (r === ROLES.rp && k === 'idef') v += 1;
   if (k === 'blk' && r.blk) v *= r.blk;
   if (k === 'pdef' && s.ins[p.id] && s.ins[p.id].lock) v += 1;
+  const dp = s.duo[p.id];
+  if (dp && DUO_KEYS.includes(k) && s.on.some((x) => x.id === dp)) v += 1.2;
   return v * condF * (1 + 0.035 * (s.mood[p.id] || 0)) * (s.ctx.home ? 1.02 : 1);
 }
 const avgE = (m, s, arr, k) => arr.reduce((a, p) => a + eff(m, s, p, k), 0) / arr.length;
 
 function pickLineup(m, s, force) {
   const margin = Math.abs(m.sides[0].pts - m.sides[1].pts);
-  if (m.q >= 4 && m.clock < 240 && margin <= 10) { s.on = s.list.slice(0, 5); return; }
-  if (m.q >= 4 && m.clock < 300 && margin >= 22 && s.list.length >= 10) { s.on = s.list.slice(5, 10); return; }
-  const sc = s.list.map((p) => {
+  const av = s.list.filter((p) => !m.ej[p.id]);
+  if (av.length <= 5) { s.on = av.slice(0, 5); return; }
+  if (m.q >= 4 && m.clock < 240 && margin <= 10) { s.on = av.slice(0, 5); return; }
+  if (m.q >= 4 && m.clock < 300 && margin >= 22 && av.length >= 10) { s.on = av.slice(5, 10); return; }
+  const sc = av.map((p) => {
     let rem = s.plan[p.id] - s.played[p.id];
     if (s.on.includes(p)) rem += force ? 30 : 75;
     return { p, rem };
@@ -248,7 +279,9 @@ function stepMatch(m) {
   for (const s of m.sides) for (const p of s.on) {
     s.played[p.id] += len; m.box[p.id].min += len;
     s.mood[p.id] += ((s.base[p.id] || 0) - s.mood[p.id]) * 0.004;
+    const h = s.heat[p.id] || 0; s.heat[p.id] = h * (h < 0 ? 0.975 - p.hid.res * 0.001 : 0.972); if (m.fireShown && h < 0.2) m.fireShown[p.id] = false;
   }
+  if (m.snap || m.trackPairs) { const s = m.sides[m.us ?? 0]; if (s.user) { const on = s.on; for (let i = 0; i < on.length; i++) for (let j = i + 1; j < on.length; j++) { const k = pairKey(on[i].id, on[j].id); m.pairT[k] = (m.pairT[k] || 0) + len; } } }
   m.sinceSub += len;
   if (m.sinceSub >= 55) { m.sinceSub = 0; m.sides.forEach((s) => pickLineup(m, s)); }
   m.poss = 1 - m.poss;
@@ -285,7 +318,7 @@ function possession(m, oi) {
   const ot = O.t, dt = D.t;
   const tacO = 0.6 + O.coach.tac / 25, tacD = 0.6 + D.coach.tac / 25;
   if (O.pts - D.pts <= -10 && R.chance(0.004)) {
-    const hh = off.find((p) => p.hid.temp <= 5 && !m.techs[p.id]);
+    const hh = off.find((p) => p.hid.temp <= 5 && (m.techs[p.id] || 0) < 2 && !m.ej[p.id] && R.chance(m.focus[oi] > m.gt ? 0.4 : 1));
     if (hh) technical(m, O, D, hh, `${pname(hh, 1)} gets a technical foul for barking at the referee!`);
   }
   const fgOn = off.some((p) => role(O, p) === ROLES.fg);
@@ -298,9 +331,9 @@ function possession(m, oi) {
     m.box[loser.id].tov++;
     if (R.chance(0.55)) {
       const st = R.wpick(def, (p) => Math.pow(eff(m, D, p, 'stl'), 2));
-      m.box[st.id].stl++;
+      m.box[st.id].stl++; heatAdd(D, st, 0.08); heatAdd(O, loser, -0.08);
       m.trans[1 - oi] = dt.defense === 'press' && R.chance(0.3) ? 0.06 : 0.03;
-      if (R.chance(0.45)) push(m, 'stl', 1 - oi, R.pick([`${pname(st, 1)} picks off the pass!`, `Steal by ${pname(st, 1)}.`, `${pname(st, 1)} strips ${pname(loser, 1)} clean!`]));
+      if (R.chance(0.45)) push(m, 'stl', 1 - oi, R.pick([`${pname(st, 1)} picks off the pass!`, `Steal by ${pname(st, 1)}.`, `${pname(st, 1)} strips ${pname(loser, 1)} clean!`]), { p: st.id, v: loser.id, k: 'stl', hl: (D.heat[st.id] || 0) > 0.45 || (m.q >= 4 && m.clock < 120) });
     }
     return;
   }
@@ -344,10 +377,21 @@ function possession(m, oi) {
     if (ot.system === 'motion') p += (avgE(m, O, off, 'iq') - 10) * 0.003 * tacO;
     if (ot.system === 'iso') p += (sh.a.han - 12) * 0.003;
     p += (O.coach.off - 10) * 0.0015 - (D.coach.def - 10) * 0.0015;
-    p += clutch + O.hot + (O.form[sh.id] || 0) + transB - (sh.hid.ego - 10) * 0.0015 + (avgE(m, O, off, 'iq') - 10) * 0.002;
+    p += clutch + O.hot + (O.form[sh.id] || 0) + (O.heat[sh.id] || 0) * 0.035 + transB - (sh.hid.ego - 10) * 0.0015 + (avgE(m, O, off, 'iq') - 10) * 0.002;
     p = clamp(p, 0.15, 0.78);
     const foulP = (type === 'in' ? 0.13 + (dt.intensity === 'high' ? 0.03 : 0) : type === 'mid' ? 0.04 : 0.015) * roleMod(O, sh, 'foul') * (ot.system === 'post' ? 1.15 : 1) * (1 - (D.coach.dis - 10) * 0.01);
     const fouled = R.chance(foulP);
+    if (fouled && type === 'in' && dfn.hid.temp <= 7 && !m.ej[dfn.id]) {
+      const di = 1 - oi;
+      const fc = 0.085 * ((9 - dfn.hid.temp) / 8) * ((D.heat[dfn.id] || 0) < -0.3 ? 1.6 : 1) * (D.pts < O.pts - 8 ? 1.5 : 1) * (1.25 - D.coach.dis / 40) * (m.focus[di] > m.gt ? 0.5 : 1);
+      if (R.chance(fc)) {
+        const lvl = R.chance(0.15) ? 2 : 1;
+        m.flags[dfn.id] = Math.max(m.flags[dfn.id] || 0, lvl);
+        heatAdd(D, dfn, -0.3);
+        if (lvl === 2) { m.ej[dfn.id] = true; push(m, 'flag', di, `FLAGRANT 2! ${pname(dfn, 1)} is EJECTED after a dangerous foul on ${pname(sh, 1)}!`, { p: dfn.id, v: sh.id, k: 'flag', hl: true, force: true, lbl: 'FLAGRANT 2 · EJECTED' }); pickLineup(m, D, true); }
+        else push(m, 'flag', di, `FLAGRANT 1 on ${pname(dfn, 1)} — he wraps up ${pname(sh, 1)} on the drive.`, { p: dfn.id, v: sh.id, k: 'flag', hl: true, force: true, lbl: 'FLAGRANT 1' });
+      }
+    }
     const made = R.chance(fouled ? p * 0.55 : p);
     const val = type === 'thr' ? 3 : 2;
     const b = m.box[sh.id];
@@ -358,7 +402,7 @@ function possession(m, oi) {
       const astP = (type === 'thr' ? 0.82 : type === 'mid' ? 0.55 : 0.58) + (ot.system === 'motion' ? 0.08 : ot.system === 'iso' ? -0.18 : ot.system === 'pnr' ? 0.04 : 0) + (fgOn ? 0.06 : 0);
       if (R.chance(clamp(astP, 0.2, 0.95))) {
         const mates = off.filter((x) => x !== sh);
-        ast = R.wpick(mates, (x) => Math.pow(eff(m, O, x, 'pas'), 2.5) * roleMod(O, x, 'ast'));
+        ast = R.wpick(mates, (x) => Math.pow(eff(m, O, x, 'pas'), 2.5) * roleMod(O, x, 'ast') * (O.duo[sh.id] === x.id ? 2.5 : 1));
         m.box[ast.id].ast++;
       }
       const n = pname(sh, 1);
@@ -369,13 +413,19 @@ function possession(m, oi) {
       else if (sh.a.jmp >= 12 && R.chance(0.5)) txt = R.pick([`${n} throws it down with authority!`, `HUGE slam from ${n}!`, `${n} rises up and hammers it home!`, `Alley-oop! ${n} finishes above the rim!`]);
       else txt = R.pick([`${n} finishes at the rim.`, `${n} with the layup.`, `${n} scores in the paint.`, `${n} spins and lays it in.`, `${n} with a nice floater.`]);
       if (late && R.chance(0.5)) txt = R.pick(['Clutch! ', 'Big-time bucket! ', 'Ice cold! ']) + txt;
+      heatAdd(O, sh, type === 'thr' ? 0.17 : 0.12); if (ast) heatAdd(O, ast, 0.04);
+      const fire = (O.heat[sh.id] || 0) > 0.45;
+      m.fireShown = m.fireShown || {};
+      const newFire = fire && !m.fireShown[sh.id]; if (fire) m.fireShown[sh.id] = true;
+      if (fire && R.chance(0.3)) txt += R.pick([` ${pname(sh, 1)} is ON FIRE!`, ` He can't miss!`, ` ${pname(sh, 1)} is heating up!`]);
       if (fouled) {
         txt = 'And one! ' + txt;
         b.fta++;
         if (R.chance(0.5 + eff(m, O, sh, 'ft') * 0.022)) { b.ftm++; b.pts++; O.pts++; }
       }
       trackRun(m, oi, val + (fouled ? 1 : 0));
-      push(m, type === 'thr' ? 'three' : 'score', oi, txt + at);
+      push(m, type === 'thr' ? 'three' : 'score', oi, txt + at, { p: sh.id, a: ast ? ast.id : null, k: type, made: true, hl: late || newFire || (type === 'in' && sh.a.jmp >= 16 && R.chance(0.08)), lbl: late ? 'CLUTCH' : newFire ? 'ON FIRE' : null });
+      if (sh.hid.trash >= 14 && R.chance((sh.hid.trash - 12) * 0.04)) trashTalk(m, O, D, sh, dfn, oi);
       return;
     }
     if (fouled) {
@@ -387,11 +437,12 @@ function possession(m, oi) {
       if (k === val || R.chance(0.6)) return;
     } else {
       b.fga++; if (type === 'thr') b.tpa++;
+      heatAdd(O, sh, -0.08 * (1.25 - sh.hid.res / 40));
       if (type === 'in' && R.chance(0.1 * (avgE(m, D, def, 'blk') / 10) * 1.4)) {
         const bl = R.wpick(def, (x) => Math.pow(eff(m, D, x, 'blk'), 2.5) * (x.h / 200));
-        m.box[bl.id].blk++;
-        if (R.chance(0.6)) push(m, 'blk', 1 - oi, R.pick([`Rejected! ${pname(bl, 1)} swats ${pname(sh, 1)}.`, `${pname(bl, 1)} with the block!`, `Get that outta here! ${pname(bl, 1)} denies ${pname(sh, 1)}.`]));
-      } else if (late && R.chance(0.4)) push(m, 'miss', oi, `${pname(sh, 1)} ${type === 'thr' ? 'misses the three' : 'can\'t get it to drop'} in crunch time.`);
+        m.box[bl.id].blk++; heatAdd(D, bl, 0.12); heatAdd(O, sh, -0.06);
+        if (R.chance(0.6)) push(m, 'blk', 1 - oi, R.pick([`Rejected! ${pname(bl, 1)} swats ${pname(sh, 1)}.`, `${pname(bl, 1)} with the block!`, `Get that outta here! ${pname(bl, 1)} denies ${pname(sh, 1)}.`]), { p: bl.id, v: sh.id, k: 'blk', hl: late || (D.heat[bl.id] || 0) > 0.45, lbl: late ? 'CLUTCH STOP' : null });
+      } else if (late && R.chance(0.4)) push(m, 'miss', oi, `${pname(sh, 1)} ${type === 'thr' ? 'misses the three' : 'can\'t get it to drop'} in crunch time.`, { p: sh.id, k: type, made: false, hl: true, lbl: 'CLUTCH' });
       else if (type === 'thr' && R.chance(0.06)) push(m, 'miss', oi, `${pname(sh, 1)} misses from three.`);
     }
     const orb = avgE(m, O, off, 'reb') + avgE(m, O, off, 'str') * 0.3, drb = avgE(m, D, def, 'reb') + avgE(m, D, def, 'str') * 0.3;
@@ -411,7 +462,10 @@ function possession(m, oi) {
 function technical(m, O, D, p, text) {
   m.techs[p.id] = (m.techs[p.id] || 0) + 1;
   O.mood[p.id] = clamp((O.mood[p.id] || 0) - 0.15, -1, 1);
-  push(m, 'tech', m.sides.indexOf(O), text);
+  heatAdd(O, p, -0.2);
+  const si = m.sides.indexOf(O);
+  push(m, 'tech', si, text, { p: p.id, k: 'tech', hl: true, force: true, lbl: 'TECHNICAL FOUL' });
+  if (m.techs[p.id] >= 2 && !m.ej[p.id]) { m.ej[p.id] = true; push(m, 'flag', si, `${pname(p, 1)} has been EJECTED after his second technical!`, { p: p.id, k: 'flag', hl: true, force: true, lbl: 'EJECTED' }); pickLineup(m, O, true); }
   const sh = D.on.slice().sort((a, b) => b.a.ft - a.a.ft)[0];
   if (!sh) return;
   m.box[sh.id].fta++;
@@ -420,7 +474,23 @@ function technical(m, O, D, p, text) {
 function trackRun(m, oi, v) {
   const run = m.run;
   if (run.team === oi) run.pts += v; else { run.team = oi; run.pts = v; run.said = 0; }
-  if (run.pts >= 8 && run.pts - run.said >= 4) { run.said = run.pts; push(m, 'run', oi, `${m.sides[oi].team.abbr} on a ${run.pts}-0 run!`); }
+  if (run.pts >= 8 && run.pts - run.said >= 4) {
+    run.said = run.pts; m.nextHL = `${m.sides[oi].team.abbr} ${run.pts}-0 RUN`; m.lastHL = -999;
+    push(m, 'run', oi, `${m.sides[oi].team.abbr} on a ${run.pts}-0 run!`);
+    m.sides[oi].on.forEach((p) => heatAdd(m.sides[oi], p, 0.05)); m.sides[1 - oi].on.forEach((p) => heatAdd(m.sides[1 - oi], p, -0.05));
+  }
+}
+function trashTalk(m, O, D, sh, dfn, oi) {
+  heatAdd(O, sh, 0.1);
+  if (!sh.known.includes('trash') && sh.team === S.userTeam && m.snap) sh.known.push('trash');
+  if (dfn.hid.temp <= 7 && (m.techs[dfn.id] || 0) < 2 && !m.ej[dfn.id]) {
+    heatAdd(D, dfn, -0.15);
+    push(m, 'trash', oi, `${pname(sh, 1)} lets ${pname(dfn, 1)} hear about it — and it's getting under his skin.`, { p: sh.id, v: dfn.id, k: 'trash', hl: (m.techs[dfn.id] || 0) === 0, lbl: 'TRASH TALK' });
+    if (R.chance(0.22 * (8 - dfn.hid.temp) / 7)) technical(m, D, O, dfn, `${pname(dfn, 1)} bites back at ${pname(sh, 1)} and gets T'd up!`);
+  } else if (dfn.hid.res >= 14) {
+    heatAdd(D, dfn, 0.15);
+    push(m, 'trash', oi, `${pname(sh, 1)} talks trash to ${pname(dfn, 1)}... who just smiles. That might have woken him up.`, { p: sh.id, v: dfn.id, k: 'trash' });
+  } else push(m, 'trash', oi, `${pname(sh, 1)} barks at ${pname(dfn, 1)} after the bucket.`, { p: sh.id, v: dfn.id, k: 'trash' });
 }
 
 /* ---------- Team talks & touchline shouts ---------- */
@@ -437,8 +507,10 @@ function toneBase(tone, ctx, p) {
   else if (tone === 'calm') b = (close && late) || imp ? 0.4 : winBig ? 0.2 : loseBig ? -0.25 : 0.1;
   else if (tone === 'demand') { b = lose && fav > 0 ? 0.4 : lose ? 0.25 : close ? 0.15 : winBig ? -0.2 : -0.05; b += (h.prof - 10) * 0.02; }
   else if (tone === 'berate') { b = loseBig ? 0.4 : lose ? 0.05 : -0.5; b += (h.prof - 10) * 0.025 - (h.ego - 10) * 0.03; }
-  if (tone === 'encourage' || tone === 'calm') b += (10 - h.clutch) * 0.015;
-  if (tone === 'demand' || tone === 'berate') b -= (10 - h.temp) * 0.025;
+  if (tone === 'encourage' || tone === 'calm' || tone === 'focus') b += (10 - h.clutch) * 0.015;
+  if (tone === 'fireup') { b = pre ? 0.2 : lose ? 0.35 : close ? 0.3 : winBig ? 0.05 : 0.2; b -= Math.max(0, 8 - h.temp) * 0.04; }
+  if (tone === 'focus') { b = (close && late) || imp ? 0.35 : lose ? 0.2 : winBig ? 0.25 : 0.15; b += (h.coach - 10) * 0.01; }
+  if (tone === 'demand' || tone === 'berate') b -= (10 - h.temp) * 0.025 - (h.res - 10) * 0.015;
   return b;
 }
 function reactionLabel(tone, d, ctx, p) {
@@ -463,11 +535,17 @@ function teamTalk(m, si, tone, scale = 1) {
     s.mood[p.id] = clamp((s.mood[p.id] || 0) + d, -1, 1);
     s.base[p.id] = clamp((s.base[p.id] || 0) + d * 0.5, -1, 1);
     const [label, cls] = reactionLabel(tone, d, ctx, p);
+    const hg = { praise: 0.2, encourage: 0.15, calm: 0.08, demand: 0.25, berate: 0.4, fireup: 0.5, focus: 0.15 }[tone] || 0.15;
+    if (!s.heat) s.heat = {};
+    s.heat[p.id] = clamp((s.heat[p.id] || 0) + d * hg, -1, 1);
+    if (tone === 'focus' && s.heat[p.id] < 0) s.heat[p.id] *= 0.55;
     out.push({ p, d, label, cls });
-    if (tone === 'berate' && !m.done && m.gt > 0 && p.hid.temp <= 6 && s.on.includes(p) && R.chance(0.3 * scale) && !m.techs[p.id]) {
-      technical(m, s, o, p, `${pname(p, 1)} snaps back at his own bench and picks up a technical!`);
+    const hothead = !m.done && m.gt > 0 && p.hid.temp <= 6 && s.on.includes(p) && (m.techs[p.id] || 0) < 2 && !m.ej[p.id];
+    if (hothead && ((tone === 'berate' && R.chance(0.3 * scale)) || (tone === 'fireup' && R.chance(0.15 * scale)))) {
+      technical(m, s, o, p, tone === 'berate' ? `${pname(p, 1)} snaps back at his own bench and picks up a technical!` : `${pname(p, 1)} gets way too fired up and is hit with a technical!`);
     }
   }
+  if (tone === 'focus') m.focus[si] = m.gt + 300;
   if (scale >= 1) m.talks++;
   return out.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
 }
@@ -482,12 +560,12 @@ function matchResult(m) {
     if (b.min <= 0 && b.pts === 0) { ratings[id] = null; continue; }
     const won = (b.team === H.team.id) === (H.pts > A.pts);
     const gsc = b.pts + 0.4 * b.fgm - 0.7 * b.fga - 0.4 * (b.fta - b.ftm) + 0.6 * b.reb + 0.4 * b.oreb + 0.7 * b.ast + b.stl + 0.7 * b.blk - b.tov;
-    const r = 6.0 + gsc * 0.1 + (won ? 0.25 : -0.2) + (b.min < 8 ? -0.1 : 0) - (m.techs[id] ? 0.3 : 0);
+    const r = 6.0 + gsc * 0.1 + (won ? 0.25 : -0.2) + (b.min < 8 ? -0.1 : 0) - (m.techs[id] ? 0.3 : 0) - (m.flags[id] ? 0.4 * m.flags[id] : 0);
     ratings[id] = Math.round(clamp(r, 3, 10) * 10) / 10;
   }
   let pom = null, best = -1;
   for (const id in ratings) if (ratings[id] != null && ratings[id] > best) { best = ratings[id]; pom = +id; }
-  return { hs: H.pts, as: A.pts, box, events: m.events, quarters: m.quarters, ratings, pom, ot: m.ot, techs: m.techs };
+  return { hs: H.pts, as: A.pts, box, events: m.events, quarters: m.quarters, ratings, pom, ot: m.ot, techs: m.techs, flags: m.flags, ej: m.ej };
 }
 function simMatch(S, home, away, opts) {
   const m = createMatch(S, home, away, opts);

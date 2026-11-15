@@ -52,11 +52,27 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 | Seasons | Aging, development (young + high potential + minutes + work rate), retirements, expiring contracts, new young free agents every summer |
 | Editor | Edit league/team names, colours, budgets; edit/create/delete players & every attribute; export/import the database as a file to share custom rosters |
 
+## Phase 1 systems (schema v3 — see ARCHITECTURE.md)
+
+- **12 hidden traits**, now including Resilience, Natural Fitness and Trash Talk.
+- **Archetypes:** ⚡ Fast Learner, 🐢 Slow Learner, 🩹 Injury Prone, 🛡️ Ironman, 🤝 Locker Room Glue Guy (cushions morale drops, mentors youth).
+- **Aging:** every player has his own peak age and decline rate.
+- **Profiles:** dynamic bios, plus an FM-style History tab (club, league, apps, minutes, points, rebounds, assists, average rating, awards, career totals).
+- **Minutes:** set a minutes target per player.
+- **Live match court:** 2D top-down court with Key Highlights (runs, clutch plays, players catching fire, technicals, flagrants, trash talk). Dots glow red-orange when On Fire and icy blue when Cold.
+- **Touchline:** shouts now include Fire Up and Focus. Discipline escalates from Technical to 2nd T / Flagrant 2 ejection to suspensions (also 1 game per 5 techs).
+- **Dynamic Duos (rare):** long-time teammates can click. They get +1 on key attributes when sharing the floor and look for each other. Trading one triggers a 1-on-1 with the other.
+- **Staff:** assistant, scout, youth and fitness coaches. Retired players with the right mentality become staff; your club's legends ask to join you.
+- **Career dates:** career start date, date joined, days in charge, coach bio.
+
 ## Code map
 
 - `js/data.js` — name pools, attributes, default teams, helpers
 - `js/engine.js` — player generation, ability calc, possession-by-possession match engine
 - `js/game.js` — season flow, schedule, playoffs, inbox, morale, injuries, board, trades, free agency, saves
+- `js/traits.js` — traits, archetypes, aging, bios, career logs, duos, staff
+- `js/court.js` — 2D court renderer for Key Highlights
+- `js/model.js` — save schema version & migrations
 - `js/ui.js` — all screens & interactions
 - `css/style.css` — theme (re-colours to your club)
 
