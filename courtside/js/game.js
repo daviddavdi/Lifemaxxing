@@ -101,7 +101,7 @@ function makeCoach(name, style, mode) {
   const base = mode === 'journey' ? 7.5 : 12;
   const a = {};
   for (const at of COACH_ATTRS) a[at.k] = Math.round(clamp(base + R.gauss() * 1.4 + (st.plus.includes(at.k) ? 4 : 0) - (st.minus.includes(at.k) ? 2 : 0), 1, 20));
-  return { name: clean(name, 28) || 'The Coach', style, a, rep: mode === 'journey' ? 3 : 12, frac: {}, hist: [], titles: 0, games: 0, wins: 0 };
+  return { journey: mode === 'journey', name: clean(name, 28) || 'The Coach', style, a, rep: mode === 'journey' ? 3 : 12, frac: {}, hist: [], titles: 0, games: 0, wins: 0 };
 }
 function journeymanOffers(db) {
   const t2 = db.leagues.filter((l) => l.tier === 2).map((l) => l.id);
@@ -110,11 +110,11 @@ function journeymanOffers(db) {
 }
 
 /* ---------- New game ---------- */
-function newGame({ name, style, mode, teamId, db, length }) {
+function newGame({ name, style, mode, teamId, db, length, diff, ironman }) {
   db = JSON.parse(JSON.stringify(db));
   S = {
     v: 4, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
-    coach: makeCoach(name, style, mode), userTeam: teamId,
+    coach: makeCoach(name, style, mode), userTeam: teamId, diff: DIFFICULTY[diff] ? diff : 'normal', ironman: !!ironman, matchLock: null,
     leagues: db.leagues.map((l) => ({ ...l, state: 'regular', po: null, final: [] })),
     teams: [], players: {}, schedule: [], inbox: [], nextPid: db.nextPid || 1, nextMid: 1, nextFx: 1,
     history: [], training: 'balanced', board: { conf: 65, exp: null }, pending: null, lastResult: null,
@@ -138,6 +138,7 @@ function newGame({ name, style, mode, teamId, db, length }) {
   const ut = userTeam();
   ut.tactics = DEFAULT_TACTICS(); ut.instr = {};
   ut.budget = Math.max(ut.budget, Math.round((teamPayroll(ut.id) * 1.06 + 1) * 10) / 10);
+  ut.budget = Math.round(ut.budget * diffCfg().budget * 10) / 10;
   S.schedule = buildAllSchedules();
   ensureMarket();
   S.coach.start = { season: S.season, day: 0 }; S.coach.joined = { season: S.season, day: 0 }; S.coach.pcoach = 10; S.coach.badges = [];
@@ -414,10 +415,11 @@ function finishUserMatch(m) {
   const f = S.schedule.find((x) => x.id === m.fid);
   const res = matchResult(m);
   applyResult(f, res);
-  S.pending = null;
+  S.pending = null; S.matchLock = null;
   S.lastResult = { fid: f.id, hs: res.hs, as: res.as, box: res.box, ratings: res.ratings, pom: res.pom, quarters: res.quarters, h: f.h, a: f.a, talked: false };
   userPostMatch(f, res);
   recordPairs(m); checkDuos();
+  { const us = f.h === S.userTeam ? res.hs : res.as, them = f.h === S.userTeam ? res.as : res.hs; achAfterMatch(m, us > them, us, them); }
   simDay(S.schedule.filter((x) => x.day === f.day && !x.played));
   save();
 }
@@ -456,7 +458,7 @@ function applyResult(f, res) {
       const g = R.int(1, 2); p.susp += g;
       if (p.team === S.userTeam) { if (!p.known.includes('temp')) p.known.push('temp'); mail('League Office', `Suspension: ${pname(p)}`, `Following his Flagrant 2 ejection, ${plink(p)} has been suspended for <b>${g} game${g > 1 ? 's' : ''}</b>.`, { type: 'league' }); }
     }
-    if (!p.inj && b.min > 0 && R.chance(b.min * 0.0005 * (1 + (100 - p.cond) / 60) * (0.45 + p.hid.injp / 13) * injuryMult(p))) {
+    if (!p.inj && b.min > 0 && R.chance(b.min * 0.0005 * (1 + (100 - p.cond) / 60) * (0.45 + p.hid.injp / 13) * injuryMult(p) * (p.team === S.userTeam ? diffCfg().inj : 1))) {
       const [n, lo, hi] = R.pick(INJURIES);
       p.inj = { name: n, days: Math.max(1, Math.round(R.int(lo, hi) * (0.8 + p.hid.injp / 50) * (hasArch(p, 'iron') ? 0.6 : hasArch(p, 'injury') ? 1.3 : 1))) };
       if (p.team === S.userTeam) mail('Physio', `Injury: ${pname(p)}`, `Coach, ${plink(p)} picked up a <b>${n.toLowerCase()}</b> against ${team(b.team === f.h ? f.a : f.h).nick}.\n\nExpected time out: <b>${p.inj.days} days</b>.`, { type: 'medical' });
@@ -472,7 +474,7 @@ function userPostMatch(f, res) {
   const opp = team(home ? f.a : f.h);
   S.coach.games++; if (won) S.coach.wins++;
   const expectWin = teamStrength(t.id) >= teamStrength(opp.id);
-  S.board.conf = clamp(S.board.conf + (won ? (expectWin ? 1 : 2.5) : (expectWin ? -2.5 : -1)) * (f.type === 'po' ? 1.5 : 1), 0, 100);
+  S.board.conf = clamp(S.board.conf + (won ? (expectWin ? 1 : 2.5) * diffCfg().gain : (expectWin ? -2.5 : -1) * diffCfg().loss) * (f.type === 'po' ? 1.5 : 1), 0, 100);
   const r = roster(t.id).sort((a, b) => calcCA(b) - calcCA(a));
   const man = S.coach.a.man;
   const cushion = r.some((x) => hasArch(x, 'glue') && !x.inj) ? 0.7 : 1;
@@ -502,7 +504,7 @@ function userPostMatch(f, res) {
     const mood = c >= 75 ? 'delighted with' : c >= 55 ? 'pleased with' : c >= 35 ? 'concerned about' : 'very unhappy with';
     mail('Board of Directors', 'Board update', `${S.coach.name},\n\nAfter ${played} games we sit <b>${ordinal(teamRank(t.id))}</b> with a ${t.w}-${t.l} record. The board is ${mood} the team's progress.\n\nExpectation: <b>${S.board.exp.txt}</b>\nBoard confidence: <b>${Math.round(c)}%</b>`, { type: 'board' });
   }
-  if (f.type === 'reg' && S.board.conf < 10 && played >= total * 0.4) sackCoach('The board has lost all confidence in your ability to turn this season around.');
+  if (f.type === 'reg' && S.board.conf < diffCfg().sackMid && played >= total * 0.4) sackCoach('The board has lost all confidence in your ability to turn this season around.');
 }
 
 function sackCoach(reason) {
@@ -625,20 +627,21 @@ function endSeason() {
   const t = userTeam(), lg = league(t.lg);
   const ach = userAchievement();
   const diff = ach.score - S.board.exp.target;
-  S.board.conf = clamp(S.board.conf + clamp(diff, -3, 2) * 11 - (ach.relegated ? 15 : 0), 0, 100);
+  S.board.conf = clamp(S.board.conf + clamp(diff, -3, 2) * 11 * (diff < 0 ? diffCfg().loss : diffCfg().gain) - (ach.relegated ? 15 : 0), 0, 100);
   if (ach.L === 5) S.coach.titles++;
   const note = ach.L === 5 ? 'Champions' : ach.promoted ? 'Promoted' : ach.relegated ? 'Relegated' : ach.L === 4 ? 'Finalists' : ach.L === 3 ? 'Semi-finals' : ach.L === 2 ? 'Playoffs' : '';
   S.coach.hist.unshift({ season: S.season, club: teamName(t), lg: lg.short, rec: `${t.w}-${t.l}`, finish: ordinal(teamRank(t.id)), note });
   coachProgress(diff, ach);
   let verdict;
-  if (S.board.conf < 20) verdict = 'The board has decided to terminate your contract. Results have fallen well short of expectations.';
+  if (S.board.conf < diffCfg().sackEnd) verdict = 'The board has decided to terminate your contract. Results have fallen well short of expectations.';
   else if (diff >= 1) verdict = 'The board is thrilled. You exceeded our expectations this season. Your wage budget will be increased.';
   else if (diff > -0.6) verdict = 'The board is satisfied — you met our expectations this season.';
   else verdict = 'The board is disappointed. We expected more. Next season must be better.';
   if (diff >= 1) t.budget = Math.round(t.budget * 1.08 * 10) / 10;
   mail('Board of Directors', 'End of season review', `${S.coach.name},\n\nExpectation: <b>${S.board.exp.txt}</b>\nFinal standing: <b>${ordinal(teamRank(S.userTeam))}</b> (${t.w}-${t.l})${note ? ` · ${note}` : ''}\n\n${verdict}\n\nYour reputation: <b>${repLabel(S.coach.rep)}</b> (${Math.round(S.coach.rep)}/20)`, { type: 'board' });
   S.vacancies = marketSeasonEnd(); S.applied = []; S.rumoured = [];
-  if (S.board.conf < 20) { sackCoach('Results have fallen well short of expectations.'); S.prevPhase = 'offseason'; return; }
+  achSeasonEnd(ach);
+  if (S.board.conf < diffCfg().sackEnd) { sackCoach('Results have fallen well short of expectations.'); S.prevPhase = 'offseason'; return; }
   if (diff >= 0.5 || ach.L >= 4) {
     const up = S.teams.filter((x) => x.id !== S.userTeam && x.prestige > t.prestige && x.prestige <= S.coach.rep + 3);
     R.shuffle(up).slice(0, diff >= 1 ? 2 : 1).forEach((x) => {
@@ -692,6 +695,8 @@ function takeNewJob(tid) {
   t.instr = {}; cleanRotation(S, t);
   S.coach.joined = { season: S.season, day: S.day };
   ensureUserStaff();
+  if (S.phase === 'sacked') unlock('comebackjob');
+  achJob();
   if (S.phase === 'sacked') S.phase = S.prevPhase === 'season' ? 'season' : 'offseason';
   S.board.conf = 60;
   S.vacancies = S.vacancies.filter((x) => x !== tid);
@@ -830,7 +835,7 @@ function tradeInterest(targetId, offerIds) {
   const tgt = S.players[targetId];
   const offer = offerIds.map((id) => S.players[id]);
   if (!offer.length) return 0;
-  return packageValue(offer) / (playerValue(tgt) * (tgt.wantsOut || tgt.listed ? 0.85 : 1.1));
+  return packageValue(offer) / (playerValue(tgt) * (tgt.wantsOut || tgt.listed ? 0.85 : 1.1) * diffCfg().trade);
 }
 function tradeCheck(targetId, offerIds) {
   const tgt = S.players[targetId];
@@ -908,6 +913,7 @@ function signFreeAgent(pid, years) {
   if (teamPayroll(ut.id) + sal > ut.budget) return { ok: false, msg: `Not enough wage budget. You have ${fmtMoney(Math.max(0, ut.budget - teamPayroll(ut.id)))} available.` };
   p.team = ut.id; p.contract = { sal, yrs: years + (S.phase === 'offseason' ? 1 : 0) }; p.morale = 70; p.rookie = false;
   logSigning(p, ut, sal, years);
+  if (stars(calcCA(p)) >= 5) unlock('bigfish');
   cleanRotation(S, ut);
   revealKnown([p]);
   return { ok: true, msg: `${pname(p)} signed for ${fmtMoney(sal)}/yr over ${years} year${years > 1 ? 's' : ''}.` };

@@ -395,3 +395,16 @@ body.live-on main { padding-bottom: 80px; }
 .dealgrid > div { font-size: 13px; }
 .tp { display: flex; gap: 4px; align-items: center; margin-top: 5px; flex-wrap: wrap; cursor: pointer; }
 .tp .stars { font-size: 9px; }
+
+/* ===== v5 ironman / achievements ===== */
+.imtag { display: inline-block; font-size: 9px; font-weight: 900; letter-spacing: .06em; padding: 1px 5px; border-radius: 4px; background: #b8952e; color: #101418; vertical-align: 1px; }
+.pick:disabled { opacity: .45; }
+.achgrid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+@media (min-width: 600px) { .achgrid { grid-template-columns: 1fr 1fr; } }
+.ach { display: flex; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; opacity: .6; }
+.ach.on { opacity: 1; border-color: #b8952e; background: linear-gradient(90deg, color-mix(in srgb, #f2c94c 12%, var(--panel)), var(--panel)); }
+.achic { font-size: 26px; width: 36px; text-align: center; filter: grayscale(1); }
+.ach.on .achic { filter: none; }
+.achmeta { color: var(--gold); margin-top: 3px; }
+.tb-team > div { min-width: 0; }
+.tb-sub { overflow: hidden; text-overflow: ellipsis; }

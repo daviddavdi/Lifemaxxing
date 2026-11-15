@@ -116,7 +116,7 @@ function topBar() {
   const t = userTeam(), lg = league(t.lg);
   const label = S.pending ? 'Match Day' : S.phase === 'offseason' ? 'New Season' : S.phase === 'sacked' ? 'Find Job' : 'Continue';
   const rec = lg.state === 'playoffs' ? 'Playoffs' : `${t.w}-${t.l} · ${ordinal(teamRank(t.id))}`;
-  return `<div class="tb-team" data-act="go" data-v="squad">${badge(t, 'lg')}<div><div class="tb-name">${esc(teamName(t))}</div><div class="tb-sub">${fmtDate(S.season, S.day, true)} · ${esc(lg.short)} · ${rec}</div></div></div>
+  return `<div class="tb-team" data-act="go" data-v="squad">${badge(t, 'lg')}<div><div class="tb-name">${esc(teamName(t))}</div><div class="tb-sub">${S.ironman ? '<span class="imtag">IRONMAN</span> ' : ''}${fmtDate(S.season, S.day, true)} · ${esc(lg.short)} · ${rec}</div></div></div>
   <button class="continue" data-act="continue">${label} ${icon('play')}</button>`;
 }
 function navBar() {
@@ -136,6 +136,7 @@ VIEWS.title = () => `
     <div class="menu">
       ${hasSave() ? `<button class="btn primary big" data-act="loadGame">Continue Career</button>` : ''}
       <button class="btn ${hasSave() ? '' : 'primary'} big" data-act="go" data-v="newgame">New Career</button>
+      <button class="btn big" data-act="go" data-v="achievements">🏆 Achievements (${Object.keys(achStore()).length}/${ACHIEVEMENTS.length})</button>
       <label class="btn big file">Start with Custom Database<input type="file" accept=".json,application/json" data-chg="importDbNew" hidden></label>
     </div>
     <p class="fine">All players, clubs, leagues and names are fictional. Edit everything in the Database Editor.</p>
@@ -144,7 +145,7 @@ VIEWS.title = () => `
 let NG = null;
 function ngStrength(tid) { const r = NG.db.players.filter((p) => p.team === tid).map(calcCA).sort((a, b) => b - a).slice(0, 8); return r.length ? r.reduce((s, x) => s + x, 0) / r.length : 0; }
 VIEWS.newgame = () => {
-  if (!NG) NG = { db: generateWorld(), step: 1, team: null, name: '', length: 'short', style: 'allround', mode: 'journey', custom: false, lg: null };
+  if (!NG) NG = { db: generateWorld(), step: 1, team: null, name: '', length: 'short', style: 'allround', mode: 'journey', custom: false, lg: null, diff: 'normal', ironman: false };
   const db = NG.db;
   if (NG.step === 1) {
     return `${header('New Career', { back: false, right: `<button class="btn sm" data-act="go" data-v="title">Cancel</button>` })}
@@ -157,6 +158,14 @@ VIEWS.newgame = () => {
       </div>
       <h2 class="sec">Coaching style</h2>
       <div class="pick-grid">${Object.entries(COACH_STYLES).map(([k, v]) => `<button class="pick ${NG.style === k ? 'on' : ''}" data-act="ngSet" data-k="style" data-v="${k}"><b>${v.n}</b><span>${v.d}</span></button>`).join('')}</div>
+      <h2 class="sec">Difficulty</h2>
+      <div class="seg">${Object.entries(DIFFICULTY).map(([k, v]) => `<button class="${(NG.diff || 'normal') === k ? 'on' : ''}" data-act="ngSet" data-k="diff" data-v="${k}">${v.n}</button>`).join('')}</div>
+      <p class="hint">${DIFFICULTY[NG.diff || 'normal'].d}</p>
+      <h2 class="sec">Game mode</h2>
+      <div class="pick-grid">
+        <button class="pick ${!NG.ironman ? 'on' : ''}" data-act="ngSet" data-k="ironman" data-v="">${'<b>Standard</b><span>Database editor, save backups and restores allowed. No achievements.</span>'}</button>
+        <button class="pick ${NG.ironman ? 'on' : ''}" data-act="ngSet" data-k="ironman" data-v="1" ${NG.custom ? 'disabled' : ''}><b>🛡️ Ironman</b><span>${NG.custom ? 'Not available with a custom database.' : 'One save, no reloading matches, no editor, no restoring backups. Earn achievements.'}</span></button>
+      </div>
       <h2 class="sec">Season length</h2>
       <div class="seg">${[['short', 'Short (18–30 games)'], ['long', 'Long (36–60 games)']].map(([v, l]) => `<button class="${NG.length === v ? 'on' : ''}" data-act="ngSet" data-k="length" data-v="${v}">${l}</button>`).join('')}</div>
       <p class="hint">${db.leagues.length} leagues · ${db.teams.length} clubs${NG.custom ? ' · custom database' : ''}</p>
@@ -285,7 +294,7 @@ VIEWS.player = ({ id }) => {
     if (S.promises[p.id]) actions += `<span class="tagx">Promised minutes (${S.promises[p.id]} games left)</span>`;
   } else if (p.team == null) actions = `<button class="btn primary" data-act="signModal" data-id="${p.id}">Offer Contract</button>`;
   else actions = `<button class="btn primary" data-act="go" data-v="trade" data-id="${p.id}">Make Trade Offer</button>`;
-  actions += `<button class="btn" data-act="go" data-v="editPlayer" data-id="${p.id}">${icon('edit')} Edit</button>`;
+  if (!S.ironman) actions += `<button class="btn" data-act="go" data-v="editPlayer" data-id="${p.id}">${icon('edit')} Edit</button>`;
   return `${header('Player Profile')}
   <div class="phero" style="--pc:${t ? t.c1 : '#555'}">
     <div class="ph-top">${badge(t, 'xl')}<div class="grow"><div class="ph-name">${esc(p.first)} <b>${esc(p.last)}</b></div>
@@ -456,13 +465,14 @@ VIEWS.more = () => `${header('More')}
     <button class="li" data-act="go" data-v="club"><span class="grow"><b>Club & Board</b><div class="muted sm">Board confidence, finances</div></span>›</button>
     <button class="li" data-act="go" data-v="jobs"><span class="grow"><b>Job Centre</b><div class="muted sm">${S.phase === 'offseason' && S.vacancies.length ? `<span class="pos">${S.vacancies.length} vacancies open</span>` : 'Opens at the end of each season'}</div></span>›</button>
     <button class="li" data-act="go" data-v="training"><span class="grow"><b>Training</b><div class="muted sm">Focus: ${TRAINING[S.training].n}</div></span>›</button>
-    <button class="li" data-act="go" data-v="editor"><span class="grow"><b>Database Editor</b><div class="muted sm">Leagues, clubs, players, hidden attributes · share files</div></span>›</button>
+    <button class="li" data-act="go" data-v="achievements"><span class="grow"><b>🏆 Achievements</b><div class="muted sm">${Object.keys(achStore()).length}/${ACHIEVEMENTS.length} unlocked${S.ironman ? '' : ' · Ironman careers only'}</div></span>›</button>
+    <button class="li" data-act="go" data-v="editor"><span class="grow"><b>Database Editor</b><div class="muted sm">${S.ironman ? '🔒 Locked in Ironman mode' : 'Leagues, clubs, players, hidden attributes · share files'}</div></span>›</button>
     <button class="li" data-act="go" data-v="settings"><span class="grow"><b>Save & Settings</b><div class="muted sm">Backup, restore, start over</div></span>›</button>
     <button class="li" data-act="toTitle"><span class="grow"><b>Main Menu</b></span>›</button>
   </div>`;
 VIEWS.coach = () => {
   const c = S.coach;
-  return `${header('Coach Profile', { right: `<button class="btn sm" data-act="go" data-v="editCoach">${icon('edit')} Edit</button>` })}
+  return `${header('Coach Profile', { right: S.ironman ? '<span class="imtag">IRONMAN</span>' : `<button class="btn sm" data-act="go" data-v="editCoach">${icon('edit')} Edit</button>` })}
   <div class="pad"><div class="card coachcard"><div class="big b">${esc(c.name)}</div><div class="muted">${COACH_STYLES[c.style]?.n || 'Coach'} · ${esc(teamName(userTeam()))}</div>
     <div class="kv"><span>Reputation</span><b>${repLabel(c.rep)} (${Math.round(c.rep)})</b></div><div class="meter"><div class="ok" style="width:${c.rep * 5}%"></div></div>
     <div class="kv"><span>Record</span><b>${c.wins}-${c.games - c.wins}${c.games ? ` (${Math.round((c.wins / c.games) * 100)}%)` : ''}</b></div><div class="kv"><span>Titles</span><b>${c.titles}</b></div>
@@ -503,14 +513,16 @@ VIEWS.training = () => `${header('Training')}
   <div class="list">${Object.entries(TRAINING).map(([k, v]) => `<button class="li ${S.training === k ? 'sel' : ''}" data-act="training" data-v="${k}"><span class="cbx">${S.training === k ? '✓' : ''}</span><span class="grow"><b>${v.n}</b><div class="muted sm">${v.d}</div></span></button>`).join('')}</div>`;
 VIEWS.settings = () => `${header('Save & Settings')}
   <div class="pad">
+    <div class="card"><h3>Career mode</h3><div class="kv"><span>Difficulty</span><b>${DIFFICULTY[S.diff || 'normal'].n}</b></div><div class="kv"><span>Mode</span><b>${S.ironman ? '🛡️ Ironman' : 'Standard'}</b></div></div>
     <div class="card"><h3>Save game</h3><p class="hint">Your career auto-saves on this device after every action.</p>
-      <div class="row-btns"><button class="btn" data-act="exportSave">Download backup</button><label class="btn file">Restore backup<input type="file" accept=".json,application/json" data-chg="importSave" hidden></label></div></div>
+      ${S.ironman ? '<p class="hint">🔒 Ironman: backups and restores are disabled. Matches you start are final — reloading the app plays them out.</p>' : `<div class="row-btns"><button class="btn" data-act="exportSave">Download backup</button><label class="btn file">Restore backup<input type="file" accept=".json,application/json" data-chg="importSave" hidden></label></div>`}</div>
     <div class="card"><h3>Danger zone</h3><div class="row-btns"><button class="btn danger" data-act="deleteSave">Delete career</button></div></div>
     <p class="fine">Courtside Manager · all players, clubs, leagues and names are fictional.</p>
   </div>`;
 
 /* Editor */
 VIEWS.editor = () => {
+  if (S.ironman) return ironLocked();
   const tab = curTab('editor', 'players');
   let body = '';
   if (tab === 'share') {
@@ -539,6 +551,7 @@ VIEWS.editor = () => {
   return `${header('Database Editor')}${tabs('editor', [['players', 'Players'], ['teams', 'Clubs'], ['leagues', 'Leagues'], ['share', 'Share']])}${body}`;
 };
 VIEWS.editTeam = ({ id }) => {
+  if (S.ironman) return ironLocked();
   const t = team(id);
   return `${header('Edit Club')}
   <div class="pad"><div class="card">
@@ -554,6 +567,7 @@ VIEWS.editTeam = ({ id }) => {
 };
 const stepper = (id, v, min = 1, max = 20) => `<span class="stepper"><button data-act="step" data-t="${id}" data-d="-1" data-min="${min}" data-max="${max}">−</button><input type="number" inputmode="numeric" min="${min}" max="${max}" id="${id}" value="${v}" class="t${tier(v)}" data-chg="attrIn"><button data-act="step" data-t="${id}" data-d="1" data-min="${min}" data-max="${max}">+</button></span>`;
 VIEWS.editPlayer = ({ id }) => {
+  if (S.ironman) return ironLocked();
   const p = S.players[id];
   if (!p) return header('Edit Player') + '<p class="empty">Player not found.</p>';
   ensureHidden(p);
@@ -574,6 +588,7 @@ VIEWS.editPlayer = ({ id }) => {
   <div class="sticky-cta"><button class="btn primary big" data-act="savePlayer" data-id="${p.id}">Save Player</button></div>`;
 };
 VIEWS.editCoach = () => {
+  if (S.ironman) return ironLocked();
   const c = S.coach;
   return `${header('Edit Coach')}
   <div class="pad"><div class="card"><label class="lbl">Name</label><input class="inp" id="ec_name" value="${esc(c.name)}" maxlength="28"><label class="lbl">Reputation (1–20)</label>${stepper('ec_rep', Math.round(c.rep))}</div>
@@ -760,16 +775,16 @@ const ACT = {
   go: (d) => { if (d.tab) UI.tab.tac = d.tab; go(d.v, d.sid ? { sid: d.sid } : d.id ? { id: +d.id } : {}, { keep: !!d.keep }); },
   tab: (d) => { UI.tab[d.k] = d.v; render(); },
   player: (d) => { closeModal(); go('player', { id: +d.id }); },
-  loadGame: () => { if (load()) { UI.stack = []; go(S.pending ? 'prematch' : S.phase === 'sacked' ? 'sacked' : 'inbox'); } },
+  loadGame: () => { if (load()) { UI.stack = []; if (ironmanResolve() || IRON_RESOLVED) { IRON_RESOLVED = false; toast('🛡️ Ironman: the match you left was played to the finish.'); UI.tab.rside = null; return go('result'); } go(S.pending ? 'prematch' : S.phase === 'sacked' ? 'sacked' : 'inbox'); } },
   toTitle: () => { save(); UI.stack = []; UI.view = 'title'; render(); },
-  ngSet: (d) => { NG[d.k] = d.v; if (d.k === 'mode') { NG.team = null; NG.offers = null; } render(); },
+  ngSet: (d) => { NG.name = ($('#ngName')?.value ?? NG.name); NG[d.k] = d.k === 'ironman' ? !!d.v : d.v; if (d.k === 'mode') { NG.team = null; NG.offers = null; } render(); },
   ngNext: () => { NG.name = ($('#ngName')?.value || NG.name || '').trim(); NG.step = 2; render(); window.scrollTo(0, 0); },
   ngBack: () => { NG.step = 1; render(); },
   ngLg: (d) => { NG.lg = d.v; NG.team = null; render(); },
   ngTeam: (d) => { NG.team = +d.id; render(); },
   ngStart: () => {
     if (!NG.team) return;
-    newGame({ name: NG.name || 'The Coach', style: NG.style, mode: NG.mode, teamId: NG.team, db: NG.db, length: NG.length });
+    newGame({ name: NG.name || 'The Coach', style: NG.style, mode: NG.mode, teamId: NG.team, db: NG.db, length: NG.length, diff: NG.diff, ironman: !!NG.ironman && !NG.custom });
     NG = null; UI.tab = {};
     go('inbox');
   },
@@ -893,6 +908,7 @@ const ACT = {
   /* match */
   playMatch: (d) => {
     UI.ftReact = null;
+    if (S.ironman) { S.matchLock = S.pending; save(); }
     if (d.watch === '1') { const m = createUserMatch(true); UI.stack = []; UI.view = 'match'; Live.start(m); render(); }
     else { const m = createUserMatch(false); teamTalk(m, m.us, 'encourage', 0.5); simToEnd(m); finishUserMatch(m); UI.stack = []; UI.tab.rside = null; go('result'); }
   },
@@ -940,7 +956,7 @@ const ACT = {
   toResult: () => { UI.tab.rside = null; go('result'); },
   ftTalk: (d) => { UI.ftReact = fullTimeTalk(d.v); render(); },
   /* misc */
-  exportSave: () => download(`courtside-save-${S.season}.json`, S),
+  exportSave: () => S.ironman ? toast('Disabled in Ironman.', 'bad') : download(`courtside-save-${S.season}.json`, S),
   deleteSave: () => modal(`<h2>Delete career?</h2><p>This cannot be undone.</p><div class="row-btns"><button class="btn" data-act="closeModal">Cancel</button><button class="btn danger" data-act="doDelete">Delete</button></div>`),
   doDelete: () => { closeModal(); deleteSave(); UI.stack = []; UI.view = 'title'; render(); },
   exportDb: () => download('courtside-database.json', exportDatabase()),
@@ -1012,7 +1028,7 @@ function modalSubs() {
 const CHG = {
   ngName: (el) => { NG.name = el.value; },
   importDbNew: (el) => readFile(el, (db) => { try { if (S && UI.view !== 'title') save(); startWithDb(db); } catch (e) { toast(esc(e.message), 'bad'); } }),
-  importSave: (el) => readFile(el, (obj) => { if (!obj || obj.v !== 2 || !obj.teams || !obj.players) return toast('Not a Courtside v2 save file.', 'bad'); S = sanitizeSave(obj); save(); UI.stack = []; toast('Career restored'); go('inbox'); }),
+  importSave: (el) => readFile(el, (obj) => { if (!obj || !(obj.v >= 2) || !obj.teams || !obj.players) return toast('Not a Courtside save file.', 'bad'); if (obj.ironman || (S && S.ironman)) return toast('Ironman careers cannot be restored from backups.', 'bad'); obj = migrateSave(obj); S = sanitizeSave(obj); save(); UI.stack = []; toast('Career restored'); go('inbox'); }),
   autoRotToggle: (el) => { S.autoRot = el.checked; if (S.autoRot) autoRotation(S, userTeam()); save(); render(); },
   edLeague: (el) => { const l = league(el.dataset.id); if (l) { l[el.dataset.f] = clean(el.value, el.dataset.f === 'short' ? 6 : 40) || l[el.dataset.f]; save(); } },
   edSearch: (el) => { UI.tab.edq = el.value; render(); },
@@ -1031,7 +1047,7 @@ document.addEventListener('change', (e) => { const el = e.target.closest('[data-
 document.addEventListener('input', (e) => { const el = e.target; if (el.dataset && el.dataset.chg === 'ngName') CHG.ngName(el); });
 
 window.addEventListener('DOMContentLoaded', () => {
-  if (hasSave()) load();
+  if (hasSave() && load() && ironmanResolve()) IRON_RESOLVED = true;
   render();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 });
@@ -1151,3 +1167,17 @@ function rumourMillView() {
   }
   return `${marketHeader('rm')}<div class="pad tight">${leagueChips(lf, 'rmlg', true)}</div>${tabs('rm', [['hot', 'Hot Seat'], ['news', 'Rumours'], ['trades', 'Biggest Trades'], ['signs', 'Biggest Signings']])}${body}`;
 }
+
+/* ---------- v5: Ironman & achievements ---------- */
+let IRON_RESOLVED = false;
+function ironLocked() {
+  return `${header('Locked')}<div class="pad"><div class="card"><h3>🛡️ Ironman career</h3><p>The database editor is disabled in Ironman mode so achievements stay earned, not edited.</p><p class="hint">Start a Standard career to use the editor.</p></div></div>`;
+}
+VIEWS.achievements = () => {
+  const st = achStore();
+  const n = Object.keys(st).length;
+  return `${header('Achievements')}
+  <div class="pad"><div class="card"><div class="kv"><span>Unlocked</span><b>${n} / ${ACHIEVEMENTS.length}</b></div><div class="meter"><div class="ok" style="width:${(n / ACHIEVEMENTS.length) * 100}%"></div></div>
+  <p class="hint">Achievements can only be earned in <b>🛡️ Ironman</b> careers. They are kept on this device across all careers.</p></div></div>
+  <div class="achgrid pad">${ACHIEVEMENTS.map((a) => { const u = st[a.k]; return `<div class="ach ${u ? 'on' : ''}"><div class="achic">${u ? a.ic : '🔒'}</div><div class="grow"><b>${a.n}</b><div class="muted sm">${a.d}</div>${u ? `<div class="sm achmeta">${esc(u.team)} · ${u.season}/${String(u.season + 1).slice(2)} · ${DIFFICULTY[u.diff]?.n || ''}</div>` : ''}</div></div>`; }).join('')}</div>`;
+};

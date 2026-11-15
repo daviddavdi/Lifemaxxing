@@ -145,7 +145,7 @@ function checkDuos() {
     const A = S.players[a], B = S.players[b];
     const compat = 0.6 + ((A.a.pas + B.a.pas) / 2 - 10) * 0.04 + ((A.hid.coach + B.hid.coach) / 2 - 10) * 0.03 + (A.pos !== B.pos ? 0.2 : 0);
     if (R.chance(0.012 * clamp(compat, 0.3, 1.6))) {
-      S.duos.push({ a, b, since: { season: S.season, day: S.day } });
+      S.duos.push({ a, b, since: { season: S.season, day: S.day } }); unlock('duo');
       A.morale = clamp(A.morale + 6, 0, 100); B.morale = clamp(B.morale + 6, 0, 100);
       mail('Assistant Coach', `Dynamic Duo: ${A.last} & ${B.last}`, `Coach, have you seen ${plink(A)} and ${plink(B)} lately? They're finishing each other's sentences out there.\n\nThey now share a <b>Dynamic Duo</b> chemistry link — both play better when they're on the floor together, and they look for each other constantly.\n\nI'd think very carefully before breaking that up.`, { type: 'staff' });
       return;

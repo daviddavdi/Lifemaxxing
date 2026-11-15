@@ -161,7 +161,7 @@ function createMatch(S, home, away, opts = {}) {
   m.sides = [home, away].map((team, i) => {
     if (!team.tactics.system) Object.assign(team.tactics, { ...DEFAULT_TACTICS(), ...team.tactics });
     return { team, ctx: { home: i === 0 }, t: team.tactics, ins: team.instr || (team.instr = {}), coach: teamCoachAttrs(S, team), pts: 0,
-      hot: clamp(R.gauss() * 0.04, -0.09, 0.09), mood: {}, base: {}, form: {}, heat: {}, played: {}, list: [], plan: {}, on: [], user: team.id === S.userTeam,
+      hot: clamp(R.gauss() * 0.04, -0.09, 0.09) + (team.id === S.userTeam && typeof diffCfg === 'function' ? diffCfg().edge : 0), mood: {}, base: {}, form: {}, heat: {}, played: {}, list: [], plan: {}, on: [], user: team.id === S.userTeam,
       duo: typeof duoMapFor === 'function' && team.id === S.userTeam ? duoMapFor(team.id) : {} };
   });
   m.fav = [strengthOf(S, home.id) - strengthOf(S, away.id), 0]; m.fav[1] = -m.fav[0];

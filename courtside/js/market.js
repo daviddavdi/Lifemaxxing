@@ -231,6 +231,7 @@ function marketMailAction(m, act) {
     return p.hid.amb >= 15 ? `${pname(p)} storms out. He is now unsettled.` : `${pname(p)} is disappointed but accepts it.`;
   }
   if (act === 'acceptReq') {
+    unlock('honour');
     p.listed = true; p.morale = clamp(p.morale + 8, 0, 100);
     let i = S.interest.find((x) => x.pid === p.id && x.tid === m.req);
     if (!i) S.interest.push(i = { pid: p.id, tid: m.req, lvl: 3, season: S.season, day: S.day });

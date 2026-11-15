@@ -76,6 +76,12 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
   - *Biggest Trades:* includes AI-to-AI trades.
   - *Biggest Signings:* including the summer free-agency window.
 
+## Difficulty, Ironman & achievements
+
+- **Difficulty:** Easy / Normal / Hard, chosen when you start a career. It changes board patience and the sacking thresholds, your wage budget, how hard AI clubs bargain in trades, injury rates, and a small on-court edge on Easy.
+- **🛡️ Ironman:** one save with no restoring backups, no database or coach editor, and no reloading matches. A match you've started is final: closing or reloading the app plays it out. Not available with custom databases.
+- **Achievements (18):** earned only in Ironman careers. They're stored on the device across careers and include First Blood, On a Roll, Comeback Kid, Champion, Dynasty, Going Up, Rags to Riches, Hard Knocks, Survivor, Player's Coach and Man of His Word.
+
 ## Code map
 
 - `js/data.js` — name pools, attributes, default teams, helpers
@@ -84,6 +90,7 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - `js/traits.js` — traits, archetypes, aging, bios, career logs, duos, staff
 - `js/court.js` — 2D court renderer for Key Highlights
 - `js/market.js` — transfer list, interest, ambition, hot seat, rumours, deals log
+- `js/achieve.js` — difficulty settings, Ironman lock, achievements
 - `js/model.js` — save schema version & migrations
 - `js/ui.js` — all screens & interactions
 - `css/style.css` — theme (re-colours to your club)
