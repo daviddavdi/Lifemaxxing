@@ -24,6 +24,7 @@ function migrateSave(o) {
     const prev = S; S = o;
     try { ensureMarket(); o.v = 4; } finally { if (prev) S = prev; }
   }
+  if (o.coach && !o.coach.look) o.coach.look = randomCoachLook(strSeed(o.coach.name));
   if (o.v < 5) { const prev = S; S = o; try { ensureRivals(); o.v = Math.max(o.v, 5); } finally { if (prev) S = prev; } }
   return o;
 }

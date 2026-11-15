@@ -111,7 +111,7 @@ function journeymanOffers(db) {
 }
 
 /* ---------- New game ---------- */
-function newGame({ name, style, mode, teamId, db, length, diff, ironman }) {
+function newGame({ name, style, mode, teamId, db, length, diff, ironman, look }) {
   db = JSON.parse(JSON.stringify(db));
   S = {
     v: 5, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
@@ -142,6 +142,7 @@ function newGame({ name, style, mode, teamId, db, length, diff, ironman }) {
   ut.budget = Math.round(ut.budget * diffCfg().budget * 10) / 10;
   S.schedule = buildAllSchedules();
   ensureMarket(); ensureRivals();
+  S.coach.look = look || randomCoachLook();
   S.coach.start = { season: S.season, day: 0 }; S.coach.joined = { season: S.season, day: 0 }; S.coach.pcoach = 10; S.coach.badges = [];
   ensureUserStaff();
   setBoardExpectations();

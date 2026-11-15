@@ -105,10 +105,20 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - **Colours everywhere:** text on team colours is chosen to stay readable, and the secondary colour appears as trim on badges, the header and the Continue button. On the court, players wear the primary colour with secondary trim, and the away team switches to its alternate kit when the colours clash.
 - Existing careers keep their world. New careers use the new database.
 
+## Faces
+
+Every player gets a generated face that stays the same all career.
+- **Skin and hair:** skin tone follows nationality, and hair style and colour vary (buzz, fade, afro, twists, cornrows, curly, long, bun, bald and more).
+- **Age:** facial hair gets more likely with age. From about 31, hair greys, hairlines recede and wrinkles appear, so players visibly age through your career.
+- **Extras:** some players wear headbands (more often the show-offs), and everyone wears their club's jersey colours.
+- **Your coach:** you design your own face in New Career (skin, hair, hair colour, facial hair, glasses, or Randomize), shown in a suit with a team-colour tie. Change it any time from the Coach Profile.
+- **Staff:** they get faces too.
+
 ## Code map
 
 - `js/data.js` — name pools, attributes, default teams, helpers
 - `js/engine.js` — player generation, ability calc, possession-by-possession match engine
+- `js/faces.js` — generated SVG faces for players, staff and your coach
 - `js/game.js` — season flow, schedule, playoffs, inbox, morale, injuries, board, trades, free agency, saves
 - `js/traits.js` — traits, archetypes, aging, bios, career logs, duos, staff
 - `js/court.js` — 2D court renderer for Key Highlights

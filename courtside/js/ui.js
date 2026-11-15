@@ -152,6 +152,8 @@ VIEWS.newgame = () => {
     return `${header('New Career', { back: false, right: `<button class="btn sm" data-act="go" data-v="title">Cancel</button>` })}
     <div class="pad">
       <div class="card"><label class="lbl">Coach name</label><input class="inp" id="ngName" maxlength="28" placeholder="Your name" value="${esc(NG.name)}" data-chg="ngName"></div>
+      <h2 class="sec">Your look</h2>
+      ${lookEditor(NG.look = NG.look || randomCoachLook(), 'ng')}
       <h2 class="sec">Career path</h2>
       <div class="pick-grid">
         <button class="pick ${NG.mode === 'journey' ? 'on' : ''}" data-act="ngSet" data-k="mode" data-v="journey"><b>Journeyman</b><span>Start unknown in a European second division. Low attributes, low reputation. Earn your way to the top.</span></button>
@@ -194,7 +196,7 @@ VIEWS.inbox = () => {
   return `${header('Inbox', { right: list.some((m) => !m.read) ? `<button class="btn sm" data-act="readAll">Mark all read</button>` : '' })}
   ${S.phase === 'sacked' ? `<div class="pad"><div class="card warn"><b>You have been sacked.</b><p>Hit <b>Find Job</b> to see which clubs are interested.</p></div></div>` : ''}
   <div class="list mails">${list.length ? list.map((m) => `<button class="li mail ${m.read ? '' : 'unread'} ${m.type === 'whisper' ? 'whisper' : ''}" data-act="mail" data-id="${m.id}">
-    <span class="mfrom-ic ${m.type || ''}">${m.type === 'whisper' ? '🤫' : esc((m.from || '?')[0])}</span>
+    ${m.pid && S.players[m.pid] ? `<span class="mfrom-face">${playerFace(S.players[m.pid], 36)}</span>` : `<span class="mfrom-ic ${m.type || ''}">${m.type === 'whisper' ? '🤫' : esc((m.from || '?')[0])}</span>`}
     <div class="grow"><div class="mrow"><span class="mfrom">${esc(m.from)}</span><span class="mdate">${fmtDate(m.season, m.day, true)}</span></div>
     <div class="msub">${esc(m.subject)}</div>${m.actions && !m.done ? '<span class="tagx">Action needed</span>' : ''}</div></button>`).join('') : '<p class="empty">No messages.</p>'}</div>`;
 };
@@ -224,7 +226,7 @@ VIEWS.squad = () => {
   if (tab === 'ov') {
     const rs = sortSquad(r, 'ov');
     body = `<table class="tbl"><thead><tr>${sth('ov', 'num', '#')}${sth('ov', 'pos', 'Pos')}${sth('ov', 'name', 'Player', 'l')}${sth('ov', 'age', 'Age')}${sth('ov', 'ca', 'Ability')}${sth('ov', 'pot', 'Pot.')}${sth('ov', 'cond', 'Cond')}${sth('ov', 'mor', 'Morale')}</tr></thead><tbody>
-    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td><span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
+    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td><span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm"><span class="mini">${playerFace(p, 26)}</span>${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
     </tbody></table>`;
   } else if (tab === 'st') {
     const rs = sortSquad(r, 'st');
@@ -302,7 +304,7 @@ VIEWS.player = ({ id }) => {
   if (!S.ironman) actions += `<button class="btn" data-act="go" data-v="editPlayer" data-id="${p.id}">${icon('edit')} Edit</button>`;
   return `${header('Player Profile')}
   <div class="phero" style="--pc:${t ? t.c1 : '#555'}">
-    <div class="ph-top">${badge(t, 'xl')}<div class="grow"><div class="ph-name">${p.team != null && p.num != null ? `<span class="jbig">#${p.num}</span> ` : ''}${esc(p.first)} <b>${esc(p.last)}</b></div>
+    <div class="ph-top"><div class="avatar">${playerFace(p, 78)}${t ? `<span class="avbadge">${badge(t)}</span>` : ''}</div><div class="grow"><div class="ph-name">${p.team != null && p.num != null ? `<span class="jbig">#${p.num}</span> ` : ''}${esc(p.first)} <b>${esc(p.last)}</b></div>
       <div class="ph-sub">${POS_NAME[p.pos]} · ${p.age} yrs · ${flag(p)} ${p.nat} · ${fmtHeight(p.h)}</div>
       <div class="ph-sub">${t ? `<a data-act="go" data-v="team" data-id="${t.id}">${esc(teamName(t))}</a> · ${esc(league(t.lg).short)}` : 'Free Agent'}${p.inj ? ` · <span class="neg">Injured: ${esc(p.inj.name)} (${p.inj.days}d)</span>` : ''}${p.wantsOut ? ' · <span class="warn-t">Wants out</span>' : ''}</div>
       ${personalityVisible(p) ? `<div class="ph-sub">Personality: <b>${esc(personality(p))}</b></div>` : ''}
@@ -479,7 +481,7 @@ VIEWS.more = () => `${header('More')}
 VIEWS.coach = () => {
   const c = S.coach;
   return `${header('Coach Profile', { right: S.ironman ? '<span class="imtag">IRONMAN</span>' : `<button class="btn sm" data-act="go" data-v="editCoach">${icon('edit')} Edit</button>` })}
-  <div class="pad"><div class="card coachcard"><div class="big b">${esc(c.name)}</div><div class="muted">${COACH_STYLES[c.style]?.n || 'Coach'} · ${esc(teamName(userTeam()))}</div>
+  <div class="pad"><div class="card coachcard"><div class="coachhead"><div class="avatar">${coachFace(84)}</div><div><div class="big b">${esc(c.name)}</div><button class="btn sm" data-act="go" data-v="coachLook">Change look</button></div></div><div class="muted">${COACH_STYLES[c.style]?.n || 'Coach'} · ${esc(teamName(userTeam()))}</div>
     <div class="kv"><span>Reputation</span><b>${repLabel(c.rep)} (${Math.round(c.rep)})</b></div><div class="meter"><div class="ok" style="width:${c.rep * 5}%"></div></div>
     <div class="kv"><span>Record</span><b>${c.wins}-${c.games - c.wins}${c.games ? ` (${Math.round((c.wins / c.games) * 100)}%)` : ''}</b></div><div class="kv"><span>Titles</span><b>${c.titles}</b></div>
     <div class="kv"><span>Career started</span><b>${fmtDate(c.start.season, c.start.day)}</b></div><div class="kv"><span>Joined club</span><b>${fmtDate(c.joined.season, c.joined.day)}</b></div>
@@ -632,7 +634,7 @@ VIEWS.prematch = () => {
     ${previewCard(f, H, A)}
     ${pressCard('pre', f)}
     ${myInj.length || tired.length ? `<div class="card">${myInj.length ? `<p class="neg">Unavailable: ${myInj.map((p) => esc(pname(p, true))).join(', ')}</p>` : ''}${tired.length ? `<p class="warn-t">Tired: ${tired.map((p) => `${esc(pname(p, true))} (${Math.round(p.cond)}%)`).join(', ')}</p>` : ''}</div>` : ''}
-    <div class="card"><h3>Your starting five</h3>${starters.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span><span class="grow">${injHTML(p)}${esc(pname(p))}${p.instrLock || (userTeam().instr[p.id] || {}).lock ? ' <span class="tagx">🔒 Stopper</span>' : ''}</span><span class="muted sm">${ROLES[(userTeam().instr[p.id] || {}).role || 'bal'].n}</span>${condHTML(p.cond)}</div>`).join('')}
+    <div class="card"><h3>Your starting five</h3>${starters.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="mini">${playerFace(p, 28)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span><span class="grow">${injHTML(p)}${esc(pname(p))}${p.instrLock || (userTeam().instr[p.id] || {}).lock ? ' <span class="tagx">🔒 Stopper</span>' : ''}</span><span class="muted sm">${ROLES[(userTeam().instr[p.id] || {}).role || 'bal'].n}</span>${condHTML(p.cond)}</div>`).join('')}
       <div class="row-btns"><button class="btn sm" data-act="go" data-v="tactics" data-keep="1">Change tactics</button></div></div>
   </div>
   <div class="sticky-cta two-btn"><button class="btn big" data-act="playMatch" data-watch="0">Quick Result</button><button class="btn primary big" data-act="playMatch" data-watch="1">${icon('play')} Go to Match</button></div>`;
@@ -824,7 +826,7 @@ const ACT = {
   ngTeam: (d) => { NG.team = +d.id; render(); },
   ngStart: () => {
     if (!NG.team) return;
-    newGame({ name: NG.name || 'The Coach', style: NG.style, mode: NG.mode, teamId: NG.team, db: NG.db, length: NG.length, diff: NG.diff, ironman: !!NG.ironman && !NG.custom });
+    newGame({ look: NG.look, name: NG.name || 'The Coach', style: NG.style, mode: NG.mode, teamId: NG.team, db: NG.db, length: NG.length, diff: NG.diff, ironman: !!NG.ironman && !NG.custom });
     NG = null; UI.tab = {};
     go('inbox');
   },
@@ -1113,7 +1115,7 @@ function duoTalk(goingId, ctx, mailId) {
     : h.loy >= 15 ? `Coach, I've given everything to this club. ${going.first} and I have something special. Please tell me the rumours aren't true.`
     : h.ego >= 15 ? `Look, I'll still get mine. But ${going.first} makes my life easy out there. Think about what you're doing.`
     : `Coach, can we talk? I heard you might move ${going.first}. He's my guy — we just click. Are you really doing this?`;
-  modal(`<div class="talk-head"><span class="mfrom-ic player">${esc(partner.first[0])}</span><div><b>${esc(pname(partner))}</b><div class="muted sm">⚡ Dynamic Duo with ${esc(pname(going))} · ${personalityVisible(partner) ? esc(personality(partner)) : ''}</div></div></div>
+  modal(`<div class="talk-head"><span class="mfrom-face">${playerFace(partner, 48)}</span><div><b>${esc(pname(partner))}</b><div class="muted sm">⚡ Dynamic Duo with ${esc(pname(going))} · ${personalityVisible(partner) ? esc(personality(partner)) : ''}</div></div></div>
     <p class="quote">“${esc(quote)}”</p>
     <div class="tones one">
       <button class="tone t-demand" data-act="duoAnswer" data-a="business" data-g="${goingId}" data-ctx="${ctx}" data-mail="${mailId || ''}"><b>"It's a business decision."</b><span>Go ahead with the trade. He won't like it.</span></button>
@@ -1139,7 +1141,7 @@ VIEWS.staff = () => {
   const ex = (S.staff || []).filter((s) => s.ex && s.team !== S.userTeam && s.team != null).slice(-20).reverse();
   return `${header('Staff')}
   <div class="pad"><p class="hint">Your backroom team. Retired players with the right mentality can become coaches and scouts — legends of your club will ask to join you.</p></div>
-  <div class="list">${mine.map((st) => `<button class="li" data-act="go" data-v="staffProfile" data-sid="${st.id}"><span class="mfrom-ic staff">${esc(st.first[0])}</span><span class="grow"><b>${esc(st.first)} ${esc(st.last)}</b>${st.ex ? ' <span class="tagx ok">Ex-player</span>' : ''}<div class="muted sm">${STAFF_ROLES[st.role].n} · ${STAFF_ROLES[st.role].d}</div></span>${attrCell(Math.round(staffScores(st.a)[st.role]))}</button>`).join('')}</div>
+  <div class="list">${mine.map((st) => `<button class="li" data-act="go" data-v="staffProfile" data-sid="${st.id}"><span class="mfrom-face">${staffFace(st, 36)}</span><span class="grow"><b>${esc(st.first)} ${esc(st.last)}</b>${st.ex ? ' <span class="tagx ok">Ex-player</span>' : ''}<div class="muted sm">${STAFF_ROLES[st.role].n} · ${STAFF_ROLES[st.role].d}</div></span>${attrCell(Math.round(staffScores(st.a)[st.role]))}</button>`).join('')}</div>
   ${ex.length ? `<h3 class="sec pad">Former players coaching elsewhere</h3><div class="list">${ex.map((st) => `<button class="li" data-act="go" data-v="staffProfile" data-sid="${st.id}">${badge(team(st.team))}<span class="grow"><b>${esc(st.first)} ${esc(st.last)}</b><div class="muted sm">${STAFF_ROLES[st.role].n} · ${st.ex.gp} career games</div></span>${attrCell(Math.round(staffScores(st.a)[st.role]))}</button>`).join('')}</div>` : ''}`;
 };
 VIEWS.staffProfile = ({ sid }) => {
@@ -1147,7 +1149,7 @@ VIEWS.staffProfile = ({ sid }) => {
   if (!st) return header('Staff') + '<p class="empty">No longer in the game.</p>';
   const t = st.team != null ? team(st.team) : null;
   return `${header('Staff Profile')}
-  <div class="phero" style="--pc:${t ? t.c1 : '#555'}"><div class="ph-top">${badge(t, 'xl')}<div class="grow"><div class="ph-name">${esc(st.first)} <b>${esc(st.last)}</b></div>
+  <div class="phero" style="--pc:${t ? t.c1 : '#555'}"><div class="ph-top"><div class="avatar">${staffFace(st, 78)}${t ? `<span class="avbadge">${badge(t)}</span>` : ''}</div><div class="grow"><div class="ph-name">${esc(st.first)} <b>${esc(st.last)}</b></div>
     <div class="ph-sub">${STAFF_ROLES[st.role].n} · ${st.age} yrs · ${NATS[st.nat]?.flag || ''} ${st.nat}</div><div class="ph-sub">${t ? esc(teamName(t)) : 'Unattached'}${st.ex ? ' · <span class="atag">Former player</span>' : ''}</div></div></div></div>
   <div class="pad"><div class="card"><h3>Bio</h3><p class="bio">${esc(staffBio(st))}</p></div></div>
   <div class="attr-grid"><div class="attr-box" style="grid-column:1/-1"><h3>Attributes</h3>${STAFF_ATTRS.map((a) => `<div class="arow"><span>${a.n}</span>${attrCell(st.a[a.k])}</div>`).join('')}</div></div>
@@ -1322,3 +1324,19 @@ ACT.sortBy = (d) => {
   else UI.tab[key] = null;
   render();
 };
+
+/* ---------- v10: faces & coach look editor ---------- */
+function lookEditor(L, target) {
+  const sw = (k, v, col, on) => `<button class="swatch ${on ? 'on' : ''}" style="background:${col}" data-act="lookSet" data-t="${target}" data-k="${k}" data-v="${v}" aria-label="${k} ${v}"></button>`;
+  const chip = (k, v, label, on) => `<button class="chip ${on ? 'on' : ''}" data-act="lookSet" data-t="${target}" data-k="${k}" data-v="${v}">${label}</button>`;
+  return `<div class="card looked"><div class="lookprev">${faceSVG(L, { size: 104, kind: 'coach', c1: target === 'coach' ? userTeam().c1 : '#c92a2a' })}<button class="btn sm" data-act="lookRandom" data-t="${target}">🎲 Randomize</button></div>
+    <label class="lbl">Skin</label><div class="swrow">${SKINS.map((c, i) => sw('skin', i, c, L.skin === i)).join('')}</div>
+    <label class="lbl">Hair</label><div class="chips wrap">${HAIR_STYLES.map((h) => chip('hair', h, HAIR_NAMES[h], L.hair === h)).join('')}</div>
+    <label class="lbl">Hair colour</label><div class="swrow">${Object.entries(HAIR_COLS).map(([k, c]) => sw('hairColor', k, c, L.hairColor === k)).join('')}</div>
+    <label class="lbl">Facial hair</label><div class="chips wrap">${BEARDS.map((b) => chip('beard', b, BEARD_NAMES[b], L.beard === b)).join('')}</div>
+    <label class="lbl">Glasses</label><div class="chips">${chip('glasses', '', 'None', !L.glasses)}${chip('glasses', '1', 'Glasses', !!L.glasses)}</div></div>`;
+}
+const lookOf = (t) => (t === 'ng' ? NG.look : S.coach.look);
+ACT.lookSet = (d) => { const L = lookOf(d.t); L[d.k] = d.k === 'skin' ? +d.v : d.k === 'glasses' ? !!d.v : d.v; if (d.t === 'coach') save(); render(); };
+ACT.lookRandom = (d) => { const nl = randomCoachLook(); if (d.t === 'ng') NG.look = nl; else { S.coach.look = nl; save(); } render(); };
+VIEWS.coachLook = () => `${header('Your Look')}<div class="pad">${lookEditor(S.coach.look = S.coach.look || randomCoachLook(strSeed(S.coach.name)), 'coach')}</div>`;
