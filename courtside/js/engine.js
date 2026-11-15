@@ -174,7 +174,7 @@ function blankBox(tid, gs) { return { min: 0, pts: 0, reb: 0, oreb: 0, ast: 0, s
 function createMatch(S, home, away, opts = {}) {
   const m = { home, away, imp: opts.imp || 0, box: {}, events: [], quarters: [], q: 1, clock: 720, gt: 0, done: false, brk: 0, pauses: !!opts.pauses,
     run: { team: -1, pts: 0, said: 0 }, ot: 0, qs: [0, 0], sinceSub: 0, trans: [0, 0], lastTone: {}, shoutAt: -999, techs: {}, talks: 0,
-    snap: !!opts.pauses, plog: [], out: null, lastHL: -999, nextHL: null, ej: {}, flags: {}, pairT: {}, focus: [0, 0] };
+    snap: !!opts.pauses, plog: [], out: null, rv: typeof playerRivalMap === 'function' ? playerRivalMap() : {}, rp: {}, lastHL: -999, nextHL: null, ej: {}, flags: {}, pairT: {}, focus: [0, 0] };
   m.sides = [home, away].map((team, i) => {
     if (!team.tactics.system) Object.assign(team.tactics, { ...DEFAULT_TACTICS(), ...team.tactics });
     return { team, ctx: { home: i === 0 }, t: team.tactics, ins: team.instr || (team.instr = {}), coach: teamCoachAttrs(S, team), pts: 0,
@@ -235,6 +235,7 @@ function push(m, type, side, text, meta) {
   return e;
 }
 const heatAdd = (s, p, v) => { s.heat[p.id] = clamp((s.heat[p.id] || 0) + v, -1, 1); };
+function rivalOn(m, p, side) { const l = m.rv && m.rv[p.id]; return l ? side.on.find((x) => l.includes(x.id)) || null : null; }
 
 function role(s, p) { const i = s.ins[p.id]; return ROLES[(i && i.role) || 'bal'] || ROLES.bal; }
 function roleMod(s, p, key) {
@@ -408,9 +409,9 @@ function possession(m, oi) {
     p = clamp(p, 0.15, 0.78);
     const foulP = (type === 'in' ? 0.13 + (dt.intensity === 'high' ? 0.03 : 0) : type === 'mid' ? 0.04 : 0.015) * roleMod(O, sh, 'foul') * (ot.system === 'post' ? 1.15 : 1) * (1 - (D.coach.dis - 10) * 0.01);
     const fouled = R.chance(foulP);
-    if (fouled && type === 'in' && dfn.hid.temp <= 7 && !m.ej[dfn.id]) {
+    if (fouled && type === 'in' && (dfn.hid.temp <= 7 || (m.rv[dfn.id] && m.rv[dfn.id].includes(sh.id))) && !m.ej[dfn.id]) {
       const di = 1 - oi;
-      const fc = 0.085 * ((9 - dfn.hid.temp) / 8) * ((D.heat[dfn.id] || 0) < -0.3 ? 1.6 : 1) * (D.pts < O.pts - 8 ? 1.5 : 1) * (1.25 - D.coach.dis / 40) * (m.focus[di] > m.gt ? 0.5 : 1);
+      const fc = (m.rv[dfn.id] && m.rv[dfn.id].includes(sh.id) ? 2 : 1) * 0.085 * ((9 - dfn.hid.temp) / 8) * ((D.heat[dfn.id] || 0) < -0.3 ? 1.6 : 1) * (D.pts < O.pts - 8 ? 1.5 : 1) * (1.25 - D.coach.dis / 40) * (m.focus[di] > m.gt ? 0.5 : 1);
       if (R.chance(fc)) {
         const lvl = R.chance(0.15) ? 2 : 1;
         m.flags[dfn.id] = Math.max(m.flags[dfn.id] || 0, lvl);
@@ -440,7 +441,8 @@ function possession(m, oi) {
       else if (sh.a.jmp >= 12 && R.chance(0.5)) txt = R.pick([`${n} throws it down with authority!`, `HUGE slam from ${n}!`, `${n} rises up and hammers it home!`, `Alley-oop! ${n} finishes above the rim!`]);
       else txt = R.pick([`${n} finishes at the rim.`, `${n} with the layup.`, `${n} scores in the paint.`, `${n} spins and lays it in.`, `${n} with a nice floater.`]);
       if (late && R.chance(0.5)) txt = R.pick(['Clutch! ', 'Big-time bucket! ', 'Ice cold! ']) + txt;
-      heatAdd(O, sh, type === 'thr' ? 0.17 : 0.12); if (ast) heatAdd(O, ast, 0.04);
+      const rvOn = rivalOn(m, sh, D);
+      heatAdd(O, sh, (type === 'thr' ? 0.17 : 0.12) * (rvOn ? 1.6 : 1)); if (ast) heatAdd(O, ast, 0.04);
       const fire = (O.heat[sh.id] || 0) > 0.45;
       m.fireShown = m.fireShown || {};
       const newFire = fire && !m.fireShown[sh.id]; if (fire) m.fireShown[sh.id] = true;
@@ -453,7 +455,8 @@ function possession(m, oi) {
       m.out = { k: type, p: sh.id, a: ast ? ast.id : null, made: true };
       trackRun(m, oi, val + (fouled ? 1 : 0));
       push(m, type === 'thr' ? 'three' : 'score', oi, txt + at, { p: sh.id, a: ast ? ast.id : null, k: type, made: true, hl: late || newFire || (type === 'in' && sh.a.jmp >= 16 && R.chance(0.08)), lbl: late ? 'CLUTCH' : newFire ? 'ON FIRE' : null });
-      if (sh.hid.trash >= 14 && R.chance((sh.hid.trash - 12) * 0.04)) trashTalk(m, O, D, sh, dfn, oi);
+      if (rvOn && R.chance(0.22 + Math.max(0, sh.hid.trash - 10) * 0.02)) trashTalk(m, O, D, sh, rvOn, oi, true);
+      else if (sh.hid.trash >= 14 && R.chance((sh.hid.trash - 12) * 0.04)) trashTalk(m, O, D, sh, dfn, oi);
       return;
     }
     if (fouled) {
@@ -467,7 +470,7 @@ function possession(m, oi) {
     } else {
       b.fga++; if (type === 'thr') b.tpa++;
       m.out = { k: type, p: sh.id, made: false };
-      heatAdd(O, sh, -0.08 * (1.25 - sh.hid.res / 40));
+      heatAdd(O, sh, -0.08 * (1.25 - sh.hid.res / 40) * (rivalOn(m, sh, D) ? 1.6 : 1));
       if (type === 'in' && R.chance(0.1 * (avgE(m, D, def, 'blk') / 10) * 1.4)) {
         const bl = R.wpick(def, (x) => Math.pow(eff(m, D, x, 'blk'), 2.5) * (x.h / 200));
         m.box[bl.id].blk++; m.out.b = bl.id; heatAdd(D, bl, 0.12); heatAdd(O, sh, -0.06);
@@ -512,13 +515,15 @@ function trackRun(m, oi, v) {
     m.sides[oi].on.forEach((p) => heatAdd(m.sides[oi], p, 0.05)); m.sides[1 - oi].on.forEach((p) => heatAdd(m.sides[1 - oi], p, -0.05));
   }
 }
-function trashTalk(m, O, D, sh, dfn, oi) {
-  heatAdd(O, sh, 0.1);
+function trashTalk(m, O, D, sh, dfn, oi, rivals) {
+  heatAdd(O, sh, rivals ? 0.16 : 0.1);
+  const rk = pairKey(sh.id, dfn.id); m.rp[rk] = (m.rp[rk] || 0) + (rivals ? 0 : sh.pos === dfn.pos ? 1.5 : 0.75);
+  if (rivals) { push(m, 'trash', oi, `${pname(sh, 1)} and his rival ${pname(dfn, 1)} are jawing at each other again!`, { p: sh.id, v: dfn.id, k: 'trash', hl: true, lbl: 'RIVALRY' }); }
   if (!sh.known.includes('trash') && sh.team === S.userTeam && m.snap) sh.known.push('trash');
-  if (dfn.hid.temp <= 7 && (m.techs[dfn.id] || 0) < 2 && !m.ej[dfn.id]) {
+  if ((dfn.hid.temp <= 7 || (rivals && dfn.hid.temp <= 11)) && (m.techs[dfn.id] || 0) < 2 && !m.ej[dfn.id]) {
     heatAdd(D, dfn, -0.15);
     push(m, 'trash', oi, `${pname(sh, 1)} lets ${pname(dfn, 1)} hear about it — and it's getting under his skin.`, { p: sh.id, v: dfn.id, k: 'trash', hl: (m.techs[dfn.id] || 0) === 0, lbl: 'TRASH TALK' });
-    if (R.chance(0.22 * (8 - dfn.hid.temp) / 7)) technical(m, D, O, dfn, `${pname(dfn, 1)} bites back at ${pname(sh, 1)} and gets T'd up!`);
+    if (R.chance((rivals ? 0.4 : 0.22) * Math.max(1, 8 - dfn.hid.temp) / 7) && (m.rp[rk] = (m.rp[rk] || 0) + 2)) technical(m, D, O, dfn, `${pname(dfn, 1)} bites back at ${pname(sh, 1)} and gets T'd up!`);
   } else if (dfn.hid.res >= 14) {
     heatAdd(D, dfn, 0.15);
     push(m, 'trash', oi, `${pname(sh, 1)} talks trash to ${pname(dfn, 1)}... who just smiles. That might have woken him up.`, { p: sh.id, v: dfn.id, k: 'trash' });

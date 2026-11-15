@@ -89,6 +89,12 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - **Jersey numbers:** every player has a unique number (0–99) at his club. It's shown on the squad list, the profile, the rotation and inside his dot on the live court.
 - **Retired numbers:** when a club legend retires (4+ seasons, or 3 with a high rating, or a title with you), the board offers to retire his number. Banners hang in **Club & Board → Club History**, and nobody wears that number again.
 
+## Rivalries & press conferences
+
+- **Coach rivalries:** firing back at a coach in the press, poaching one of his top-3 players, or close, overtime and playoff battles all build grudge points. Enough points makes you Rivals, then Bitter Rivals, then Sworn Enemies, shown on your Coach Profile, his club page and the hot seat. Before a grudge match he talks trash in the media. The preview flags the ⚔️ GRUDGE MATCH, and board-confidence and morale swings on the result are doubled.
+- **Player rivalries:** trash talkers and hotheads who battle opponents at their position, or former teammates who leave on bad terms (clashing egos, unsettled exits), become personal rivals. When both are on court they trash talk far more, swing harder between On Fire and Cold, and are much likelier to get technicals and flagrants. They're marked with red rings on the court and listed in the preview.
+- **Press conferences:** before and after every game, three questions each about rivals, your star, expectations, the result, ejections and the player of the match. Answers move morale, board confidence and rivalries, and blaming the refs can get you fined. Your Media Handling attribute matters. Delegate pre-game, post-game or both to your assistant in Settings (or per game) and he keeps it measured.
+
 ## Code map
 
 - `js/data.js` — name pools, attributes, default teams, helpers
@@ -98,6 +104,7 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - `js/court.js` — 2D court renderer for Key Highlights
 - `js/market.js` — transfer list, interest, ambition, hot seat, rumours, deals log
 - `js/preview.js` — win probability, odds, scouting, tactical tweak, upset swings
+- `js/rivals.js` — coach & player rivalries, press conferences
 - `js/achieve.js` — difficulty settings, Ironman lock, achievements
 - `js/model.js` — save schema version & migrations
 - `js/ui.js` — all screens & interactions

@@ -189,6 +189,12 @@ const Court = {
       if (dist > 0.01) { d.x += (dx / dist) * step; d.y += (dy / dist) * step; }
       d.a += ((onCourt ? 1 : 0) - d.a) * Math.min(1, dt * 3);
     }
+    const onIds = new Set(m.sides.flatMap((s) => s.on.map((p) => p.id)));
+    if (m.rv) for (const id of onIds) for (const o of m.rv[id] || []) if (onIds.has(o) && id < o && this.dots[id] && this.dots[o]) {
+      const c = this.ctx, r = Math.max(7, this.W / 48) + 4; c.strokeStyle = 'rgba(255,82,82,.85)'; c.lineWidth = 1.5; c.setLineDash([3, 3]);
+      for (const q of [this.dots[id], this.dots[o]]) { c.beginPath(); c.arc(this.X(q.x), this.Y(Math.min(q.y, 49.5)), r, 0, Math.PI * 2); c.stroke(); }
+      c.setLineDash([]);
+    }
     for (const id in this.dots) {
       const d = this.dots[id]; if (d.a < 0.03) continue;
       const si = sideOf[id]; if (si == null) continue;

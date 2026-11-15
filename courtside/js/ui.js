@@ -274,6 +274,7 @@ VIEWS.player = ({ id }) => {
       <div class="card"><h3>Bio</h3><p class="bio">${esc(playerBio(p, { pers: personalityVisible(p), arch: archVisible(p), ca: seenCA(p), pot: seenPot(p) }))}</p></div>
       ${archVisible(p) && p.arch.length ? `<div class="card"><h3>Traits</h3>${p.arch.map((k) => `<div class="lrow"><span class="arch-ic">${ARCHETYPES[k].ic}</span><span class="grow"><b>${ARCHETYPES[k].n}</b><div class="muted sm">${ARCHETYPES[k].d}</div></span></div>`).join('')}</div>` : ''}
       ${dpp ? `<div class="card duo"><h3>⚡ Dynamic Duo</h3><div class="lrow" data-act="player" data-id="${dpp.id}"><span class="grow"><b>${esc(pname(dpp))}</b><div class="muted sm">+1 to Finishing, Mid-Range, Three Point, Passing and IQ when they share the floor. They look for each other.</div></span></div></div>` : ''}
+      ${playerRivalOf(p.id).length ? `<div class="card rivalcard"><h3>⚔️ Personal rivals</h3>${playerRivalOf(p.id).filter((r) => S.players[r.other]).map((r) => { const o = S.players[r.other]; return `<div class="lrow" data-act="player" data-id="${o.id}"><span class="grow"><b>#${o.num ?? '–'} ${esc(pname(o))}</b> ${o.team != null ? badge(team(o.team)) : ''}<div class="muted sm">${esc(r.reason)} · since ${r.since.season}</div></span></div>`; }).join('')}</div>` : ''}
       <div class="card"><h3>Personality</h3><div class="big b">${personalityVisible(p) ? esc(personality(p)) : 'Unknown'}</div>${personalityVisible(p) ? '' : '<p class="hint">Your staff don\'t know him well enough yet.</p>'}</div>
       <div class="card"><h3>Coach's notes</h3>${notes || peakNote ? `<ul class="notes">${notes}${peakNote}</ul>` : `<p class="muted">${mine ? 'Staff are still getting to know him. Keep your ears open around the building.' : 'Nothing on file. Rumours and scouting will fill this in.'}</p>`}</div>
       <div class="card"><h3>Roles</h3>${Object.keys(ROLES).filter((r) => r !== 'bal').map((r) => ({ r, s: roleScore(p, r) })).sort((a, b) => b.s - a.s).slice(0, 4).map(({ r, s }) => `<div class="lrow"><span class="grow">${ROLES[r].n}${r === br ? ' <span class="tagx ok">Best</span>' : ''}${mine && ins.role === r ? ' <span class="tagx">Current</span>' : ''}</span>${starsHTML(stars(s))}</div>`).join('')}
@@ -301,7 +302,7 @@ VIEWS.player = ({ id }) => {
       <div class="ph-sub">${POS_NAME[p.pos]} · ${p.age} yrs · ${flag(p)} ${p.nat} · ${fmtHeight(p.h)}</div>
       <div class="ph-sub">${t ? `<a data-act="go" data-v="team" data-id="${t.id}">${esc(teamName(t))}</a> · ${esc(league(t.lg).short)}` : 'Free Agent'}${p.inj ? ` · <span class="neg">Injured: ${esc(p.inj.name)} (${p.inj.days}d)</span>` : ''}${p.wantsOut ? ' · <span class="warn-t">Wants out</span>' : ''}</div>
       ${personalityVisible(p) ? `<div class="ph-sub">Personality: <b>${esc(personality(p))}</b></div>` : ''}
-      <div class="ph-sub">${archVisible(p) ? p.arch.map((k) => `<span class="atag">${ARCHETYPES[k].ic} ${ARCHETYPES[k].n}</span>`).join('') : ''}${duoPartner(p.id) && S.players[duoPartner(p.id)] ? `<span class="atag duo">⚡ Duo: ${esc(S.players[duoPartner(p.id)].last)}</span>` : ''}${p.susp > 0 ? `<span class="atag bad">Suspended (${p.susp})</span>` : ''}${p.listed ? '<span class="atag tl">Transfer Listed</span>' : ''}${p.unsettled && isMine(p) ? '<span class="atag bad">Unsettled</span>' : ''}${p.wantsTo && isMine(p) && team(p.wantsTo) ? `<span class="atag bad">Wants ${esc(team(p.wantsTo).nick)}</span>` : ''}${p.movePromise != null && isMine(p) ? '<span class="atag">Promised a move</span>' : ''}</div>
+      <div class="ph-sub">${archVisible(p) ? p.arch.map((k) => `<span class="atag">${ARCHETYPES[k].ic} ${ARCHETYPES[k].n}</span>`).join('') : ''}${duoPartner(p.id) && S.players[duoPartner(p.id)] ? `<span class="atag duo">⚡ Duo: ${esc(S.players[duoPartner(p.id)].last)}</span>` : ''}${p.susp > 0 ? `<span class="atag bad">Suspended (${p.susp})</span>` : ''}${p.listed ? '<span class="atag tl">Transfer Listed</span>' : ''}${playerRivalOf(p.id).filter((r) => S.players[r.other]).map((r) => `<span class="atag bad">⚔️ ${esc(S.players[r.other].last)}</span>`).join('')}${p.unsettled && isMine(p) ? '<span class="atag bad">Unsettled</span>' : ''}${p.wantsTo && isMine(p) && team(p.wantsTo) ? `<span class="atag bad">Wants ${esc(team(p.wantsTo).nick)}</span>` : ''}${p.movePromise != null && isMine(p) ? '<span class="atag">Promised a move</span>' : ''}</div>
       ${isMine(p) && interestFor(p.id).length ? `<div class="ph-sub wantedby">Wanted by: ${interestFor(p.id).slice(0, 4).map((i) => `${badge(team(i.tid))} <span class="ilv ${INTEREST_LVL[i.lvl][1]}">${INTEREST_LVL[i.lvl][0]}</span>`).join(' ')}</div>` : ''}</div></div>
     <div class="ph-stats">
       <div><span>Ability</span>${starsHTML(stars(seenCA(p)))}</div>
@@ -324,7 +325,8 @@ VIEWS.team = ({ id }) => {
   return `${header(esc(teamName(t)))}
   <div class="pad"><div class="card teamcard" style="--pc:${t.c1}">${badge(t, 'xl')}<div class="grow"><div class="b big">${esc(teamName(t))}</div><div class="muted">${lgFlag(lg)} ${esc(lg.name)} · ${t.w}-${t.l} · ${ordinal(teamRank(t.id))}</div>
   <div class="muted sm">${TACTIC_OPTS.system.find((x) => x[0] === tc.system)?.[1] || 'Motion'} offense · ${TACTIC_OPTS.defense.find((x) => x[0] === tc.defense)?.[1]} defense · ${tc.pace} pace</div>
-  <div class="muted sm">Prestige ${prestigeStars(t.prestige)} · Payroll ${fmtMoney(teamPayroll(t.id))}</div></div></div></div>
+  <div class="muted sm">Prestige ${prestigeStars(t.prestige)} · Payroll ${fmtMoney(teamPayroll(t.id))}</div>
+  ${t.coach && t.id !== S.userTeam ? `<div class="sm">Coach: <b>${esc(t.coach.name)}</b>${coachRival(t) ? ` <span class="rivlvl">⚔️ ${rivalLabel(coachRival(t).pts)}</span>` : ''}</div>` : ''}</div></div></div>
   <div class="scrollx"><table class="tbl"><thead><tr><th>Pos</th><th class="l">Player</th><th>Age</th><th>Ability</th><th>PPG</th><th>Salary</th></tr></thead><tbody>
   ${r.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 ? 'sep' : ''}"><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}</td><td>${p.age}</td><td>${starsHTML(stars(seenCA(p)))}</td><td>${avg1(p.st.pts, p.st.gp)}</td><td>${fmtMoney(p.contract.sal)}</td></tr>`).join('')}
   </tbody></table></div>`;
@@ -479,7 +481,8 @@ VIEWS.coach = () => {
     <div class="kv"><span>Career started</span><b>${fmtDate(c.start.season, c.start.day)}</b></div><div class="kv"><span>Joined club</span><b>${fmtDate(c.joined.season, c.joined.day)}</b></div>
     <div class="kv"><span>Days in charge</span><b>${daysBetween(c.joined, { season: S.season, day: S.day })}</b></div>
     <div class="kv"><span>Player's Coach</span><b>${attrCell(c.pcoach ?? 10)}</b></div></div>
-    <div class="card"><h3>Bio</h3><p class="bio">${esc(coachBio())}</p></div></div>
+    <div class="card"><h3>Bio</h3><p class="bio">${esc(coachBio())}</p></div>
+    <div class="card rivalcard"><h3>⚔️ Personal rivals</h3>${(S.rivals?.coach || []).length ? S.rivals.coach.map((r) => { const t = S.teams.find((x) => x.coach && x.coach.name === r.name); return `<div class="lrow"><span class="grow"><b>${esc(r.name)}</b> ${t ? badge(t) : '<span class="muted sm">(out of work)</span>'}<div class="muted sm">${esc(r.reasons.join(' · ') || 'Long-running feud')}</div></span><span class="rivlvl">${rivalLabel(r.pts)}</span></div>`; }).join('') : '<p class="muted">No rivals yet. Clash with coaches in the press, poach their stars or battle them in tight games and the media will make it personal.</p>'}</div></div>
   <div class="attr-grid three">${COACH_GROUPS.map((g) => `<div class="attr-box"><h3>${g}</h3>${COACH_ATTRS.filter((a) => a.g === g).map((a) => `<div class="arow"><span>${a.n}</span>${attrCell(c.a[a.k])}</div>`).join('')}</div>`).join('')}</div>
   <div class="pad"><p class="hint">Coaching attributes shape matches (Offense, Defense, Tactical Knowledge), development (Player Development, Conditioning), team talks (Motivating, Man Management, Discipline) and how accurately you rate players (Judging Ability / Potential). They grow with experience and success.</p></div>
   <h3 class="sec pad">Career</h3>
@@ -514,6 +517,9 @@ VIEWS.training = () => `${header('Training')}
   <div class="list">${Object.entries(TRAINING).map(([k, v]) => `<button class="li ${S.training === k ? 'sel' : ''}" data-act="training" data-v="${k}"><span class="cbx">${S.training === k ? '✓' : ''}</span><span class="grow"><b>${v.n}</b><div class="muted sm">${v.d}</div></span></button>`).join('')}</div>`;
 VIEWS.settings = () => `${header('Save & Settings')}
   <div class="pad">
+    <div class="card"><h3>Press conferences</h3><p class="hint">Face the media yourself, or send your assistant (he keeps it measured — no drama, no rivalry fuel).</p>
+      <label class="lbl">Pre-match</label><div class="seg">${[['me', 'I\'ll do it'], ['assistant', 'Assistant']].map(([v, l]) => `<button class="${S.press.pre === v ? 'on' : ''}" data-act="pressSet" data-k="pre" data-v="${v}">${l}</button>`).join('')}</div>
+      <label class="lbl">Post-match</label><div class="seg">${[['me', 'I\'ll do it'], ['assistant', 'Assistant']].map(([v, l]) => `<button class="${S.press.post === v ? 'on' : ''}" data-act="pressSet" data-k="post" data-v="${v}">${l}</button>`).join('')}</div></div>
     <div class="card"><h3>Career mode</h3><div class="kv"><span>Difficulty</span><b>${DIFFICULTY[S.diff || 'normal'].n}</b></div><div class="kv"><span>Mode</span><b>${S.ironman ? '🛡️ Ironman' : 'Standard'}</b></div></div>
     <div class="card"><h3>Save game</h3><p class="hint">Your career auto-saves on this device after every action.</p>
       ${S.ironman ? '<p class="hint">🔒 Ironman: backups and restores are disabled. Matches you start are final — reloading the app plays them out.</p>' : `<div class="row-btns"><button class="btn" data-act="exportSave">Download backup</button><label class="btn file">Restore backup<input type="file" accept=".json,application/json" data-chg="importSave" hidden></label></div>`}</div>
@@ -620,6 +626,7 @@ VIEWS.prematch = () => {
       <div class="mt">${badge(H, 'xl')}<b>${esc(H.nick)}</b><span class="muted sm">${f.type === 'po' ? '' : `${H.w}-${H.l}`}</span>${starsHTML(stars(teamStrength(H.id)))}</div>
     </div>
     ${previewCard(f, H, A)}
+    ${pressCard('pre', f)}
     ${myInj.length || tired.length ? `<div class="card">${myInj.length ? `<p class="neg">Unavailable: ${myInj.map((p) => esc(pname(p, true))).join(', ')}</p>` : ''}${tired.length ? `<p class="warn-t">Tired: ${tired.map((p) => `${esc(pname(p, true))} (${Math.round(p.cond)}%)`).join(', ')}</p>` : ''}</div>` : ''}
     <div class="card"><h3>Your starting five</h3>${starters.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span><span class="grow">${injHTML(p)}${esc(pname(p))}${p.instrLock || (userTeam().instr[p.id] || {}).lock ? ' <span class="tagx">🔒 Stopper</span>' : ''}</span><span class="muted sm">${ROLES[(userTeam().instr[p.id] || {}).role || 'bal'].n}</span>${condHTML(p.cond)}</div>`).join('')}
       <div class="row-btns"><button class="btn sm" data-act="go" data-v="tactics" data-keep="1">Change tactics</button></div></div>
@@ -759,6 +766,7 @@ VIEWS.result = () => {
       <tr><td>${esc(H.abbr)}</td>${r.quarters.map((q) => `<td>${q[0]}</td>`).join('')}<td><b>${r.hs}</b></td></tr></table>
       ${pom ? `<div class="pomc" data-act="player" data-id="${pom.id}">★ Player of the Match: <b>${esc(pname(pom))}</b> (${esc(team(r.box[pom.id].team).abbr)}) ${ratingPill(r.ratings[pom.id])}</div>` : ''}
     </div>
+    ${pressCard('post', S.schedule.find((x) => x.id === r.fid) || { id: r.fid, h: r.h, a: r.a })}
     <div class="card" id="ftt">${r.talked ? (UI.ftReact ? `<h3>Post-match talk</h3>${reactionsHTML(UI.ftReact)}` : '<p class="muted">Post-match talk done.</p>') : `<h3>Post-match team talk</h3><p class="hint">Your words now affect morale going into the next game.</p><div class="tones compact">${Object.entries(TONES).map(([k, v]) => `<button class="tone t-${k}" data-act="ftTalk" data-v="${k}"><b>${v.n}</b></button>`).join('')}</div>`}</div>
   </div>
   <div class="tabs"><button class="tab ${side === 'a' ? 'on' : ''}" data-act="tab" data-k="rside" data-v="a">${esc(A.nick)}</button><button class="tab ${side === 'h' ? 'on' : ''}" data-act="tab" data-k="rside" data-v="h">${esc(H.nick)}</button></div>
@@ -1177,7 +1185,7 @@ function rumourMillView() {
     const all = hotSeat(lf), myPos = all.findIndex((x) => x.t.id === S.userTeam) + 1;
     body = `${myPos ? `<div class="pad"><div class="card ${S.board.conf < 30 ? 'warn' : ''}"><div class="kv"><span>Your position on the sack race</span><b>${ordinal(myPos)} of ${all.length}</b></div><div class="kv"><span>Odds</span><b>${oddsFor(S.board.conf)}</b></div></div></div>` : ''}
     <div class="scrollx"><table class="tbl"><thead><tr><th>#</th><th class="l">Coach</th><th>Board</th><th>Odds</th></tr></thead><tbody>
-    ${list.map((x, i) => `<tr class="${x.t.id === S.userTeam ? 'me' : ''}" data-act="go" data-v="team" data-id="${x.t.id}"><td>${i + 1}</td><td class="l nm">${badge(x.t)} <b>${esc(coachName(x.t))}</b>${x.t.id === S.userTeam ? ' <span class="tagx">YOU</span>' : ''}<div class="muted sm">${esc(x.t.nick)} · ${x.t.w}-${x.t.l} · ${esc(league(x.t.lg).short)}</div></td><td><div class="meter mini"><div class="${x.conf >= 50 ? 'ok' : x.conf >= 25 ? 'mid' : 'bad'}" style="width:${x.conf}%"></div></div></td><td class="b">${oddsFor(x.conf)}</td></tr>`).join('')}
+    ${list.map((x, i) => `<tr class="${x.t.id === S.userTeam ? 'me' : ''}" data-act="go" data-v="team" data-id="${x.t.id}"><td>${i + 1}</td><td class="l nm">${badge(x.t)} <b>${esc(coachName(x.t))}</b>${x.t.id === S.userTeam ? ' <span class="tagx">YOU</span>' : coachRival(x.t) ? ' <span class="rivlvl">⚔️</span>' : ''}<div class="muted sm">${esc(x.t.nick)} · ${x.t.w}-${x.t.l} · ${esc(league(x.t.lg).short)}</div></td><td><div class="meter mini"><div class="${x.conf >= 50 ? 'ok' : x.conf >= 25 ? 'mid' : 'bad'}" style="width:${x.conf}%"></div></div></td><td class="b">${oddsFor(x.conf)}</td></tr>`).join('')}
     </tbody></table></div><p class="hint pad">Next coach to leave his job — bookmaker odds based on board confidence.</p>`;
   } else if (sub === 'news') {
     const items = (S.news || []).filter((n) => inLg(n.lg) || n.mine).slice(0, 50);
@@ -1220,8 +1228,12 @@ function previewCard(f, H, A) {
   const applied = S.tweakApplied === f.id;
   const tw = pv.tweak;
   const stopTxt = tw.stopper ? `${pname(S.players[tw.stopper.id], true)} (#${S.players[tw.stopper.id].num}) shadows ${pname(S.players[tw.stopper.star], true)}` : null;
+  const oppT = team(f.h === S.userTeam ? f.a : f.h), cr = coachRival(oppT);
+  const prv = []; const rmap = playerRivalMap();
+  roster(S.userTeam).forEach((p) => (rmap[p.id] || []).forEach((oid) => { const o = S.players[oid]; if (o && o.team === oppT.id) prv.push([p, o]); }));
   return `<div class="card preview">
     <h3>Match Preview</h3>
+    ${cr ? `<div class="grudge">⚔️ <b>GRUDGE MATCH</b> — you vs ${esc(cr.name)} · ${rivalLabel(cr.pts)}<div class="sm">Board confidence and locker-room swings are doubled tonight.</div></div>` : ''}
     <div class="wp-row"><span class="b">${esc(A.abbr)} ${pa}%</span><span class="muted sm">Win probability</span><span class="b">${ph}% ${esc(H.abbr)}</span></div>
     <div class="wpbar"><div style="width:${pa}%;background:${A.c1}"></div><div style="width:${ph}%;background:${H.c1}"></div></div>
     <div class="odds">
@@ -1231,7 +1243,7 @@ function previewCard(f, H, A) {
     </div>
     <p class="hint">Based on available players, condition, morale, form and home court. ${pv.pUs < 0.35 ? 'An upset here would lift the board and the locker room.' : pv.pUs > 0.65 ? 'We are clear favourites — losing this one would hurt.' : ''}</p>
     <h3 class="sec2">Assistant's scouting</h3>
-    <ul class="scout">${pv.bullets.map((b) => `<li><span>${b.ic}</span><div>${b.html}</div></li>`).join('')}</ul>
+    <ul class="scout">${pv.bullets.map((b) => `<li><span>${b.ic}</span><div>${b.html}</div></li>`).join('')}${prv.map(([a, o]) => `<li><span>⚔️</span><div><b>#${a.num} ${esc(a.last)}</b> vs <b>#${o.num} ${esc(o.last)}</b> — personal rivals. Expect trash talk, big swings and foul trouble when they share the floor.</div></li>`).join('')}</ul>
     ${tw.changes.length || stopTxt ? `<div class="tweak"><div class="muted sm">Recommended tweak</div><div class="sm">${tw.changes.map((c) => esc(c.label)).concat(stopTxt ? [`🔒 ${esc(stopTxt)}`] : []).join(' · ')}</div>
       <button class="btn ${applied ? '' : 'primary'} big" data-act="applyTweak" ${applied ? 'disabled' : ''}>${applied ? '✓ Tweak applied' : 'Apply Assistant\'s Tweak'}</button></div>` : ''}
   </div>`;
@@ -1253,3 +1265,29 @@ VIEWS.clubHistory = () => {
   </div>`;
 };
 ACT.applyTweak = () => { if (!UI.pv) return; applyTweak(UI.pv); toast("Assistant's tweak applied."); render(); };
+
+/* ---------- v7: press conferences ---------- */
+function pressCard(kind, f) {
+  if (!f) return '';
+  ensureRivals();
+  const label = kind === 'pre' ? 'Pre-match press conference' : 'Post-match press conference';
+  if (S.pressDone[kind] === f.id) return `<div class="card press done"><h3>🎙️ ${label}</h3><p class="muted sm">${S.press[kind] === 'assistant' ? 'Your assistant handled the media and kept it measured.' : 'Done.'}</p></div>`;
+  return `<div class="card press"><h3>🎙️ ${label}</h3><p class="hint">The media are waiting. Your answers affect morale, the board and your rivalries.</p>
+    <div class="row-btns"><button class="btn primary" data-act="pressStart" data-k="${kind}" data-f="${f.id}">Face the press</button><button class="btn" data-act="pressAssistant" data-k="${kind}" data-f="${f.id}">Send assistant</button></div></div>`;
+}
+function pressFixture(fid) { return S.schedule.find((x) => x.id === +fid) || (S.lastResult && S.lastResult.fid === +fid ? { id: +fid, h: S.lastResult.h, a: S.lastResult.a } : null); }
+function pressModal() {
+  const P = UI.press, q = P.qs[P.i];
+  if (!q) {
+    S.pressDone[P.kind] = P.f.id; save(); closeModal();
+    toast(P.notes.length ? `🎙️ Press done · ${esc(P.notes.join(' · '))}` : '🎙️ Press conference done.');
+    return render();
+  }
+  modal(`<div class="muted sm">🎙️ ${P.kind === 'pre' ? 'Pre-match' : 'Post-match'} press conference · question ${P.i + 1} of ${P.qs.length}</div><h2 class="pq">${esc(q.q)}</h2>
+    <div class="tones one">${q.opts.map((o, i) => `<button class="tone ${['t-berate', 't-calm', 't-encourage'][i]}" data-act="pressAnswer" data-i="${i}"><b>${esc(o.t)}</b><span>${esc(o.d)}</span></button>`).join('')}</div>
+    <p class="hint">Your Media Handling (${S.coach.a.med}) affects how well your words land.</p>`, { locked: true, tall: true });
+}
+ACT.pressStart = (d) => { const f = pressFixture(d.f); if (!f) return; UI.press = { kind: d.k, f, qs: pressQuestions(d.k, f), i: 0, notes: [] }; pressModal(); };
+ACT.pressAnswer = (d) => { const P = UI.press; const o = P.qs[P.i].opts[+d.i]; P.notes.push(...applyPress(o.fx, P.f)); P.i++; pressModal(); };
+ACT.pressAssistant = (d) => { const f = pressFixture(d.f); if (!f) return; assistantPress(d.k, f); save(); toast('Your assistant faced the media.'); render(); };
+ACT.pressSet = (d) => { S.press[d.k] = d.v; save(); render(); };

@@ -1,7 +1,7 @@
 /* Courtside Manager — schema versioning & save migrations */
 'use strict';
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 // Upgrade any older save to the current schema without losing the career.
 function migrateSave(o) {
@@ -24,5 +24,6 @@ function migrateSave(o) {
     const prev = S; S = o;
     try { ensureMarket(); o.v = 4; } finally { if (prev) S = prev; }
   }
+  if (o.v < 5) { const prev = S; S = o; try { ensureRivals(); o.v = Math.max(o.v, 5); } finally { if (prev) S = prev; } }
   return o;
 }

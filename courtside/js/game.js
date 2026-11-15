@@ -113,7 +113,7 @@ function journeymanOffers(db) {
 function newGame({ name, style, mode, teamId, db, length, diff, ironman }) {
   db = JSON.parse(JSON.stringify(db));
   S = {
-    v: 4, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
+    v: 5, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
     coach: makeCoach(name, style, mode), userTeam: teamId, diff: DIFFICULTY[diff] ? diff : 'normal', ironman: !!ironman, matchLock: null,
     leagues: db.leagues.map((l) => ({ ...l, state: 'regular', po: null, final: [] })),
     teams: [], players: {}, schedule: [], inbox: [], nextPid: db.nextPid || 1, nextMid: 1, nextFx: 1,
@@ -140,7 +140,7 @@ function newGame({ name, style, mode, teamId, db, length, diff, ironman }) {
   ut.budget = Math.max(ut.budget, Math.round((teamPayroll(ut.id) * 1.06 + 1) * 10) / 10);
   ut.budget = Math.round(ut.budget * diffCfg().budget * 10) / 10;
   S.schedule = buildAllSchedules();
-  ensureMarket();
+  ensureMarket(); ensureRivals();
   S.coach.start = { season: S.season, day: 0 }; S.coach.joined = { season: S.season, day: 0 }; S.coach.pcoach = 10; S.coach.badges = [];
   ensureUserStaff();
   setBoardExpectations();
@@ -277,7 +277,7 @@ function advanceDay() {
   const playing = new Set(today.flatMap((f) => [f.h, f.a]));
   S.teams.forEach((t) => { if (playing.has(t.id) && (t.id !== S.userTeam || S.autoRot)) autoRotation(S, t); });
   const uf = today.find((f) => f.h === S.userTeam || f.a === S.userTeam);
-  if (uf) { S.pending = uf.id; return 'prematch'; }
+  if (uf) { S.pending = uf.id; rivalsPregame(uf); if (S.press.pre === 'assistant') assistantPress('pre', uf); return 'prematch'; }
   simDay(today);
   return 'day';
 }
@@ -418,9 +418,12 @@ function finishUserMatch(m) {
   applyResult(f, res);
   S.pending = null; S.matchLock = null;
   S.lastResult = { fid: f.id, hs: res.hs, as: res.as, box: res.box, ratings: res.ratings, pom: res.pom, quarters: res.quarters, h: f.h, a: f.a, talked: false };
+  const confBefore = S.board.conf, moraleBefore = {}; roster(S.userTeam).forEach((p) => (moraleBefore[p.id] = p.morale));
+  S.lastTechs = { ...(res.techs || {}), ...(res.flags || {}) };
   userPostMatch(f, res);
   recordPairs(m); checkDuos();
-  { const us = f.h === S.userTeam ? res.hs : res.as, them = f.h === S.userTeam ? res.as : res.hs; upsetSwing(f, us > them); achAfterMatch(m, us > them, us, them); }
+  { const us = f.h === S.userTeam ? res.hs : res.as, them = f.h === S.userTeam ? res.as : res.hs; upsetSwing(f, us > them); rivalsPostMatch(m, f, res, confBefore, moraleBefore); achAfterMatch(m, us > them, us, them); }
+  if (S.press.post === 'assistant') assistantPress('post', f);
   simDay(S.schedule.filter((x) => x.day === f.day && !x.played));
   save();
 }
@@ -746,6 +749,7 @@ function startNewSeason() {
   }
   for (const p of retirees) { handleRetirement(p); delete S.players[p.id]; }
   staffNewSeason();
+  prunePlayerRivals();
   for (const p of Object.values(S.players)) {
     if (p.team == null) continue;
     p.contract.yrs--;
@@ -869,6 +873,7 @@ function proposeTrade(targetId, offerIds, duoTalked) {
   return { ok: false, msg: `${t.nick} GM: “${txt}”` };
 }
 function executeTrade(otherTeamId, incoming, outgoing, duoTalked) {
+  rivalsOnTrade(otherTeamId, incoming, outgoing);
   incoming.concat(outgoing).forEach((id) => logStint(S.players[id]));
   logTrade(userTeam(), team(otherTeamId), incoming, outgoing);
   onUserTradeOut(outgoing, otherTeamId);
