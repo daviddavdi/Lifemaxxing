@@ -631,31 +631,53 @@ VIEWS.prematch = () => {
 };
 
 /* Live match */
+const SPEEDS = { 1: 4, 2: 8, 4: 16, 8: 32 }; // game seconds per real second (1× ≈ 12-minute game)
+function clockAt(t) {
+  if (t < 2880) { const q = Math.min(4, Math.floor(t / 720) + 1); return { q, c: Math.max(0, 720 - (t - (q - 1) * 720)) }; }
+  const k = Math.floor((t - 2880) / 300); return { q: 5 + k, c: Math.max(0, 300 - (t - 2880 - k * 300)) };
+}
 const Live = {
-  m: null, t: 0, speed: 1, timer: null, paused: false, painted: -1, tab: 'feed',
-  start(m) { this.m = m; this.t = 0; this.speed = 1; this.paused = true; this.painted = -1; this.tab = 'feed'; this.finished = false; clearInterval(this.timer); this.timer = setInterval(() => this.tick(), 100); },
-  tick() {
-    const m = this.m; if (!m || UI.view !== 'match') return;
-    if (m.done) { if (!this.finished) this.finish(); return; }
-    if (this.paused || document.querySelector('.modal-bg')) return;
-    if (m.brk) { this.breakTime(); return; }
-    if (this.holdUntil && performance.now() < this.holdUntil) { this.paintLegend(); return; }
-    this.t += { 1: 45, 2: 100, 4: 240 }[this.speed] * 0.1;
-    const n0 = m.events.length;
-    simUntil(m, this.t);
-    if (this.hlOn !== false && $('#court')) {
-      const hl = m.events.slice(n0).filter((e) => e.hl && e.on).pop();
-      if (hl) { const dur = { 1: 2600, 2: 2100, 4: 1500 }[this.speed]; Court.play(hl, m, dur); this.holdUntil = performance.now() + dur + 120; }
+  m: null, t: 0, speed: 1, paused: false, painted: -1, tab: 'feed', hlOn: true, raf: 0, last: 0, lastPaint: 0, curRate: 6, hlLabel: null,
+  start(m) {
+    this.m = m; this.t = 0; this.speed = 1; this.paused = true; this.painted = -1; this.tab = 'feed'; this.finished = false; this.hlLabel = null;
+    cancelAnimationFrame(this.raf); this.last = performance.now(); this.raf = requestAnimationFrame((ts) => this.loop(ts));
+  },
+  loop(ts) {
+    if (!this.m || UI.view !== 'match') { this.raf = 0; return; }
+    const dt = Math.min(0.1, Math.max(0, (ts - this.last) / 1000)); this.last = ts;
+    this.raf = requestAnimationFrame((t2) => this.loop(t2));
+    this.step(dt);
+    if (ts - this.lastPaint > 120) { this.lastPaint = ts; this.paint(); }
+  },
+  nearHL() {
+    const m = this.m;
+    for (let i = m.events.length - 1; i >= 0; i--) {
+      const e = m.events[i];
+      if (e.g < this.t - 2.5) break;
+      if (e.hl && e.g <= this.t + 3.5) return e;
     }
-    this.paint();
+    return null;
   },
-  paintLegend() {
-    const m = this.m, el = $('#clegend'); if (!el || !m) return;
-    const hot = [], cold = [];
-    m.sides.forEach((s) => s.on.forEach((p) => { const h = s.heat[p.id] || 0; if (h > 0.45) hot.push(`${esc(s.team.abbr)} ${esc(p.last)}`); else if (h < -0.45) cold.push(`${esc(s.team.abbr)} ${esc(p.last)}`); }));
-    const html = `<span class="fire">🔥 ${hot.join(', ') || '—'}</span><span class="ice">🧊 ${cold.join(', ') || '—'}</span>`;
-    if (el._h !== html) { el._h = html; el.innerHTML = html; }
+  step(dt) {
+    const m = this.m;
+    if (m.done && this.t >= m.gt) { if (!this.finished) this.finish(); return; }
+    if (this.paused || document.querySelector('.modal-bg')) { this.curRate = 0; return; }
+    if (m.brk && this.t >= m.gt) { this.curRate = 0; this.breakTime(); return; }
+    let rate = SPEEDS[this.speed] || 4;
+    this.hlLabel = null;
+    if (this.hlOn) { const e = this.nearHL(); if (e) { rate = Math.min(rate, 1.6); this.hlLabel = e.lbl || 'KEY MOMENT'; } }
+    this.curRate = rate;
+    let nt = this.t + dt * rate;
+    if (m.brk || m.done) nt = Math.min(nt, m.gt);
+    this.t = nt;
+    if (!m.brk && !m.done) simUntil(m, this.t + 0.01);
   },
+  shownScore() {
+    const m = this.m;
+    for (let i = m.plog.length - 1; i >= 0; i--) { const P = m.plog[i]; if (P.g0 + (P.g1 - P.g0) * 0.85 <= this.t) return [P.hs, P.as]; }
+    return [0, 0];
+  },
+  visibleCount() { const m = this.m; let n = 0; for (const e of m.events) if (e.g <= this.t) n++; return n; },
   breakTime() {
     const m = this.m, q = m.brk;
     if (q === 2) { talkModal('Half-time team talk', true); return; }
@@ -665,32 +687,41 @@ const Live = {
   },
   finish() {
     this.finished = true;
-    clearInterval(this.timer);
     finishUserMatch(this.m);
     this.paint(true);
   },
+  paintLegend() {
+    const m = this.m, el = $('#clegend'); if (!el || !m) return;
+    const hot = [], cold = [];
+    m.sides.forEach((s) => s.on.forEach((p) => { const h = s.heat[p.id] || 0; if (h > 0.45) hot.push(`${esc(s.team.abbr)} ${esc(p.last)}`); else if (h < -0.45) cold.push(`${esc(s.team.abbr)} ${esc(p.last)}`); }));
+    const html = `<span class="fire">🔥 ${hot.join(', ') || '—'}</span><span class="ice">🧊 ${cold.join(', ') || '—'}</span>`;
+    if (el._h !== html) { el._h = html; el.innerHTML = html; }
+  },
   paint(force) {
     const m = this.m; const root = $('#live'); if (!root || !m) return;
-    const H = m.sides[0].team, A = m.sides[1].team;
-    const c = Math.max(0, m.clock);
-    const clock = `${Math.floor(c / 60)}:${String(Math.floor(c % 60)).padStart(2, '0')}`;
-    const cv = $('#court'); if (cv && Court.cv !== cv) Court.attach(cv, m); Court.m = m;
+    const cv = $('#court'); if (cv && Court.cv !== cv) Court.attach(cv, m);
     this.paintLegend();
-    $('#sb').innerHTML = `<div class="sbt">${badge(A, 'lg')}<span>${esc(A.abbr)}</span></div><div class="sbs"><b>${m.sides[1].pts}</b><span>–</span><b>${m.sides[0].pts}</b></div><div class="sbt r"><span>${esc(H.abbr)}</span>${badge(H, 'lg')}</div>
-      <div class="sbq">${m.done ? 'FINAL' + (m.ot ? ' / OT' : '') : (m.q <= 4 ? 'Q' + m.q : 'OT' + (m.q - 4)) + ' · ' + clock}</div>`;
-    const ctlKey = [this.speed, this.paused, m.done, this.tab, m.gt === 0, this.hlOn].join('|');
+    const H = m.sides[0].team, A = m.sides[1].team;
+    const over = m.done && this.t >= m.gt;
+    const [hs, as] = over ? [m.sides[0].pts, m.sides[1].pts] : this.shownScore();
+    const { q, c } = clockAt(this.t);
+    const clock = `${Math.floor(c / 60)}:${String(Math.floor(c % 60)).padStart(2, '0')}`;
+    $('#sb').innerHTML = `<div class="sbt">${badge(A, 'lg')}<span>${esc(A.abbr)}</span></div><div class="sbs"><b>${as}</b><span>–</span><b>${hs}</b></div><div class="sbt r"><span>${esc(H.abbr)}</span>${badge(H, 'lg')}</div>
+      <div class="sbq">${over ? 'FINAL' + (m.ot ? ' / OT' : '') : (q <= 4 ? 'Q' + q : 'OT' + (q - 4)) + ' · ' + clock}</div>`;
+    const ctlKey = [this.speed, this.paused, over, this.tab, this.t === 0, this.hlOn].join('|');
     if (force || this._ctl !== ctlKey) {
       this._ctl = ctlKey;
-      $('#lctl').innerHTML = m.done ? `<button class="btn primary big" data-act="toResult">Match Report ${icon('play')}</button>`
-        : m.gt === 0 && this.paused ? `<button class="btn primary big" data-act="liveTipoff">${icon('mega')} Pre-match team talk & tip-off</button>`
-        : `<div class="seg">${[1, 2, 4].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
+      $('#lctl').innerHTML = over ? `<button class="btn primary big" data-act="toResult">Match Report ${icon('play')}</button>`
+        : this.t === 0 && this.paused ? `<button class="btn primary big" data-act="liveTipoff">${icon('mega')} Pre-match team talk & tip-off</button>`
+        : `<div class="seg">${[1, 2, 4, 8].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
       $('#ltabs').innerHTML = ['feed', 'box'].map((k) => `<button class="tab ${this.tab === k ? 'on' : ''}" data-act="liveTab" data-v="${k}">${k === 'feed' ? 'Commentary' : 'Live Stats'}</button>`).join('');
-      $('#lbar').innerHTML = m.done ? '' : `<button class="btn" data-act="liveShout" ${m.gt === 0 ? 'disabled' : ''}>${icon('mega')} Shout</button><button class="btn" data-act="liveTac">Tactics</button><button class="btn" data-act="liveSubs">Subs</button>`;
+      $('#lbar').innerHTML = over ? '' : `<button class="btn" data-act="liveShout" ${this.t === 0 ? 'disabled' : ''}>${icon('mega')} Shout</button><button class="btn" data-act="liveTac">Tactics</button><button class="btn" data-act="liveSubs">Subs</button>`;
     }
-    if (!force && this.painted === m.events.length && this.tab === 'feed') return;
-    this.painted = m.events.length;
+    const vis = this.visibleCount();
+    if (!force && this.painted === vis && this.tab === 'feed') return;
+    this.painted = vis;
     if (this.tab === 'feed') {
-      $('#feed').innerHTML = m.events.slice().reverse().slice(0, 60).map((e) => { const tm = e.side >= 0 ? m.sides[e.side].team : null; return `<div class="ev ${e.type}" style="--ec:${tm ? tm.c1 : 'transparent'}"><span class="evt">${e.q <= 4 ? 'Q' + e.q : 'OT'} ${Math.floor(e.c / 60)}:${String(e.c % 60).padStart(2, '0')}</span><span class="evx">${esc(e.text)}</span><span class="evs">${e.as}-${e.hs}</span></div>`; }).join('');
+      $('#feed').innerHTML = m.events.filter((e) => e.g <= this.t).reverse().slice(0, 60).map((e) => { const tm = e.side >= 0 ? m.sides[e.side].team : null; return `<div class="ev ${e.type}${e.hl ? ' hl' : ''}" style="--ec:${tm ? tm.c1 : 'transparent'}"><span class="evt">${e.q <= 4 ? 'Q' + e.q : 'OT'} ${Math.floor(e.c / 60)}:${String(e.c % 60).padStart(2, '0')}</span><span class="evx">${esc(e.text)}</span><span class="evs">${e.as}-${e.hs}</span></div>`; }).join('');
     } else {
       const s = m.sides[m.us];
       $('#feed').innerHTML = `<table class="tbl box"><thead><tr><th class="l">Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>Mood</th><th>Form</th></tr></thead><tbody>${s.list.map((p) => { const b = m.box[p.id]; const md = s.mood[p.id] || 0; const h = s.heat[p.id] || 0; return `<tr class="${s.on.includes(p) ? 'oncourt' : ''}"><td class="l nm">${s.on.includes(p) ? '<i class="st-dot"></i>' : ''}${esc(pname(p, true))}${m.ej[p.id] ? ' <span class="neg">EJ</span>' : m.techs[p.id] ? ' <span class="warn-t">T</span>' : ''}</td><td>${Math.round(b.min / 60)}</td><td class="b">${b.pts}</td><td>${b.reb}</td><td>${b.ast}</td><td>${b.fgm}-${b.fga}</td><td>${moodIcon(md)}</td><td>${h > 0.45 ? '🔥' : h < -0.45 ? '🧊' : h > 0.2 ? '<span class="pos">↑</span>' : h < -0.2 ? '<span class="neg">↓</span>' : '<span class="muted">·</span>'}</td></tr>`; }).join('')}</tbody></table>`;
@@ -926,7 +957,7 @@ const ACT = {
   livePause: () => { Live.paused = !Live.paused; Live.paint(true); },
   liveTab: (d) => { Live.tab = d.v; Live.paint(true); },
   liveSkip: () => modal(`<h2>Skip to the end?</h2><p class="hint">You won't be able to give a half-time talk or make changes.</p><div class="row-btns"><button class="btn" data-act="closeModal">Cancel</button><button class="btn primary" data-act="doSkip">Skip</button></div>`),
-  doSkip: () => { closeModal(); const m = Live.m; m.pauses = false; m.brk = 0; simToEnd(m); Live.finish(); },
+  doSkip: () => { closeModal(); const m = Live.m; m.pauses = false; m.brk = 0; simToEnd(m); Live.t = m.gt; Live.finish(); },
   liveShout: () => {
     const m = Live.m;
     const wait = Math.ceil((m.shoutAt + 150 - m.gt) / 60);
