@@ -222,12 +222,14 @@ VIEWS.squad = () => {
   const tab = curTab('squad', 'ov');
   let body;
   if (tab === 'ov') {
-    body = `<table class="tbl"><thead><tr><th>#</th><th>Pos</th><th class="l">Player</th><th>Age</th><th>Ability</th><th>Pot.</th><th>Cond</th><th>Morale</th></tr></thead><tbody>
-    ${r.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 ? 'sep' : ''}"><td><span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
+    const rs = sortSquad(r, 'ov');
+    body = `<table class="tbl"><thead><tr>${sth('ov', 'num', '#')}${sth('ov', 'pos', 'Pos')}${sth('ov', 'name', 'Player', 'l')}${sth('ov', 'age', 'Age')}${sth('ov', 'ca', 'Ability')}${sth('ov', 'pot', 'Pot.')}${sth('ov', 'cond', 'Cond')}${sth('ov', 'mor', 'Morale')}</tr></thead><tbody>
+    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td><span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
     </tbody></table>`;
   } else if (tab === 'st') {
-    body = `<table class="tbl"><thead><tr><th class="l">Player</th><th>GP</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG%</th><th>Rat</th></tr></thead><tbody>
-    ${r.map((p) => { const s = p.st; return `<tr data-act="player" data-id="${p.id}"><td class="l nm">${esc(pname(p, true))}</td><td>${s.gp}</td><td>${avg1(s.min, s.gp)}</td><td class="b">${avg1(s.pts, s.gp)}</td><td>${avg1(s.reb, s.gp)}</td><td>${avg1(s.ast, s.gp)}</td><td>${s.fga ? Math.round((s.fgm / s.fga) * 100) : '-'}</td><td>${s.gp ? ratingPill(s.rat / s.gp) : '-'}</td></tr>`; }).join('')}
+    const rs = sortSquad(r, 'st');
+    body = `<table class="tbl"><thead><tr>${sth('st', 'name', 'Player', 'l')}${sth('st', 'age', 'Age')}${sth('st', 'gp', 'GP')}${sth('st', 'min', 'MIN')}${sth('st', 'pts', 'PTS')}${sth('st', 'reb', 'REB')}${sth('st', 'ast', 'AST')}${sth('st', 'stl', 'STL')}${sth('st', 'blk', 'BLK')}${sth('st', 'fg', 'FG%')}${sth('st', 'tp', '3P%')}${sth('st', 'rat', 'Rat')}</tr></thead><tbody>
+    ${rs.map((p) => { const s = p.st; return `<tr data-act="player" data-id="${p.id}"><td class="l nm">${esc(pname(p, true))}</td><td>${p.age}</td><td>${s.gp}</td><td>${avg1(s.min, s.gp)}</td><td class="b">${avg1(s.pts, s.gp)}</td><td>${avg1(s.reb, s.gp)}</td><td>${avg1(s.ast, s.gp)}</td><td>${avg1(s.stl, s.gp)}</td><td>${avg1(s.blk, s.gp)}</td><td>${s.fga ? Math.round((s.fgm / s.fga) * 100) : '-'}</td><td>${s.tpa ? Math.round((s.tpm / s.tpa) * 100) : '-'}</td><td>${s.gp ? ratingPill(s.rat / s.gp) : '-'}</td></tr>`; }).join('')}
     </tbody></table>`;
   } else if (tab === 'want') {
     body = wantedView(r);
@@ -245,8 +247,9 @@ VIEWS.squad = () => {
       <div class="card"><h3>Personalities</h3>${r.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="grow">${esc(pname(p, true))}</span><span class="pers">${esc(personality(p))}</span><span class="muted sm">${p.known.length} note${p.known.length === 1 ? '' : 's'}</span></div>`).join('')}</div>
     </div>`;
   } else {
-    body = `<table class="tbl"><thead><tr><th class="l">Player</th><th>Age</th><th>Salary</th><th>Years</th><th></th></tr></thead><tbody>
-    ${r.map((p) => `<tr data-act="player" data-id="${p.id}"><td class="l nm">${esc(pname(p, true))}</td><td>${p.age}</td><td>${fmtMoney(p.contract.sal)}</td><td>${p.contract.yrs}</td><td>${p.contract.yrs <= 1 ? '<span class="tagx">Expiring</span>' : ''}</td></tr>`).join('')}
+    const rs = sortSquad(r, 'ct');
+    body = `<table class="tbl"><thead><tr>${sth('ct', 'name', 'Player', 'l')}${sth('ct', 'age', 'Age')}${sth('ct', 'sal', 'Salary')}${sth('ct', 'yrs', 'Years')}<th></th></tr></thead><tbody>
+    ${rs.map((p) => `<tr data-act="player" data-id="${p.id}"><td class="l nm">${esc(pname(p, true))}</td><td>${p.age}</td><td>${fmtMoney(p.contract.sal)}</td><td>${p.contract.yrs}</td><td>${p.contract.yrs <= 1 ? '<span class="tagx">Expiring</span>' : ''}</td></tr>`).join('')}
     </tbody></table>
     <div class="pad"><div class="kv"><span>Payroll</span><b>${fmtMoney(teamPayroll(t.id))}</b></div><div class="kv"><span>Wage budget</span><b>${fmtMoney(t.budget)}</b></div><div class="kv"><span>Room</span><b class="${t.budget - teamPayroll(t.id) < 0 ? 'neg' : 'pos'}">${fmtMoney(Math.max(0, t.budget - teamPayroll(t.id)))}</b></div></div>`;
   }
@@ -1292,3 +1295,30 @@ ACT.pressStart = (d) => { const f = pressFixture(d.f); if (!f) return; UI.press 
 ACT.pressAnswer = (d) => { const P = UI.press; const o = P.qs[P.i].opts[+d.i]; P.notes.push(...applyPress(o.fx, P.f)); P.i++; pressModal(); };
 ACT.pressAssistant = (d) => { const f = pressFixture(d.f); if (!f) return; assistantPress(d.k, f); save(); toast('Your assistant faced the media.'); render(); };
 ACT.pressSet = (d) => { S.press[d.k] = d.v; save(); render(); };
+
+/* ---------- sortable squad tables ---------- */
+const SORT_KEYS = {
+  num: (p) => p.num ?? 999, pos: (p) => POS.indexOf(p.pos), name: (p) => p.last.toLowerCase(), age: (p) => p.age, ca: (p) => calcCA(p), pot: (p) => seenPot(p),
+  cond: (p) => p.cond, mor: (p) => p.morale, sal: (p) => p.contract.sal, yrs: (p) => p.contract.yrs,
+  gp: (p) => p.st.gp, min: (p) => p.st.gp ? p.st.min / p.st.gp : -1, pts: (p) => p.st.gp ? p.st.pts / p.st.gp : -1, reb: (p) => p.st.gp ? p.st.reb / p.st.gp : -1,
+  ast: (p) => p.st.gp ? p.st.ast / p.st.gp : -1, stl: (p) => p.st.gp ? p.st.stl / p.st.gp : -1, blk: (p) => p.st.gp ? p.st.blk / p.st.gp : -1,
+  fg: (p) => p.st.fga ? p.st.fgm / p.st.fga : -1, tp: (p) => p.st.tpa ? p.st.tpm / p.st.tpa : -1, rat: (p) => p.st.gp ? p.st.rat / p.st.gp : -1,
+};
+function sortSquad(r, tab) {
+  const st = UI.tab['sq_' + tab]; if (!st || !SORT_KEYS[st.k]) return r;
+  const f = SORT_KEYS[st.k], dir = st.dir === 'asc' ? 1 : -1;
+  return r.slice().sort((a, b) => { const x = f(a), y = f(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+}
+function sth(tab, k, label, cls = '') {
+  const st = UI.tab['sq_' + tab], on = st && st.k === k;
+  return `<th class="${cls} sortable ${on ? 'on' : ''}" data-act="sortBy" data-t="${tab}" data-k="${k}">${label}${on ? (st.dir === 'asc' ? ' ▲' : ' ▼') : ''}</th>`;
+}
+// first tap: highest→lowest (A→Z for names); second tap flips; third tap back to rotation order
+ACT.sortBy = (d) => {
+  const key = 'sq_' + d.t, cur = UI.tab[key];
+  const first = ['name', 'num', 'pos'].includes(d.k) ? 'asc' : 'desc';
+  if (!cur || cur.k !== d.k) UI.tab[key] = { k: d.k, dir: first };
+  else if (cur.dir === first) UI.tab[key] = { k: d.k, dir: first === 'asc' ? 'desc' : 'asc' };
+  else UI.tab[key] = null;
+  render();
+};

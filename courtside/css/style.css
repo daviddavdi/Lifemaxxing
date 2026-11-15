@@ -448,3 +448,8 @@ body.live-on main { padding-bottom: 80px; }
 .badge.lg, .badge.xl { box-shadow: inset 0 0 0 2.5px var(--trim, rgba(255,255,255,.12)); }
 .continue { box-shadow: 0 0 0 2px var(--trim, rgba(255,255,255,.18)) inset, 0 4px 14px rgba(0,0,0,.35); }
 .topbar { border-bottom: 2px solid var(--trim, var(--team)); }
+
+/* ===== v9 fixes: star fill accuracy, sortable headers ===== */
+.stars { width: max-content; align-self: flex-start; flex: none; }
+.tbl th.sortable { cursor: pointer; user-select: none; }
+.tbl th.sortable.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--team); }
