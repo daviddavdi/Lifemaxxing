@@ -82,6 +82,13 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - **🛡️ Ironman:** one save with no restoring backups, no database or coach editor, and no reloading matches. A match you've started is final: closing or reloading the app plays it out. Not available with custom databases.
 - **Achievements (18):** earned only in Ironman careers. They're stored on the device across careers and include First Blood, On a Roll, Comeback Kid, Champion, Dynasty, Going Up, Rags to Riches, Hard Knocks, Survivor, Player's Coach and Man of His Word.
 
+## Match Preview, jersey numbers & retired numbers
+
+- **Match Preview:** before every game your assistant shows win probability (calibrated against the match engine, using available players, condition, morale, form and home court), bookmaker odds, last-5 form, and three scouting notes: their hottest player, their biggest weakness, and how they play. One tap applies the recommended tweak, including putting a defensive stopper on their star.
+- **Upsets:** beating a heavy favourite gives a big boost to board confidence and morale. Losing as a heavy favourite costs both, and makes the rumour mill.
+- **Jersey numbers:** every player has a unique number (0–99) at his club. It's shown on the squad list, the profile, the rotation and inside his dot on the live court.
+- **Retired numbers:** when a club legend retires (4+ seasons, or 3 with a high rating, or a title with you), the board offers to retire his number. Banners hang in **Club & Board → Club History**, and nobody wears that number again.
+
 ## Code map
 
 - `js/data.js` — name pools, attributes, default teams, helpers
@@ -90,6 +97,7 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - `js/traits.js` — traits, archetypes, aging, bios, career logs, duos, staff
 - `js/court.js` — 2D court renderer for Key Highlights
 - `js/market.js` — transfer list, interest, ambition, hot seat, rumours, deals log
+- `js/preview.js` — win probability, odds, scouting, tactical tweak, upset swings
 - `js/achieve.js` — difficulty settings, Ironman lock, achievements
 - `js/model.js` — save schema version & migrations
 - `js/ui.js` — all screens & interactions

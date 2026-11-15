@@ -226,6 +226,19 @@ function handleRetirement(p) {
   const tot = careerTotals(p, false);
   const avg = tot.gp ? (tot.rat / tot.gp).toFixed(2) : '-';
   if (wasMine) mail(pname(p), 'Retirement', `Coach, after ${tot.seasons} seasons and ${tot.gp} games I've decided to hang up my sneakers. Thank you for everything.\n\nCareer: ${(tot.pts / Math.max(1, tot.gp)).toFixed(1)} ppg · average rating ${avg}.`, { type: 'player' });
+  const atUsRows = p.career.filter((c) => c.tid === S.userTeam);
+  const atUsGp = atUsRows.reduce((s, c) => s + c.gp, 0), atUsRat = atUsRows.reduce((s, c) => s + c.rat, 0);
+  const titlesHere = p.awards.filter((a) => a.k === 'Champion' && atUsRows.some((c) => c.s === a.s)).length;
+  const legend = atUs >= 4 || (atUs >= 3 && atUsGp && atUsRat / atUsGp >= 7) || (atUs >= 2 && titlesHere >= 1);
+  if (legend && Number.isInteger(p.num) && !(userTeam().retired || []).some((x) => x.num === p.num)) {
+    const rt = { tid: S.userTeam, num: p.num, pid: p.id, name: pname(p), pos: p.pos, seasons: atUs, gp: atUsGp, pts: atUsRows.reduce((s, c) => s + c.pts, 0), rat: atUsRat, titles: titlesHere };
+    mail('Board of Directors', `Retire #${p.num}?`, `${S.coach.name},
+
+${pname(p)} gave this club ${atUs} seasons and ${atUsGp} games${titlesHere ? `, winning ${titlesHere} title${titlesHere > 1 ? 's' : ''}` : ''}, averaging ${atUsGp ? (rt.pts / atUsGp).toFixed(1) : '0'} points with a ${atUsGp ? (atUsRat / atUsGp).toFixed(2) : '-'} average rating.
+
+The board proposes to officially retire his <b>#${p.num}</b> jersey. No player at ${teamName(userTeam())} would ever wear it again, and his banner would hang in the Club History.`,
+      { type: 'board', retire: rt, actions: [{ act: 'retireNum', label: `Retire #${p.num}` }, { act: 'reject', label: 'Not now' }] });
+  }
   if (p.career.length < 4) return;
   const st = staffFromPlayer(p);
   if (st.score < 12.5) return;
@@ -245,6 +258,19 @@ function staffNewSeason() {
   S.staff = (S.staff || []).filter((s) => { s.age++; if (s.team === S.userTeam) return s.age < 72; return s.age < 68 && (s.team != null || s.joined == null || s.joined.season >= S.season - 1); });
   const others = S.staff.filter((s) => s.team !== S.userTeam);
   if (others.length > 80) { const drop = new Set(others.slice(0, others.length - 80).map((s) => s.id)); S.staff = S.staff.filter((s) => !drop.has(s.id)); }
+}
+
+function retireNumber(rt) {
+  const t = team(rt.tid);
+  if (!t) return 'The club no longer exists.';
+  t.retired = t.retired || [];
+  if (t.retired.some((x) => x.num === rt.num)) return 'Already retired.';
+  t.retired.push({ ...rt, season: S.season });
+  const wearer = roster(t.id).find((p) => p.num === rt.num);
+  ensureNumbers(S, t);
+  roster(t.id).forEach((p) => (p.morale = clamp(p.morale + 4, 0, 100)));
+  news('rumour', `${teamName(t)} retire #${rt.num} in honour of ${rt.name}. His banner now hangs from the rafters.`, { lg: t.lg, tid: t.id, mine: t.id === S.userTeam });
+  return `#${rt.num} is retired forever. ${rt.name}'s banner hangs in the Club History.${wearer ? ` ${pname(wearer)} switches to #${wearer.num}.` : ''}`;
 }
 
 /* ---------- Manager career dates & bio ---------- */

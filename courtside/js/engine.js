@@ -124,6 +124,7 @@ function autoRotation(S, team) {
     }
     if (best) { used.add(best.id); starters.push(best.id); }
   }
+  ensureNumbers(S, team);
   const rest = roster.filter((p) => !used.has(p.id)).sort((x, y) => (x.inj || x.susp > 0 ? 1 : 0) - (y.inj || y.susp > 0 ? 1 : 0) || calcCA(y) - calcCA(x));
   team.rotation = starters.concat(rest.map((p) => p.id));
   if (team.id !== S.userTeam) {
@@ -134,6 +135,7 @@ function autoRotation(S, team) {
 function cleanRotation(S, team) {
   const ids = Object.values(S.players).filter((p) => p.team === team.id).map((p) => p.id);
   const set = new Set(ids);
+  ensureNumbers(S, team);
   const rot = (team.rotation || []).filter((id) => set.has(id));
   for (const id of ids) if (!rot.includes(id)) rot.push(id);
   team.rotation = rot;
@@ -141,6 +143,21 @@ function cleanRotation(S, team) {
 }
 
 const MIN_PLAN = [34, 33, 32, 31, 30, 20, 18, 16, 14, 12];
+
+/* ---------- Jersey numbers (unique per club, retired numbers excluded) ---------- */
+const JERSEY_FAV = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 44, 45, 50, 55];
+function ensureNumbers(S, team) {
+  const r = Object.values(S.players).filter((p) => p.team === team.id).sort((a, b) => a.id - b.id);
+  const used = new Set((team.retired || []).map((x) => x.num));
+  const need = [];
+  for (const p of r) { if (Number.isInteger(p.num) && p.num >= 0 && p.num <= 99 && !used.has(p.num)) used.add(p.num); else need.push(p); }
+  for (const p of need) {
+    const free = JERSEY_FAV.filter((n) => !used.has(n));
+    const pool = free.length ? free : Array.from({ length: 100 }, (_, i) => i).filter((n) => !used.has(n));
+    p.num = pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0;
+    used.add(p.num);
+  }
+}
 
 /* ---------- Match engine (stateful, possession by possession) ---------- */
 function teamCoachAttrs(S, team) {

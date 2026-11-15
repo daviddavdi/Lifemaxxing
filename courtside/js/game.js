@@ -409,6 +409,7 @@ function createUserMatch(pauses) {
   m.fid = f.id;
   m.us = f.h === S.userTeam ? 0 : 1;
   m.trackPairs = true;
+  S.preview = { fid: f.id, p: matchPreview(f).pUs };
   return m;
 }
 function finishUserMatch(m) {
@@ -419,7 +420,7 @@ function finishUserMatch(m) {
   S.lastResult = { fid: f.id, hs: res.hs, as: res.as, box: res.box, ratings: res.ratings, pom: res.pom, quarters: res.quarters, h: f.h, a: f.a, talked: false };
   userPostMatch(f, res);
   recordPairs(m); checkDuos();
-  { const us = f.h === S.userTeam ? res.hs : res.as, them = f.h === S.userTeam ? res.as : res.hs; achAfterMatch(m, us > them, us, them); }
+  { const us = f.h === S.userTeam ? res.hs : res.as, them = f.h === S.userTeam ? res.as : res.hs; upsetSwing(f, us > them); achAfterMatch(m, us > them, us, them); }
   simDay(S.schedule.filter((x) => x.day === f.day && !x.played));
   save();
 }
@@ -983,6 +984,7 @@ function mailAction(mid, act) {
     if (S.phase === 'season') msg = 'You can only switch clubs in the off-season.';
     else { m.done = `You took the ${teamName(team(m.job))} job.`; takeNewJob(m.job); return { msg: m.done, job: true }; }
   } else if (act === 'hireStaff') msg = hireStaff(m.staffId);
+  else if (act === 'retireNum') msg = retireNumber(m.retire);
   else if (['letTalk', 'promiseMove', 'notForSale', 'acceptReq', 'rejectReq'].includes(act)) msg = marketMailAction(m, act);
   else if (act === 'reject') { msg = 'Declined.'; if (m.trade) onOfferRejected(m); }
   else if (act === 'renew') return { renew: m.pid };

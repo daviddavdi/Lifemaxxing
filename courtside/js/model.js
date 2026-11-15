@@ -19,6 +19,7 @@ function migrateSave(o) {
       o.v = 3;
     } finally { if (prev) S = prev; }
   }
+  if (o.v >= 2) { const prev = S; S = o; try { o.teams.forEach((t) => ensureNumbers(o, t)); } finally { if (prev) S = prev; } }
   if (o.v < 4) {
     const prev = S; S = o;
     try { ensureMarket(); o.v = 4; } finally { if (prev) S = prev; }

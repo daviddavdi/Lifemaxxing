@@ -65,7 +65,7 @@ const Court = {
     }
     c.fillStyle = team.c1; c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
     c.lineWidth = opts.focus ? 2.5 : 1.2; c.strokeStyle = opts.focus ? '#f2c94c' : 'rgba(255,255,255,.55)'; c.stroke();
-    c.fillStyle = team.c2; c.font = `700 ${Math.round(r * 0.95)}px -apple-system, Segoe UI, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = team.c2; c.font = `800 ${Math.round(r * (label.length > 1 ? 0.92 : 1.05))}px -apple-system, Segoe UI, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(label, px, py + 0.5);
     c.globalAlpha = 1;
   },
@@ -82,7 +82,7 @@ const Court = {
     c.fillStyle = 'rgba(10,12,16,.85)'; c.beginPath(); if (c.roundRect) c.roundRect(this.W / 2 - w / 2, 6, w, 20, 6); else c.rect(this.W / 2 - w / 2, 6, w, 20); c.fill();
     c.fillStyle = '#f2c94c'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, this.W / 2, 16);
   },
-  initials(p) { return p ? p.last.replace(/[^A-Za-zÀ-ž]/g, '').slice(0, 2) : '?'; },
+  initials(p) { return p ? (Number.isInteger(p.num) ? String(p.num) : p.last.slice(0, 2)) : '?'; },
 
   /* ---------- positions ---------- */
   spot(i, att) { // offensive spots attacking the right basket (feet), mirrored for the left
