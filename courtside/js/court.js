@@ -123,7 +123,7 @@ const Court = {
     const targets = {};
     const sideOf = {};
     let ballT = null, ballZ = 0, ballExact = false, focus = null;
-    if (!P) { this.deadBall = false; // jump ball
+    if (!P) { this.deadBall = false; this.rush = null; // jump ball
       m.sides.forEach((s, si) => ordered(s.on).forEach((p, i) => {
         const ang = (i / 5) * Math.PI * 2;
         targets[p.id] = i === 4 ? [47 + (si ? 1.2 : -1.2), 25] : [47 + (si ? 1 : -1) * (7 + Math.cos(ang) * 4), 25 + Math.sin(ang) * 9];
@@ -140,7 +140,7 @@ const Court = {
       const firstTs = acts.length ? acts[0].ts : P.g1;
       const setUp = clamp((L.t - P.g0) / Math.max(0.5, (firstTs - P.g0) * 0.7), 0, 1);
       const u = A ? clamp((L.t - A.ts) / Math.max(0.05, A.te - A.ts), 0, 1) : 0;
-      const ft = A && A.t === 'ft'; this.deadBall = ft;
+      const ft = A && A.t === 'ft'; this.deadBall = ft; this.rush = null;
       const mir = (x, y) => (att === 0 ? [x, y] : [94 - x, y]);
       const pos = (id) => { const d = this.dots[id]; return d ? [d.x, d.y] : targets[id] || [47, 25]; };
       const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
@@ -153,7 +153,7 @@ const Court = {
         if (ft) { [x, y] = id === A.p ? mir(75, 25) : laneO[lo++ % 4]; }
         else {
           x += Math.sin(nowS * 0.8 + i * 1.9 + P.g0) * 2 * setUp; y += Math.cos(nowS * 0.6 + i * 1.3 + P.g0) * 2.4 * setUp;
-          if (A && A.t === 'shot' && id === A.p) { const sp = this.shotSpot(A.k, [x, y], att); const k = clamp(u / 0.45, 0, 1); x += (sp[0] - x) * k; y += (sp[1] - y) * k; }
+          if (A && A.t === 'shot' && id === A.p) { const sp = this.shotSpot(A.k, [x, y], att); const k = clamp(u / 0.45, 0, 1); x += (sp[0] - x) * k; y += (sp[1] - y) * k; this.rush = { id, by: A.ts + (A.te - A.ts) * 0.5, snap: u >= 0.5 }; }
           if (A && A.t === 'reb' && A.off && id === A.p) { const k = clamp(u / 0.6, 0, 1); [x, y] = lerp([x, y], mir(84, y > 25 ? 28 : 22), k); }
         }
         targets[id] = [x, y]; sideOf[id] = so;
@@ -219,7 +219,13 @@ const Court = {
       const onCourt = ty < 51;
       if (!d) { const st = P && onCourt ? [47 + (sideOf[id] ? 6 : -6), 53] : [tx, ty]; d = this.dots[id] = { x: st[0], y: st[1], a: onCourt ? (P ? 0.2 : 1) : 0 }; }
       const dx = tx - d.x, dy = ty - d.y, dist = Math.hypot(dx, dy);
-      const step = Math.min(dist, vmax * dt * (dist < 1.5 ? 0.6 : 1));
+      let vm = vmax;
+      const ru = this.rush && P && +id === this.rush.id ? this.rush : null;
+      if (ru) { // the shooter must be standing on the exact spot (inside / beyond the arc) when he lets it go
+        if (ru.snap) { d.x = tx; d.y = ty; }
+        else vm = Math.max(vmax, dist / Math.max(0.04, (ru.by - L.t) / Math.max(0.5, rate)) * 1.15);
+      }
+      const step = Math.min(dist, vm * dt * (dist < 1.5 && !ru ? 0.6 : 1));
       if (dist > 0.01) { d.x += (dx / dist) * step; d.y += (dy / dist) * step; }
       d.a += ((onCourt ? 1 : 0) - d.a) * Math.min(1, dt * 3);
     }

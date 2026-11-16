@@ -527,6 +527,10 @@ VIEWS.settings = () => `${header('Save & Settings')}
     <div class="card"><h3>Press conferences</h3><p class="hint">Face the media yourself, or send your assistant (he keeps it measured — no drama, no rivalry fuel).</p>
       <label class="lbl">Pre-match</label><div class="seg">${[['me', 'I\'ll do it'], ['assistant', 'Assistant']].map(([v, l]) => `<button class="${S.press.pre === v ? 'on' : ''}" data-act="pressSet" data-k="pre" data-v="${v}">${l}</button>`).join('')}</div>
       <label class="lbl">Post-match</label><div class="seg">${[['me', 'I\'ll do it'], ['assistant', 'Assistant']].map(([v, l]) => `<button class="${S.press.post === v ? 'on' : ''}" data-act="pressSet" data-k="post" data-v="${v}">${l}</button>`).join('')}</div></div>
+    <div class="card"><h3>🔊 Sound</h3>
+      <label class="check"><input type="checkbox" data-chg="sndMusic" ${Music.on ? 'checked' : ''}> Background music in menus</label>
+      <label class="check"><input type="checkbox" data-chg="sndClicks" ${Music.clicks ? 'checked' : ''}> Button click sounds</label>
+      <label class="check"><input type="checkbox" data-chg="sndMatch" ${Sound.on ? 'checked' : ''}> Arena sound in matches (crowd, ball, whistles)</label></div>
     <div class="card"><h3>Career mode</h3><div class="kv"><span>Difficulty</span><b>${DIFFICULTY[S.diff || 'normal'].n}</b></div><div class="kv"><span>Mode</span><b>${S.ironman ? '🛡️ Ironman' : 'Standard'}</b></div></div>
     <div class="card"><h3>Save game</h3><p class="hint">Your career auto-saves on this device after every action.</p>
       ${S.ironman ? '<p class="hint">🔒 Ironman: backups and restores are disabled. Matches you start are final — reloading the app plays them out.</p>' : `<div class="row-btns"><button class="btn" data-act="exportSave">Download backup</button><label class="btn file">Restore backup<input type="file" accept=".json,application/json" data-chg="importSave" hidden></label></div>`}</div>
@@ -1101,6 +1105,9 @@ const CHG = {
   importDbNew: (el) => readFile(el, (db) => { try { if (S && UI.view !== 'title') save(); startWithDb(db); } catch (e) { toast(esc(e.message), 'bad'); } }),
   importSave: (el) => readFile(el, (obj) => { if (!obj || !(obj.v >= 2) || !obj.teams || !obj.players) return toast('Not a Courtside save file.', 'bad'); if (obj.ironman || (S && S.ironman)) return toast('Ironman careers cannot be restored from backups.', 'bad'); obj = migrateSave(obj); S = sanitizeSave(obj); save(); UI.stack = []; toast('Career restored'); go('inbox'); }),
   asstSubs: (el) => { S.asstSubs = el.checked; const s = liveSide(); s.asst = el.checked; if (s.asst) pickLineup(Live.m, s, true); save(); modalSubs(); Live.paint(true); },
+  sndMusic: (el) => { Sound.unlock(); Music.setMusic(el.checked); },
+  sndClicks: (el) => { Music.setClicks(el.checked); if (el.checked) { Sound.unlock(); Music.click('primary'); } },
+  sndMatch: (el) => { Sound.setPref(el.checked); if (el.checked) Sound.unlock(); },
   autoRotToggle: (el) => { S.autoRot = el.checked; if (S.autoRot) autoRotation(S, userTeam()); save(); render(); },
   edLeague: (el) => { const l = league(el.dataset.id); if (l) { l[el.dataset.f] = clean(el.value, el.dataset.f === 'short' ? 6 : 40) || l[el.dataset.f]; save(); } },
   edSearch: (el) => { UI.tab.edq = el.value; render(); },
@@ -1154,7 +1161,11 @@ document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (!el || el.disabled) return;
   const fn = ACT[el.dataset.act];
-  if (fn) { e.preventDefault(); fn(el.dataset, el); }
+  if (fn) {
+    e.preventDefault();
+    if (typeof Music !== 'undefined') { const a = el.dataset.act; Music.click(el.classList.contains('primary') || a === 'continue' ? 'primary' : a === 'back' || a === 'closeModal' ? 'back' : a === 'tab' || a === 'go' || a === 'nav' ? 'tab' : 'tap'); }
+    fn(el.dataset, el);
+  }
 });
 document.addEventListener('change', (e) => { const el = e.target.closest('[data-chg]'); if (el && CHG[el.dataset.chg]) CHG[el.dataset.chg](el); });
 document.addEventListener('input', (e) => { const el = e.target; if (el.dataset && el.dataset.chg === 'ngName') CHG.ngName(el); });

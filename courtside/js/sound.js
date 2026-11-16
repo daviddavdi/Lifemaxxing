@@ -12,7 +12,7 @@ const Sound = {
     let str = ''; b.forEach((x) => (str += String.fromCharCode(x))); return 'data:audio/wav;base64,' + btoa(str);
   },
   unlock() {
-    if (!this.on) return;
+    if (!this.on && !(typeof Music !== 'undefined' && (Music.on || Music.clicks))) return;
     try {
       if (navigator.audioSession) try { navigator.audioSession.type = 'playback'; } catch (e) {} // iPhone: play through the silent switch (Safari 17+)
       // iPhone: a looping (silent) HTML media element moves the page into the "playback" audio session, so WebAudio isn't muted by the silent switch
@@ -27,7 +27,8 @@ const Sound = {
         let last = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + 0.04 * w) / 1.04; d[i] = w * 0.6 + last * 3; }
         this.noise = b;
       }
-      if (this.ctx.state !== 'running') { const pr = this.ctx.resume(); if (pr && pr.catch) pr.catch(() => {}); }
+      const go = () => { if (typeof Music !== 'undefined') Music.start(); };
+      if (this.ctx.state !== 'running') { const pr = this.ctx.resume(); if (pr && pr.then) pr.then(go, () => {}); } else go();
       this.generate();
       if (!this.warm) { const b = this.ctx.createBuffer(1, 1, 22050), s = this.ctx.createBufferSource(); s.buffer = b; s.connect(this.ctx.destination); s.start(0); this.warm = true; } // iOS warm-up
     } catch (e) { console.warn('sound unavailable', e); }
@@ -53,7 +54,7 @@ const Sound = {
   },
   any(prefix) { const k = Object.keys(this.B).filter((x) => x.startsWith(prefix)); return k.length ? k[Math.floor(Math.random() * k.length)] : null; },
   test(n = 0) { if (!this.ready() || !this.B.cheer0) return n < 40 && setTimeout(() => this.test(n + 1), 250); this.swish(); setTimeout(() => this.cheer(1), 120); },
-  stopAll() { this.stopBed(); try { if (this.keep) this.keep.pause(); } catch (e) {} },
+  stopAll() { this.stopBed(); },
   src() { const s = this.ctx.createBufferSource(); s.buffer = this.noise; s.loop = true; return s; },
   filt(type, f, q = 0.7) { const x = this.ctx.createBiquadFilter(); x.type = type; x.frequency.value = f; x.Q.value = q; return x; },
   env(g, t0, peak, att, hold, rel) {
