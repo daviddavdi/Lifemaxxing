@@ -58,7 +58,7 @@ Pre-match team talk → live commentary → touchline **shouts** (Praise / Encou
 - **Archetypes:** ⚡ Fast Learner, 🐢 Slow Learner, 🩹 Injury Prone, 🛡️ Ironman, 🤝 Locker Room Glue Guy (cushions morale drops, mentors youth).
 - **Aging:** every player has his own peak age and decline rate.
 - **Profiles:** dynamic bios, plus an FM-style History tab (club, league, apps, minutes, points, rebounds, assists, average rating, awards, career totals).
-- **Minutes:** set a minutes target per player.
+- **Minutes:** set a minutes target per player. Set targets are kept exactly; players on Auto share what's left of the 240 minutes. The Rotation screen shows the planned minutes (your own targets in gold). Energy, fouls and blowouts can shift them by a minute or two.
 - **Live match court:** 2D top-down court with Key Highlights (runs, clutch plays, players catching fire, technicals, flagrants, trash talk). Dots glow red-orange when On Fire and icy blue when Cold.
 - **The court shows exactly what the engine decided:** every possession is replayed action by action. Three-pointers are taken from beyond the arc (corners included), two-pointers from inside it (drives finish at the rim, jumpers from mid-range), and free throws are shot from the line with players lined up on the lane, one attempt at a time ("Free throw 1 of 2"). And-ones, blocks, offensive and defensive rebounds, steals, turnovers and technical free throws are each shown, with a caption naming the player and the action, a result flash (+2, +3, ✓ FT, MISS, BLOCKED, STEAL), and the scoreboard ticks at the moment each point goes in. Every trip to the line gets a commentary line.
 - **Faces:** generated faces appear on profiles, the squad list, the inbox, the starting five and staff list, and on match day.

@@ -339,13 +339,21 @@ VIEWS.team = ({ id }) => {
 };
 
 /* Tactics */
+// The minutes each fit player will get next game (same plan the match engine uses).
+function planMins(t) {
+  const list = t.rotation.map((id) => S.players[id]).filter((p) => p && !p.inj && !(p.susp > 0));
+  const tg = minTargets(list, t.instr || {}), o = {};
+  list.forEach((p, i) => (o[p.id] = Math.round(tg[i])));
+  return o;
+}
 function rotationList(r, opts = {}) {
+  const pm = opts.live ? null : planMins(userTeam()), setT = (p) => userTeam().instr[p.id] && userTeam().instr[p.id].min != null;
   const slotName = (i) => (i < 5 ? POS[i] : i < 10 ? 'Bench' : 'Reserve');
   const off = (p, i) => i < 5 && p.pos !== POS[i];
   return `<div class="list rot" data-dragzone="${opts.act === 'liveSubSel' ? 'live' : 'rot'}">${r.map((p, i) => `<button class="li rotrow ${UI.sel === p.id ? 'sel' : ''} ${i === 5 || i === 10 ? 'gap' : ''}" data-act="${opts.act || 'rotSel'}" data-id="${p.id}" data-drag-row="${p.id}">
     <span class="dragh" data-drag="${p.id}" aria-label="Drag to move">⋮⋮</span><span class="slot ${i < 5 ? 'st' : i < 10 ? 'bn' : 'rs'} ${off(p, i) ? 'offpos' : ''}" ${off(p, i) ? `title="${p.pos} playing ${POS[i]}"` : ''}>${off(p, i) ? '⚠ ' : ''}${slotName(i)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span>
     <span class="grow nm">${opts.live ? `<span class="mini">${playerFace(p, 26)}</span>` : ''}${injHTML(p)}${esc(pname(p, true))}</span>${opts.live ? `<span class="mins">${opts.live(p)}</span>` : starsHTML(stars(calcCA(p)))}${opts.live ? '' : condHTML(p.cond)}
-    ${opts.live ? '' : `<span class="mins">${i < MIN_PLAN.length ? MIN_PLAN[i] + "'" : '–'}</span>`}</button>`).join('')}</div>`;
+    ${opts.live ? '' : `<span class="mins ${setT(p) ? 'set' : ''}" ${setT(p) ? 'title="Your minutes target"' : ''}>${pm[p.id] ? pm[p.id] + "'" : '–'}</span>`}</button>`).join('')}</div>`;
 }
 function tacticsPanel(tc, which) {
   const keys = which === 'off' ? ['pace', 'system', 'focus', 'oreb'] : ['defense', 'help', 'intensity'];
@@ -360,11 +368,14 @@ VIEWS.tactics = () => {
   let body = '';
   if (tab === 'off' || tab === 'def') body = `<div class="pad"><div class="card">${tacticsPanel(tc, tab)}</div><p class="hint">Your Tactical Knowledge (${S.coach.a.tac}) affects how well systems work. ${tab === 'off' ? `Offensive Coaching: ${S.coach.a.off}.` : `Defensive Coaching: ${S.coach.a.def}.`}</p></div>`;
   else if (tab === 'roles') {
-    body = `<div class="pad"><p class="hint">Give players roles and instructions. Coachable players follow them more closely. One player can be your Defensive Stopper — he shadows the opponent's top scorer.</p></div>
+    const pm = planMins(t), fSum = r.reduce((a, p) => a + (t.instr[p.id] && t.instr[p.id].min != null && pm[p.id] != null ? t.instr[p.id].min : 0), 0);
+    const nSet = r.filter((p) => t.instr[p.id] && t.instr[p.id].min != null).length;
+    body = `<div class="pad"><p class="hint">Give players roles and instructions. Coachable players follow them more closely. One player can be your Defensive Stopper — he shadows the opponent's top scorer.</p>
+    <p class="hint">Minutes targets are what the bench follows during games (5 players × 48' = 240' in total). Players on <b>Auto</b> share whatever your set targets leave over.${nSet ? ` You've set ${nSet} target${nSet > 1 ? 's' : ''} adding up to ${fSum}', leaving ${Math.max(0, 240 - fSum)}' for the rest.` : ''} Tired players, foul trouble and blowouts can still shift things by a few minutes.</p>${fSum > 200 && nSet < 10 ? `<p class="warn-t">⚠ Your targets use ${fSum}' of 240' — everyone else gets squeezed${fSum > 240 ? ', and your targets will be cut down to fit' : ''}.</p>` : ''}</div>
     <div class="list">${r.slice(0, 12).map((p, i) => { const ins = t.instr[p.id] || {}; const rk = ins.role || 'bal'; return `<div class="li rolecard ${i === 5 ? 'gap' : ''}">
       <div class="rc-top"><span class="ps">${p.pos}</span><b class="grow nm" data-act="player" data-id="${p.id}">${esc(pname(p, true))}</b>${starsHTML(stars(roleScore(p, rk)))}</div>
       <div class="rc-row"><select class="inp sm" data-chg="setRole" data-id="${p.id}">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}" ${k === rk ? 'selected' : ''}>${v.n}${k !== 'bal' ? ` (${stars(roleScore(p, k))}★)` : ''}</option>`).join('')}</select></div>
-      <div class="rc-row"><span class="muted sm grow">Minutes target</span><span class="stepper"><button data-act="setMin" data-id="${p.id}" data-d="-2">−</button><span class="minv">${ins.min != null ? ins.min + "'" : 'Auto'}</span><button data-act="setMin" data-id="${p.id}" data-d="2">+</button></span>${ins.min != null ? `<button class="chip" data-act="setMin" data-id="${p.id}" data-d="auto">Auto</button>` : ''}</div>
+      <div class="rc-row"><span class="muted sm grow">Minutes target</span><span class="stepper"><button data-act="setMin" data-id="${p.id}" data-d="-2">−</button><span class="minv">${ins.min != null ? ins.min + "'" : `Auto${pm[p.id] ? ` · ${pm[p.id]}'` : ''}`}</span><button data-act="setMin" data-id="${p.id}" data-d="2">+</button></span>${ins.min != null ? `<button class="chip" data-act="setMin" data-id="${p.id}" data-d="auto">Auto</button>` : ''}</div>
       <div class="rc-row"><div class="seg mini">${[[-1, 'Fewer shots'], [0, 'Normal'], [1, 'More shots']].map(([v, l]) => `<button class="${(ins.shots || 0) === v ? 'on' : ''}" data-act="setShots" data-id="${p.id}" data-v="${v}">${l}</button>`).join('')}</div>
       <button class="chip ${ins.lock ? 'on' : ''}" data-act="setLock" data-id="${p.id}">🔒 Stopper</button></div></div>`; }).join('')}</div>`;
   } else {
@@ -1004,7 +1015,7 @@ const ACT = {
   setMin: (d) => {
     const t = userTeam(); const i = t.instr[d.id] || (t.instr[d.id] = {});
     if (d.d === 'auto') delete i.min;
-    else { const idx = t.rotation.indexOf(+d.id); const cur = i.min != null ? i.min : (idx < MIN_PLAN.length ? MIN_PLAN[idx] : 0); i.min = clamp(cur + +d.d, 0, 44); }
+    else { const cur = i.min != null ? i.min : (planMins(t)[+d.id] || 0); i.min = clamp(cur + +d.d, 0, 44); }
     save(); render();
   },
   toggleList: (d) => {

@@ -195,6 +195,19 @@ function createMatch(S, home, away, opts = {}) {
   push(m, 'info', -1, `Tip-off! The ${away.city} ${away.nick} visit the ${home.city} ${home.nick}.`);
   return m;
 }
+/* Minutes plan for a list of players in rotation order. Targets the manager set are kept as they are;
+   the "Auto" players share whatever is left of the 240 minutes (in proportion to the default plan). */
+function minTargets(list, ins) {
+  const set = (p) => { const o = ins && ins[p.id] && ins[p.id].min; return o != null && o !== '' ? clamp(+o, 0, 44) : null; };
+  const fixed = list.map(set), auto = list.map((p, i) => (fixed[i] == null ? (i < MIN_PLAN.length ? MIN_PLAN[i] : 0) : 0));
+  const tgt = list.map((p, i) => (fixed[i] != null ? fixed[i] : auto[i]));
+  if (list.length < 10) return tgt;
+  const fSum = fixed.reduce((a, x) => a + (x || 0), 0), aSum = auto.reduce((a, x) => a + x, 0), left = 240 - fSum;
+  if (aSum > 0 && left >= aSum * 0.25) return tgt.map((x, i) => (fixed[i] != null ? x : Math.min(44, auto[i] * left / aSum)));
+  // the set targets alone don't fit (or leave almost nothing): squeeze everybody proportionally
+  const sum = tgt.reduce((a, x) => a + x, 0);
+  return sum > 0 ? tgt.map((x) => Math.min(44, x * 240 / sum)) : tgt;
+}
 function rebuildPlan(S, m, s, initial) {
   const team = s.team;
   cleanRotation(S, team);
@@ -203,9 +216,7 @@ function rebuildPlan(S, m, s, initial) {
   if (list.length < 5) list = list.concat(team.rotation.map((id) => S.players[id]).filter((p) => p && !list.includes(p))).slice(0, 5);
   const remain = initial ? 1 : clamp((2880 - m.gt) / 2880, 0.02, 1);
   const plan = {};
-  const target = list.map((p, idx) => { const o = s.ins[p.id] && s.ins[p.id].min; return o != null && o !== '' ? clamp(+o, 0, 44) : (idx < MIN_PLAN.length ? MIN_PLAN[idx] : 0); });
-  const sum = target.reduce((a, x) => a + x, 0);
-  if (list.length >= 10 && sum > 0 && Math.abs(sum - 240) > 1) target.forEach((x, i) => (target[i] = Math.min(44, x * 240 / sum)));
+  const target = minTargets(list, s.ins);
   list.forEach((p, idx) => { plan[p.id] = (s.played[p.id] || 0) + target[idx] * 60 * remain; });
   if (list.length < 10) {
     const extra = MIN_PLAN.slice(list.length).reduce((a, x) => a + x, 0) * 60 * remain / Math.max(1, Math.min(list.length, 5));

@@ -365,7 +365,7 @@ body.live-on main { padding-bottom: 80px; }
 .arch-ic { font-size: 20px; width: 28px; text-align: center; }
 .card.duo { border-color: #b8952e; background: color-mix(in srgb, #f2c94c 7%, var(--panel)); }
 .bio { line-height: 1.6; color: #d4d8e2; margin: 0; }
-.minv { min-width: 44px; text-align: center; font-weight: 800; font-size: 13px; }
+.minv { min-width: 64px; white-space: nowrap; text-align: center; font-weight: 800; font-size: 13px; }
 .tbl.hist .badge { min-width: 26px; height: 16px; font-size: 9px; }
 .tbl.hist .nm { max-width: 200px; }
 .tbl tr.tot td { border-top: 2px solid var(--line); background: var(--panel); }
@@ -522,3 +522,4 @@ body.live-on main { padding-bottom: 80px; }
 .lpc-ev { font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--line); }
 .boxsw { margin: 8px 12px; }
 .tbl.box tr[data-act] { cursor: pointer; }
+.mins.set { color: var(--gold); font-weight: 800; }
