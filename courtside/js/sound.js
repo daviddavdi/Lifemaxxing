@@ -28,11 +28,31 @@ const Sound = {
         this.noise = b;
       }
       if (this.ctx.state !== 'running') { const pr = this.ctx.resume(); if (pr && pr.catch) pr.catch(() => {}); }
+      this.generate();
       if (!this.warm) { const b = this.ctx.createBuffer(1, 1, 22050), s = this.ctx.createBufferSource(); s.buffer = b; s.connect(this.ctx.destination); s.start(0); this.warm = true; } // iOS warm-up
     } catch (e) { console.warn('sound unavailable', e); }
   },
   ready() { return this.on && this.ctx && this.ctx.state === 'running'; },
-  test() { if (!this.ready()) return setTimeout(() => this.ready() && this.test(), 250); this.swish(); setTimeout(() => this.cheer(1), 120); },
+  B: {}, genQ: null,
+  generate() {
+    if (this.genQ || typeof Crowd === 'undefined') return;
+    const jobs = [['bedL', () => Crowd.bed()], ['bounce', () => Crowd.bounce()], ['cheer0', () => Crowd.cheer()], ['bedR', () => Crowd.bed()], ['cheer1', () => Crowd.cheer()],
+      ['groan0', () => Crowd.groan()], ['ooh0', () => Crowd.ooh()], ['sq0', () => Crowd.squeak()], ['sq1', () => Crowd.squeak()], ['sq2', () => Crowd.squeak()],
+      ['cheer2', () => Crowd.cheer(3, 30)], ['roar', () => Crowd.cheer(5, 52, true)], ['groan1', () => Crowd.groan(1.6)], ['ooh1', () => Crowd.ooh(1.3)], ['chant', () => Crowd.chant()]];
+    this.genQ = jobs;
+    const next = () => { const j = this.genQ.shift(); if (!j) return; try { const a = j[1](); const b = this.ctx.createBuffer(1, a.length, Crowd.SR); b.getChannelData(0).set(a); this.B[j[0]] = b; } catch (e) { console.warn('crowd gen', e); } setTimeout(next, 40); };
+    setTimeout(next, 30);
+  },
+  play(name, gain, opt = {}) {
+    const b = this.B[name]; if (!b || !this.ready()) return null;
+    const c = this.ctx, s = c.createBufferSource(), g = c.createGain(); s.buffer = b; s.playbackRate.value = (opt.rate || 1) * (opt.vary === false ? 1 : 0.96 + Math.random() * 0.08);
+    g.gain.value = gain; s.connect(g);
+    if (opt.pan != null && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, opt.pan)); g.connect(p); p.connect(opt.dest || this.master); } else g.connect(opt.dest || this.master);
+    if (opt.loop) s.loop = true;
+    s.start(c.currentTime + (opt.delay || 0)); return { s, g };
+  },
+  any(prefix) { const k = Object.keys(this.B).filter((x) => x.startsWith(prefix)); return k.length ? k[Math.floor(Math.random() * k.length)] : null; },
+  test(n = 0) { if (!this.ready() || !this.B.cheer0) return n < 40 && setTimeout(() => this.test(n + 1), 250); this.swish(); setTimeout(() => this.cheer(1), 120); },
   stopAll() { this.stopBed(); try { if (this.keep) this.keep.pause(); } catch (e) {} },
   src() { const s = this.ctx.createBufferSource(); s.buffer = this.noise; s.loop = true; return s; },
   filt(type, f, q = 0.7) { const x = this.ctx.createBiquadFilter(); x.type = type; x.frequency.value = f; x.Q.value = q; return x; },
@@ -57,19 +77,14 @@ const Sound = {
   },
   /* ---- the sounds ---- */
   cheer(power = 1) {
-    if (this.voices > 3) return; this.voices++; setTimeout(() => this.voices--, 1800);
-    const L = Math.min(2.2, power * this.loud), dur = 1.3 + L * 0.9;
-    this.noiseHit('bandpass', 1150, 0.55, 0.32 * L, 0.1, dur * 0.35, dur * 0.65);
-    this.noiseHit('lowpass', 420, 0.7, 0.22 * L, 0.14, dur * 0.3, dur * 0.7);
-    const n = Math.round(2 + L * 3);
-    for (let i = 0; i < n; i++) { const f = 260 + Math.random() * 320, d = Math.random() * 0.35; this.tone('triangle', f, f * (1.25 + Math.random() * 0.3), 0.012 * L, 0.12, 0.25 + Math.random() * 0.4, 0.5, d, 1500); }
+    if (this.voices > 3) return; this.voices++; setTimeout(() => this.voices--, 1500);
+    const L = Math.min(2.2, power * this.loud);
+    if (L > 1.45 && this.B.roar) { this.play('roar', 0.55 * Math.min(1.5, L), { pan: -0.15 }); this.play(this.any('cheer'), 0.3 * L, { pan: 0.6, delay: 0.05 }); return; }
+    const a = this.any('cheer'); let b = this.any('cheer'); if (b === a) b = this.any('cheer');
+    this.play(a, 0.42 * L, { pan: -0.55 }); this.play(b, 0.36 * L, { pan: 0.55, delay: 0.03 + Math.random() * 0.06 });
   },
-  groan(power = 1) {
-    const L = Math.min(2, power * this.loud);
-    this.noiseHit('lowpass', 520, 0.7, 0.12 * L, 0.12, 0.25, 0.8);
-    for (let i = 0; i < 3; i++) { const f = 190 + Math.random() * 60; this.tone('sawtooth', f, f * 0.72, 0.006 * L, 0.1, 0.3, 0.6, Math.random() * 0.15, 650); }
-  },
-  ooh(power = 1) { const L = Math.min(2, power * this.loud); for (let i = 0; i < 4; i++) { const f = 220 + Math.random() * 90; this.tone('sawtooth', f, f * 1.18, 0.006 * L, 0.15, 0.25, 0.5, Math.random() * 0.1, 700); } this.noiseHit('bandpass', 700, 0.8, 0.08 * L, 0.12, 0.2, 0.6); },
+  groan(power = 1) { const L = Math.min(2, power * this.loud); this.play(this.any('groan'), 0.38 * L, { pan: (Math.random() - 0.5) * 0.6 }); },
+  ooh(power = 1) { const L = Math.min(2, power * this.loud); this.play(this.any('ooh'), 0.38 * L, { pan: (Math.random() - 0.5) * 0.6 }); },
   swish() { this.noiseHit('highpass', 3200, 0.7, 0.22, 0.01, 0.04, 0.16); this.noiseHit('bandpass', 5200, 1.2, 0.08, 0.02, 0.05, 0.2, 0.03); },
   rim() { this.tone('sine', 640, 610, 0.16, 0.003, 0.02, 0.32); this.tone('sine', 1190, 1150, 0.07, 0.003, 0.01, 0.22); this.noiseHit('lowpass', 220, 0.8, 0.18, 0.005, 0.02, 0.12); },
   thud() { this.noiseHit('lowpass', 160, 0.9, 0.25, 0.005, 0.02, 0.1); },
@@ -80,20 +95,28 @@ const Sound = {
   },
   buzzer() { this.tone('sawtooth', 196, 196, 0.1, 0.02, 0.85, 0.15, 0, 1400); this.tone('square', 201, 201, 0.05, 0.02, 0.85, 0.15, 0, 900); },
   claps(pattern, gain) { pattern.forEach((t) => this.noiseHit('bandpass', 1500 + Math.random() * 400, 1.1, gain, 0.004, 0.015, 0.07, t)); },
-  chant() { // "DE-FENSE" — two crowd vowels over claps
-    const L = Math.min(2, this.loud), g = 0.012 * L;
-    [[0, 230, 0.32], [0.45, 185, 0.42]].forEach(([d, f, len]) => { for (let i = 0; i < 5; i++) { const ff = f * (0.97 + Math.random() * 0.06); this.tone('sawtooth', ff, ff * 0.98, g, 0.04, len, 0.15, d + Math.random() * 0.03, 900); } });
-    this.claps([0, 0.45, 1.2, 1.65], 0.12 * L);
-  },
+  chant() { this.play('chant', 0.42 * Math.min(2, this.loud), { vary: false }); },
+  bounce(pan) { this.play('bounce', 0.16, { pan, rate: 0.95 + Math.random() * 0.1 }); },
+  squeak(pan) { this.play(this.any('sq'), 0.05 + Math.random() * 0.04, { pan }); },
   /* ---- crowd bed ---- */
   startBed() {
-    if (!this.ready() || this.bed) return;
-    const s = this.src(), f1 = this.filt('bandpass', 650, 0.4), f2 = this.filt('lowpass', 1800, 0.5), g = this.ctx.createGain();
-    g.gain.value = 0.0001; s.connect(f1); f1.connect(f2); f2.connect(g); g.connect(this.master); s.start();
-    this.bed = s; this.bedGain = g;
+    if (!this.ready() || this.bed || !this.B.bedL) return;
+    const g = this.ctx.createGain(); g.gain.value = 0.0001; g.connect(this.master);
+    const l = this.play('bedL', 1, { pan: -0.7, loop: true, dest: g, vary: false }), r = this.B.bedR ? this.play('bedR', 1, { pan: 0.7, loop: true, dest: g, vary: false, rate: 0.985 }) : null;
+    this.bed = { stop: () => { try { l.s.stop(); r && r.s.stop(); } catch (e) {} } }; this.bedGain = g;
+    if (!r) this.bedMono = true;
   },
-  stopBed() { try { if (this.bed) { this.bedGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.3); const b = this.bed; setTimeout(() => { try { b.stop(); } catch (e) {} }, 1200); } } catch (e) {} this.bed = null; this.bedGain = null; },
+  stopBed() { try { if (this.bed) { this.bedGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.3); const b = this.bed; setTimeout(() => b.stop(), 1200); } } catch (e) {} this.bed = null; this.bedGain = null; },
   /* ---- match hook: called by the live controller with the game-time window it just played ---- */
+  foley(m, t) { // ball dribbles while someone is bringing it up or setting up a shot, and the odd sneaker squeak
+    const now = performance.now(), P = m.plog.find((x) => x.g0 <= t && x.g1 > t); if (!P) return;
+    const acts = P.acts || []; let A = null; for (const a of acts) if (t >= a.ts) A = a;
+    const u = A ? (t - A.ts) / Math.max(0.05, A.te - A.ts) : 0;
+    const dribbling = !A ? true : A.t === 'shot' ? u < 0.5 : A.t === 'ft' ? u < 0.35 : false;
+    const bx = typeof Court !== 'undefined' && Court.ball ? Court.ball.x : 47, pan = (bx / 94 * 2 - 1) * 0.7;
+    if (dribbling && now - (this.lastBounce || 0) > (A && A.t === 'ft' ? 620 : 430) + Math.random() * 90) { this.lastBounce = now; this.bounce(pan); }
+    if (!A || A.t === 'shot') { if (now - (this.lastSq || 0) > 1800 && Math.random() < 0.04) { this.lastSq = now; this.squeak(pan + (Math.random() - 0.5) * 0.5); } }
+  },
   begin(m) {
     this.pi = 0; this.lastChant = 0;
     let loud = 1;
@@ -104,12 +127,14 @@ const Sound = {
   },
   tick(m, t0, t1, paused) {
     if (!this.ready()) return;
+    if (this.bed && this.bedMono && this.B.bedR) { this.stopBed(); this.bedMono = false; }
     this.startBed();
     const [H, A] = m.sides, margin = Math.abs(H.pts - A.pts);
     const late = m.q >= 4 && m.clock < 240 && margin <= 8;
-    const lvl = paused ? 0.05 : (0.09 + (late ? 0.07 : 0)) * this.loud;
+    const lvl = paused ? 0.12 : (0.2 + (late ? 0.14 : 0)) * Math.min(1.8, this.loud);
     if (this.bedGain) this.bedGain.gain.setTargetAtTime(lvl, this.ctx.currentTime, 0.4);
     if (paused || t1 <= t0) return;
+    this.foley(m, t1);
     const rate = (t1 - t0);
     while (this.pi < m.plog.length && m.plog[this.pi].g1 < t0) this.pi++;
     for (let i = this.pi; i < m.plog.length && m.plog[i].g0 <= t1; i++) {
