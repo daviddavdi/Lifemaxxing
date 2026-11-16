@@ -225,8 +225,8 @@ VIEWS.squad = () => {
   let body;
   if (tab === 'ov') {
     const rs = sortSquad(r, 'ov');
-    body = `<table class="tbl"><thead><tr>${sth('ov', 'num', '#')}${sth('ov', 'pos', 'Pos')}${sth('ov', 'name', 'Player', 'l')}${sth('ov', 'age', 'Age')}${sth('ov', 'ca', 'Ability')}${sth('ov', 'pot', 'Pot.')}${sth('ov', 'cond', 'Cond')}${sth('ov', 'mor', 'Morale')}</tr></thead><tbody>
-    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td><span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm"><span class="mini">${playerFace(p, 26)}</span>${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
+    body = `${UI.tab.sq_ov ? '' : '<p class="hint pad-x">Drag ⋮⋮ to move players up or down the rotation.</p>'}<table class="tbl" data-dragzone="squad"><thead><tr>${sth('ov', 'num', '#')}${sth('ov', 'pos', 'Pos')}${sth('ov', 'name', 'Player', 'l')}${sth('ov', 'age', 'Age')}${sth('ov', 'ca', 'Ability')}${sth('ov', 'pot', 'Pot.')}${sth('ov', 'cond', 'Cond')}${sth('ov', 'mor', 'Morale')}</tr></thead><tbody>
+    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" data-drag-row="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td>${UI.tab.sq_ov ? '' : `<span class="dragh" data-drag="${p.id}" aria-label="Drag to move">⋮⋮</span>`}<span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm"><span class="mini">${playerFace(p, 26)}</span>${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
     </tbody></table>`;
   } else if (tab === 'st') {
     const rs = sortSquad(r, 'st');
@@ -341,8 +341,9 @@ VIEWS.team = ({ id }) => {
 /* Tactics */
 function rotationList(r, opts = {}) {
   const slotName = (i) => (i < 5 ? POS[i] : i < 10 ? 'Bench' : 'Reserve');
-  return `<div class="list rot">${r.map((p, i) => `<button class="li rotrow ${UI.sel === p.id ? 'sel' : ''} ${i === 5 || i === 10 ? 'gap' : ''}" data-act="${opts.act || 'rotSel'}" data-id="${p.id}">
-    <span class="slot ${i < 5 ? 'st' : i < 10 ? 'bn' : 'rs'}">${slotName(i)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span>
+  const off = (p, i) => i < 5 && p.pos !== POS[i];
+  return `<div class="list rot" data-dragzone="${opts.act === 'liveSubSel' ? 'live' : 'rot'}">${r.map((p, i) => `<button class="li rotrow ${UI.sel === p.id ? 'sel' : ''} ${i === 5 || i === 10 ? 'gap' : ''}" data-act="${opts.act || 'rotSel'}" data-id="${p.id}" data-drag-row="${p.id}">
+    <span class="dragh" data-drag="${p.id}" aria-label="Drag to move">⋮⋮</span><span class="slot ${i < 5 ? 'st' : i < 10 ? 'bn' : 'rs'} ${off(p, i) ? 'offpos' : ''}" ${off(p, i) ? `title="${p.pos} playing ${POS[i]}"` : ''}>${off(p, i) ? '⚠ ' : ''}${slotName(i)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span>
     <span class="grow nm">${opts.live ? `<span class="mini">${playerFace(p, 26)}</span>` : ''}${injHTML(p)}${esc(pname(p, true))}</span>${opts.live ? `<span class="mins">${opts.live(p)}</span>` : starsHTML(stars(calcCA(p)))}${opts.live ? '' : condHTML(p.cond)}
     ${opts.live ? '' : `<span class="mins">${i < MIN_PLAN.length ? MIN_PLAN[i] + "'" : '–'}</span>`}</button>`).join('')}</div>`;
 }
@@ -369,7 +370,7 @@ VIEWS.tactics = () => {
   } else {
     body = `<div class="pad"><div class="sec-row"><h2 class="sec">Rotation</h2><button class="btn sm" data-act="autoRot">Auto-pick</button></div>
     <label class="check"><input type="checkbox" data-chg="autoRotToggle" ${S.autoRot ? 'checked' : ''}> Let my assistant pick the rotation before every game</label>
-    <p class="hint">Tap a player, then another to swap. Top 5 start; bench 6–10 get minutes; reserves don't play.</p></div>${rotationList(r)}`;
+    <p class="hint">Drag ⋮⋮ to slide a player up or down, or tap two players to swap. Top 5 start; bench 6–10 get minutes; reserves don't play.</p>${(() => { const bad = r.slice(0, 5).map((p, i) => p.pos !== POS[i] ? `${esc(p.last)} (${p.pos}) at ${POS[i]}` : null).filter(Boolean); return bad.length ? `<p class="warn-t">⚠ Out of position: ${bad.join(', ')}. Auto-pick puts players in their natural positions.</p>` : ''; })()}</div>${rotationList(r)}`;
   }
   return `${header('Tactics')}${tabs('tac', [['off', 'Offense'], ['def', 'Defense'], ['roles', 'Roles'], ['rot', 'Rotation']])}${body}`;
 };
@@ -649,11 +650,11 @@ function clockAt(t) {
 const Live = {
   m: null, t: 0, speed: 1, paused: false, painted: -1, tab: 'feed', hlOn: true, raf: 0, last: 0, lastPaint: 0, curRate: 6, hlLabel: null,
   start(m) {
-    this.react = null; this.m = m; this.t = 0; this.speed = 1; this.paused = true; this.painted = -1; this.tab = 'feed'; this.finished = false; this.hlLabel = null;
+    this.react = null; this.m = m; Sound.begin(m); this.t = 0; this.speed = 1; this.paused = true; this.painted = -1; this.tab = 'feed'; this.finished = false; this.hlLabel = null;
     cancelAnimationFrame(this.raf); this.last = performance.now(); this.raf = requestAnimationFrame((ts) => this.loop(ts));
   },
   loop(ts) {
-    if (!this.m || UI.view !== 'match') { this.raf = 0; return; }
+    if (!this.m || UI.view !== 'match') { this.raf = 0; Sound.stopBed(); return; }
     const dt = Math.min(0.1, Math.max(0, (ts - this.last) / 1000)); this.last = ts;
     this.raf = requestAnimationFrame((t2) => this.loop(t2));
     this.step(dt);
@@ -671,7 +672,7 @@ const Live = {
   step(dt) {
     const m = this.m;
     if (m.done && this.t >= m.gt) { if (!this.finished) this.finish(); return; }
-    if (this.paused || document.querySelector('.modal-bg')) { this.curRate = 0; return; }
+    if (this.paused || document.querySelector('.modal-bg')) { this.curRate = 0; Sound.tick(m, this.t, this.t, true); return; }
     if (m.brk && this.t >= m.gt) { this.curRate = 0; this.breakTime(); return; }
     let rate = SPEEDS[this.speed] || 4;
     this.hlLabel = null;
@@ -679,8 +680,9 @@ const Live = {
     this.curRate = rate;
     let nt = this.t + dt * rate;
     if (m.brk || m.done) nt = Math.min(nt, m.gt);
-    this.t = nt;
+    const t0 = this.t; this.t = nt;
     if (!m.brk && !m.done) simUntil(m, this.t + 0.01);
+    Sound.tick(m, t0, this.t, false);
   },
   shownScore() {
     const m = this.m;
@@ -736,13 +738,13 @@ const Live = {
     const { q, c } = clockAt(this.t);
     const clock = `${Math.floor(c / 60)}:${String(Math.floor(c % 60)).padStart(2, '0')}`;
     $('#sb').innerHTML = `<div class="sbt">${badge(A, 'lg')}<span>${esc(A.abbr)}</span></div><div class="sbs"><b>${as}</b><span>–</span><b>${hs}</b></div><div class="sbt r"><span>${esc(H.abbr)}</span>${badge(H, 'lg')}</div>
-      <div class="sbq">${over ? 'FINAL' + (m.ot ? ' / OT' : '') : (q <= 4 ? 'Q' + q : 'OT' + (q - 4)) + ' · ' + clock}</div>`;
-    const ctlKey = [this.speed, this.paused, over, this.tab, this.t === 0, this.hlOn, m.sides[m.us].asst].join('|');
+      ${m.rivalGame && !over ? '<div class="sbriv">🔥 Rivalry game — the crowd is up for this one</div>' : ''}<div class="sbq">${over ? 'FINAL' + (m.ot ? ' / OT' : '') : (q <= 4 ? 'Q' + q : 'OT' + (q - 4)) + ' · ' + clock}</div>`;
+    const ctlKey = [Sound.on, this.speed, this.paused, over, this.tab, this.t === 0, this.hlOn, m.sides[m.us].asst].join('|');
     if (force || this._ctl !== ctlKey) {
       this._ctl = ctlKey;
       $('#lctl').innerHTML = over ? `<button class="btn primary big" data-act="toResult">Match Report ${icon('play')}</button>`
         : this.t === 0 && this.paused ? `<button class="btn primary big" data-act="liveTipoff">${icon('mega')} Pre-match team talk & tip-off</button>`
-        : `<div class="seg">${[1, 2, 4, 8].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
+        : `<div class="seg">${[1, 2, 4, 8].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="iconbtn snd" data-act="liveSound" aria-label="Sound">${Sound.on ? '🔊' : '🔇'}</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
       $('#ltabs').innerHTML = ['feed', 'box'].map((k) => `<button class="tab ${this.tab === k ? 'on' : ''}" data-act="liveTab" data-v="${k}">${k === 'feed' ? 'Commentary' : 'Live Stats'}</button>`).join('');
       $('#lbar').innerHTML = over ? '' : `<button class="btn" data-act="liveShout" ${this.t === 0 ? 'disabled' : ''}>${icon('mega')} Shout</button><button class="btn" data-act="liveTac">Tactics</button><button class="btn" data-act="liveSubs">Subs${m.sides[m.us].asst ? ' · Asst' : ''}</button>`;
     }
@@ -984,6 +986,7 @@ const ACT = {
   skipTalk: (d) => ACT.talkDone(d),
   talkDone: () => { closeModal(); Live.m.brk = 0; Live.paused = false; Live.paint(true); },
   liveResume: () => { closeModal(); Live.m.brk = 0; Live.paused = false; Live.paint(true); },
+  liveSound: () => { Sound.setPref(!Sound.on); if (Sound.on) Sound.unlock(); toast(Sound.on ? 'Crowd sound on' : 'Sound off'); Live.paint(true); },
   liveSpeed: (d) => { Live.speed = +d.v; Live.paint(true); },
   livePause: () => { Live.paused = !Live.paused; Live.paint(true); },
   liveTab: (d) => { Live.tab = d.v; Live.paint(true); },
@@ -1105,7 +1108,48 @@ const CHG = {
   setRole: (el) => { const t = userTeam(); const i = t.instr[el.dataset.id] || (t.instr[el.dataset.id] = {}); i.role = el.value; save(); render(); },
 };
 
+/* drag to reorder the rotation (rotation tab, squad overview, live subs) */
+const Drag = {
+  st: null,
+  down(e) {
+    const h = e.target.closest('[data-drag]'); if (!h) return;
+    const zone = h.closest('[data-dragzone]'); if (!zone) return;
+    e.preventDefault();
+    const rows = [...zone.querySelectorAll('[data-drag-row]')], row = h.closest('[data-drag-row]');
+    const rects = rows.map((r) => r.getBoundingClientRect());
+    this.st = { zone, rows, row, rects, from: rows.indexOf(row), to: rows.indexOf(row), y0: e.clientY, id: +row.dataset.dragRow, moved: false };
+    row.classList.add('dragging'); try { h.setPointerCapture(e.pointerId); } catch (x) {}
+  },
+  move(e) {
+    const st = this.st; if (!st) return; e.preventDefault();
+    const dy = e.clientY - st.y0; if (Math.abs(dy) > 4) st.moved = true;
+    st.row.style.transform = `translateY(${dy}px)`;
+    const mid = st.rects[st.from].top + st.rects[st.from].height / 2 + dy;
+    let to = 0; st.rects.forEach((r, i) => { if (i !== st.from && mid > r.top + r.height / 2) to = i < st.from ? i + 1 : i; });
+    if (mid < st.rects[0].top + st.rects[0].height / 2) to = 0;
+    st.to = to; const hgt = st.rects[st.from].height;
+    st.rows.forEach((r, i) => { if (i === st.from) return; let sh = 0; if (st.from < to && i > st.from && i <= to) sh = -hgt; if (st.from > to && i >= to && i < st.from) sh = hgt; r.style.transform = sh ? `translateY(${sh}px)` : ''; });
+    // auto-scroll near the edges
+    const scr = document.scrollingElement; if (e.clientY < 90) scr.scrollTop -= 8; else if (e.clientY > innerHeight - 110) scr.scrollTop += 8;
+  },
+  up() {
+    const st = this.st; if (!st) return; this.st = null;
+    st.rows.forEach((r) => { r.style.transform = ''; r.classList.remove('dragging'); });
+    Drag.justDragged = st.moved; setTimeout(() => (Drag.justDragged = false), 50);
+    if (!st.moved || st.to === st.from) return;
+    const t = userTeam(), rot = t.rotation, targetId = +st.rows[st.to].dataset.dragRow;
+    const i = rot.indexOf(st.id); if (i < 0) return; rot.splice(i, 1);
+    const j = rot.indexOf(targetId); rot.splice(st.from < st.to ? j + 1 : j, 0, st.id);
+    S.autoRot = false; UI.sel = null; save();
+    if (st.zone.dataset.dragzone === 'live' && Live.m) { rebuildPlan(S, Live.m, liveSide(), false); modalSubs(); } else render();
+  },
+};
+document.addEventListener('pointerdown', (e) => Drag.down(e));
+document.addEventListener('pointermove', (e) => Drag.move(e), { passive: false });
+document.addEventListener('pointerup', () => Drag.up());
+document.addEventListener('pointercancel', () => Drag.up());
 document.addEventListener('click', (e) => {
+  if (Drag.justDragged || e.target.closest('[data-drag]')) { e.preventDefault(); return; }
   const el = e.target.closest('[data-act]');
   if (!el || el.disabled) return;
   const fn = ACT[el.dataset.act];

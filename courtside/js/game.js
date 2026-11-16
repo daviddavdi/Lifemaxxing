@@ -413,6 +413,7 @@ function createUserMatch(pauses) {
   m.fid = f.id;
   m.us = f.h === S.userTeam ? 0 : 1;
   m.trackPairs = true;
+  { const o2 = team(m.us === 0 ? f.a : f.h), me = userTeam(); m.rivalGame = (typeof isRivalMatch === 'function' && isRivalMatch(f)) || (o2.city && o2.city === me.city); }
   S.preview = { fid: f.id, p: matchPreview(f).pUs };
   return m;
 }

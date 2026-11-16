@@ -495,3 +495,15 @@ body.live-on main { padding-bottom: 80px; }
 .ev.sub .evx { color: #c6cbd8; font-style: italic; }
 .rotrow .mins { white-space: nowrap; display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; width: auto; flex: none; }
 .rotrow .mins .en.sm { flex: none; width: 34px; height: 5px; }
+/* drag to reorder */
+.dragh { display: inline-flex; align-items: center; justify-content: center; width: 22px; min-height: 28px; margin-right: 4px; color: var(--muted); font-size: 14px; letter-spacing: -3px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; flex: none; }
+[data-drag-row] { transition: transform .12s ease; }
+[data-drag-row].dragging { transition: none; position: relative; z-index: 5; background: var(--panel2) !important; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+.slot.offpos { background: #6b4a12 !important; color: #ffd98a !important; }
+.pad-x { padding: 0 16px; margin: 4px 0 6px; }
+.sbriv { grid-column: 1 / -1; text-align: center; font-size: 11.5px; font-weight: 700; color: #ffb26b; margin-top: 2px; }
+.iconbtn.snd { font-size: 16px; }
+.rotrow { gap: 6px; padding-left: 6px; padding-right: 10px; }
+.rotrow .dragh { width: 18px; margin-right: 0; }
+.rotrow .slot { width: 44px; }
+.rotrow .stars { transform: scale(.85); transform-origin: right center; margin-left: -8px; }

@@ -115,17 +115,19 @@ function autoRotation(S, team) {
   const avail = roster.filter((p) => !p.inj && !(p.susp > 0));
   const pool = avail.length >= 5 ? avail : roster;
   const used = new Set();
-  const starters = [];
-  for (let i = 0; i < 5; i++) {
-    let best = null, bs = -1e9;
-    for (const p of pool) {
-      if (used.has(p.id)) continue;
-      const d = Math.abs(POS.indexOf(p.pos) - i);
-      const sc = calcCA(p) - d * 1.4 - (p.cond < 70 ? 1 : 0);
-      if (sc > bs) { bs = sc; best = p; }
-    }
-    if (best) { used.add(best.id); starters.push(best.id); }
-  }
+  let starters = [];
+  // best five with each player in his own position where possible (a C only plays PF if he's clearly better)
+  const cand = pool.slice().sort((x, y) => calcCA(y) - calcCA(x)).slice(0, 10);
+  const PEN = [0, 2.6, 6, 10, 14];
+  const CA = new Map(cand.map((p) => [p, calcCA(p)]));
+  const fit = (p, i) => CA.get(p) - PEN[Math.abs(POS.indexOf(p.pos) - i)] - (p.cond < 70 ? 1 : 0);
+  let best = -1e9, pick = null;
+  const cur = [], rec = (i, sc) => {
+    if (i === 5) { if (sc > best) { best = sc; pick = cur.slice(); } return; }
+    for (const p of cand) if (!cur.includes(p)) { cur.push(p); rec(i + 1, sc + fit(p, i)); cur.pop(); }
+  };
+  if (cand.length >= 5) rec(0, 0); else pick = cand;
+  starters = pick.map((p) => p.id); starters.forEach((id) => used.add(id));
   ensureNumbers(S, team);
   const rest = roster.filter((p) => !used.has(p.id)).sort((x, y) => (x.inj || x.susp > 0 ? 1 : 0) - (y.inj || y.susp > 0 ? 1 : 0) || calcCA(y) - calcCA(x));
   team.rotation = starters.concat(rest.map((p) => p.id));
