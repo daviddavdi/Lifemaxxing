@@ -654,7 +654,7 @@ const Live = {
     cancelAnimationFrame(this.raf); this.last = performance.now(); this.raf = requestAnimationFrame((ts) => this.loop(ts));
   },
   loop(ts) {
-    if (!this.m || UI.view !== 'match') { this.raf = 0; Sound.stopBed(); return; }
+    if (!this.m || UI.view !== 'match') { this.raf = 0; Sound.stopAll(); return; }
     const dt = Math.min(0.1, Math.max(0, (ts - this.last) / 1000)); this.last = ts;
     this.raf = requestAnimationFrame((t2) => this.loop(t2));
     this.step(dt);
@@ -739,12 +739,12 @@ const Live = {
     const clock = `${Math.floor(c / 60)}:${String(Math.floor(c % 60)).padStart(2, '0')}`;
     $('#sb').innerHTML = `<div class="sbt">${badge(A, 'lg')}<span>${esc(A.abbr)}</span></div><div class="sbs"><b>${as}</b><span>–</span><b>${hs}</b></div><div class="sbt r"><span>${esc(H.abbr)}</span>${badge(H, 'lg')}</div>
       ${m.rivalGame && !over ? '<div class="sbriv">🔥 Rivalry game — the crowd is up for this one</div>' : ''}<div class="sbq">${over ? 'FINAL' + (m.ot ? ' / OT' : '') : (q <= 4 ? 'Q' + q : 'OT' + (q - 4)) + ' · ' + clock}</div>`;
-    const ctlKey = [Sound.on, this.speed, this.paused, over, this.tab, this.t === 0, this.hlOn, m.sides[m.us].asst].join('|');
+    const ctlKey = [Sound.on, Sound.ready(), this.speed, this.paused, over, this.tab, this.t === 0, this.hlOn, m.sides[m.us].asst].join('|');
     if (force || this._ctl !== ctlKey) {
       this._ctl = ctlKey;
       $('#lctl').innerHTML = over ? `<button class="btn primary big" data-act="toResult">Match Report ${icon('play')}</button>`
         : this.t === 0 && this.paused ? `<button class="btn primary big" data-act="liveTipoff">${icon('mega')} Pre-match team talk & tip-off</button>`
-        : `<div class="seg">${[1, 2, 4, 8].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="iconbtn snd" data-act="liveSound" aria-label="Sound">${Sound.on ? '🔊' : '🔇'}</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
+        : `<div class="seg">${[1, 2, 4, 8].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="iconbtn snd ${Sound.on && !Sound.ready() ? 'blocked' : ''}" data-act="${Sound.on && !Sound.ready() ? 'liveSoundOn' : 'liveSound'}" aria-label="Sound">${!Sound.on ? '🔇' : Sound.ready() ? '🔊' : '🔈 Tap'}</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
       $('#ltabs').innerHTML = ['feed', 'box'].map((k) => `<button class="tab ${this.tab === k ? 'on' : ''}" data-act="liveTab" data-v="${k}">${k === 'feed' ? 'Commentary' : 'Live Stats'}</button>`).join('');
       $('#lbar').innerHTML = over ? '' : `<button class="btn" data-act="liveShout" ${this.t === 0 ? 'disabled' : ''}>${icon('mega')} Shout</button><button class="btn" data-act="liveTac">Tactics</button><button class="btn" data-act="liveSubs">Subs${m.sides[m.us].asst ? ' · Asst' : ''}</button>`;
     }
@@ -976,7 +976,7 @@ const ACT = {
     if (d.watch === '1') { const m = createUserMatch(true); UI.stack = []; UI.view = 'match'; Live.start(m); render(); }
     else { const m = createUserMatch(false); teamTalk(m, m.us, 'encourage', 0.5); simToEnd(m); finishUserMatch(m); UI.stack = []; UI.tab.rside = null; go('result'); }
   },
-  liveTipoff: () => talkModal('Pre-match team talk', false),
+  liveTipoff: () => { Sound.unlock(); talkModal('Pre-match team talk', false); },
   doTalk: (d) => {
     const m = Live.m;
     const res = teamTalk(m, m.us, d.v, 1);
@@ -986,7 +986,8 @@ const ACT = {
   skipTalk: (d) => ACT.talkDone(d),
   talkDone: () => { closeModal(); Live.m.brk = 0; Live.paused = false; Live.paint(true); },
   liveResume: () => { closeModal(); Live.m.brk = 0; Live.paused = false; Live.paint(true); },
-  liveSound: () => { Sound.setPref(!Sound.on); if (Sound.on) Sound.unlock(); toast(Sound.on ? 'Crowd sound on' : 'Sound off'); Live.paint(true); },
+  liveSound: () => { Sound.setPref(!Sound.on); if (Sound.on) { Sound.unlock(); Sound.test(); } toast(Sound.on ? '🔊 Crowd sound on — you should hear a cheer. Nothing? Check the volume and silent switch.' : 'Sound off'); Live.paint(true); },
+  liveSoundOn: () => { Sound.unlock(); Sound.test(); setTimeout(() => Live.paint(true), 400); },
   liveSpeed: (d) => { Live.speed = +d.v; Live.paint(true); },
   livePause: () => { Live.paused = !Live.paused; Live.paint(true); },
   liveTab: (d) => { Live.tab = d.v; Live.paint(true); },

@@ -507,3 +507,4 @@ body.live-on main { padding-bottom: 80px; }
 .rotrow .dragh { width: 18px; margin-right: 0; }
 .rotrow .slot { width: 44px; }
 .rotrow .stars { transform: scale(.85); transform-origin: right center; margin-left: -8px; }
+.iconbtn.snd.blocked { width: auto; padding: 0 8px; font-size: 12px; font-weight: 700; color: #ffb26b; border-color: #ffb26b; }

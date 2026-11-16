@@ -5,23 +5,35 @@ const Sound = {
   ctx: null, master: null, bed: null, bedGain: null, noise: null, on: true, loud: 1, lastChant: 0, pi: 0, voices: 0,
   pref() { try { const v = localStorage.getItem('courtside_sound'); return v == null ? true : v === '1'; } catch (e) { return true; } },
   setPref(v) { this.on = v; try { localStorage.setItem('courtside_sound', v ? '1' : '0'); } catch (e) {} if (!v) this.stopBed(); },
+  silentWav() { // 1 s of silence as a WAV data URI (8 kHz, 8-bit mono)
+    const n = 8000, b = new Uint8Array(44 + n), v = new DataView(b.buffer), w = (o, t) => [...t].forEach((c, i) => (b[o + i] = c.charCodeAt(0)));
+    w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true); b.fill(128, 44);
+    let str = ''; b.forEach((x) => (str += String.fromCharCode(x))); return 'data:audio/wav;base64,' + btoa(str);
+  },
   unlock() {
     if (!this.on) return;
     try {
-      if (navigator.audioSession) navigator.audioSession.type = 'playback'; // lets iPhone play even with the silent switch on (Safari 17+)
+      if (navigator.audioSession) try { navigator.audioSession.type = 'playback'; } catch (e) {} // iPhone: play through the silent switch (Safari 17+)
+      // iPhone: a looping (silent) HTML media element moves the page into the "playback" audio session, so WebAudio isn't muted by the silent switch
+      if (!this.keep) { const a = new Audio(this.silentWav()); a.loop = true; a.setAttribute('playsinline', ''); a.volume = 0.01; this.keep = a; }
+      if (this.keep.paused) { const pr = this.keep.play(); if (pr && pr.catch) pr.catch(() => {}); }
       if (!this.ctx) {
         const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
         this.ctx = new AC();
         const comp = this.ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.connect(this.ctx.destination);
-        this.master = this.ctx.createGain(); this.master.gain.value = 0.9; this.master.connect(comp);
+        this.master = this.ctx.createGain(); this.master.gain.value = 1.6; this.master.connect(comp);
         const len = this.ctx.sampleRate * 4, b = this.ctx.createBuffer(1, len, this.ctx.sampleRate), d = b.getChannelData(0);
         let last = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + 0.04 * w) / 1.04; d[i] = w * 0.6 + last * 3; }
         this.noise = b;
       }
-      if (this.ctx.state === 'suspended') this.ctx.resume();
-    } catch (e) { this.ctx = null; }
+      if (this.ctx.state !== 'running') { const pr = this.ctx.resume(); if (pr && pr.catch) pr.catch(() => {}); }
+      if (!this.warm) { const b = this.ctx.createBuffer(1, 1, 22050), s = this.ctx.createBufferSource(); s.buffer = b; s.connect(this.ctx.destination); s.start(0); this.warm = true; } // iOS warm-up
+    } catch (e) { console.warn('sound unavailable', e); }
   },
   ready() { return this.on && this.ctx && this.ctx.state === 'running'; },
+  test() { if (!this.ready()) return setTimeout(() => this.ready() && this.test(), 250); this.swish(); setTimeout(() => this.cheer(1), 120); },
+  stopAll() { this.stopBed(); try { if (this.keep) this.keep.pause(); } catch (e) {} },
   src() { const s = this.ctx.createBufferSource(); s.buffer = this.noise; s.loop = true; return s; },
   filt(type, f, q = 0.7) { const x = this.ctx.createBiquadFilter(); x.type = type; x.frequency.value = f; x.Q.value = q; return x; },
   env(g, t0, peak, att, hold, rel) {
@@ -95,7 +107,7 @@ const Sound = {
     this.startBed();
     const [H, A] = m.sides, margin = Math.abs(H.pts - A.pts);
     const late = m.q >= 4 && m.clock < 240 && margin <= 8;
-    const lvl = paused ? 0.03 : (0.05 + (late ? 0.05 : 0)) * this.loud;
+    const lvl = paused ? 0.05 : (0.09 + (late ? 0.07 : 0)) * this.loud;
     if (this.bedGain) this.bedGain.gain.setTargetAtTime(lvl, this.ctx.currentTime, 0.4);
     if (paused || t1 <= t0) return;
     const rate = (t1 - t0);
@@ -125,5 +137,6 @@ const Sound = {
     }
   },
 };
-document.addEventListener('pointerdown', () => Sound.unlock(), { passive: true });
+// iOS only counts touchend / click as a user gesture that may start audio
+['touchend', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, () => Sound.unlock(), { capture: true, passive: true }));
 Sound.on = Sound.pref();
