@@ -471,3 +471,27 @@ body.live-on main { padding-bottom: 80px; }
 .swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); padding: 0; }
 .swatch.on { border-color: var(--text); box-shadow: 0 0 0 2px var(--team, #f08c00); }
 .chips.wrap { flex-wrap: wrap; overflow: visible; }
+/* live: on-court faces, energy, reactions */
+.oncourt { padding: 6px 12px 2px; }
+.ochead { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+.ochead .sm { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.ocrow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.oc { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 2px 6px; border-radius: 10px; background: var(--panel, #1b1f29); border: 1px solid var(--line); color: inherit; font: inherit; min-width: 0; }
+.oc.r-great, .oc.r-good { border-color: #2f7d55; } .oc.r-bad { border-color: #8a6d22; } .oc.r-awful { border-color: #9b3434; }
+.ocf, .rface { position: relative; display: inline-block; line-height: 0; }
+.ocf svg, .rface svg { border-radius: 50%; }
+.remo { position: absolute; right: -6px; top: -6px; font-size: 15px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.ocn { font-size: 10.5px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ocs { font-size: 10px; color: var(--muted); }
+.ocr { font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 8px; background: #2b2f3b; }
+.ocr.r-great { background: #1d6b4f; color: #b9f5dc; } .ocr.r-good { background: #2d5a2b; color: #cdf3b5; } .ocr.r-bad { background: #5b4a1b; color: #f6dd96; } .ocr.r-awful { background: #6b2525; color: #ffc4c4; }
+.en { display: block; width: 86%; height: 4px; border-radius: 3px; background: #2b2f3b; overflow: hidden; }
+.en i { display: block; height: 100%; border-radius: 3px; }
+.en.sm { display: inline-block; width: 34px; vertical-align: middle; margin-right: 4px; }
+.rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; max-height: 46vh; overflow-y: auto; margin-top: 8px; }
+.rcard { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 10px; background: var(--panel2, #222733); text-align: center; font-size: 12px; }
+.rcard b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.check.asst { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 10px; background: var(--panel2, #222733); margin: 6px 0; }
+.ev.sub .evx { color: #c6cbd8; font-style: italic; }
+.rotrow .mins { white-space: nowrap; display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; width: auto; flex: none; }
+.rotrow .mins .en.sm { flex: none; width: 34px; height: 5px; }

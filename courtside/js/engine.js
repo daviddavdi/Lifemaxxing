@@ -180,7 +180,7 @@ function createMatch(S, home, away, opts = {}) {
   m.sides = [home, away].map((team, i) => {
     if (!team.tactics.system) Object.assign(team.tactics, { ...DEFAULT_TACTICS(), ...team.tactics });
     return { team, ctx: { home: i === 0 }, t: team.tactics, ins: team.instr || (team.instr = {}), coach: teamCoachAttrs(S, team), pts: 0,
-      hot: clamp(R.gauss() * 0.04, -0.09, 0.09) + (team.id === S.userTeam && typeof diffCfg === 'function' ? diffCfg().edge : 0), mood: {}, base: {}, form: {}, heat: {}, played: {}, list: [], plan: {}, on: [], user: team.id === S.userTeam,
+      hot: clamp(R.gauss() * 0.04, -0.09, 0.09) + (team.id === S.userTeam && typeof diffCfg === 'function' ? diffCfg().edge : 0), mood: {}, base: {}, form: {}, heat: {}, played: {}, list: [], plan: {}, on: [], en: {}, user: team.id === S.userTeam, asst: team.id === S.userTeam && !!opts.pauses && S.asstSubs !== false,
       duo: typeof duoMapFor === 'function' && team.id === S.userTeam ? duoMapFor(team.id) : {} };
   });
   m.fav = [strengthOf(S, home.id) - strengthOf(S, away.id), 0]; m.fav[1] = -m.fav[0];
@@ -212,6 +212,7 @@ function rebuildPlan(S, m, s, initial) {
   for (const p of list) {
     ensureHidden(p);
     if (s.played[p.id] == null) s.played[p.id] = 0;
+    if (s.en[p.id] == null) s.en[p.id] = 100;
     if (!m.box[p.id]) {
       m.box[p.id] = blankBox(team.id, 0);
       const b = (p.morale - 60) / 110; s.base[p.id] = b; s.mood[p.id] = b; s.form[p.id] = R.gauss() * ((21 - p.hid.cons) / 20) * 0.045; s.heat[p.id] = clamp(s.form[p.id] * 4, -0.2, 0.2);
@@ -250,7 +251,7 @@ function roleMod(s, p, key) {
   return key === 'eff' ? v * k : 1 + (v - 1) * k;
 }
 function eff(m, s, p, k) {
-  const condF = 0.86 + 0.14 * (p.cond / 100);
+  const condF = (0.86 + 0.14 * (p.cond / 100)) * (0.94 + 0.06 * ((s.en && s.en[p.id] != null ? s.en[p.id] : 100) / 100));
   let v = p.a[k];
   const r = role(s, p);
   if (r === ROLES.td && k === 'pdef') v += 1;
@@ -264,6 +265,7 @@ function eff(m, s, p, k) {
 const avgE = (m, s, arr, k) => arr.reduce((a, p) => a + eff(m, s, p, k), 0) / arr.length;
 
 function pickLineup(m, s, force) {
+  if (s.asst) return asstLineup(m, s, force);
   const margin = Math.abs(m.sides[0].pts - m.sides[1].pts);
   const av = s.list.filter((p) => !m.ej[p.id]);
   if (av.length <= 5) { s.on = av.slice(0, 5); return; }
@@ -275,6 +277,43 @@ function pickLineup(m, s, force) {
     return { p, rem };
   }).sort((a, b) => b.rem - a.rem);
   s.on = sc.slice(0, 5).map((x) => x.p);
+}
+// Assistant coach runs the substitutions: minutes plan + energy + hot/cold hand + foul-outs, announced in the feed.
+function asstLineup(m, s, force) {
+  const before = s.on.slice();
+  const margin = Math.abs(m.sides[0].pts - m.sides[1].pts);
+  const av = s.list.filter((p) => !m.ej[p.id]);
+  const en = (p) => s.en[p.id] ?? 100, heat = (p) => s.heat[p.id] || 0;
+  if (av.length <= 5) s.on = av.slice(0, 5);
+  else {
+    const crunch = m.q >= 4 && m.clock < 300 && margin <= 10, garbage = m.q >= 4 && m.clock < 300 && margin >= 22;
+    const sc = av.map((p, idx) => {
+      let v = (s.plan[p.id] || 0) - (s.played[p.id] || 0);
+      if (s.on.includes(p)) v += force ? 40 : 150;
+      v += (en(p) - 70) * 4 + heat(p) * 140;
+      if (heat(p) > 0.45) v += 90; if (heat(p) < -0.45) v -= 90;
+      if (crunch) v += (10 - idx) * 40 + calcCA(p) * 12;
+      if (garbage) v += idx >= 5 ? 400 : -400;
+      if (en(p) < 40) v -= 300;
+      return { p, v };
+    }).sort((a, b) => b.v - a.v);
+    let on = sc.slice(0, 5).map((x) => x.p);
+    // keep a ball-handler and a big on the floor when possible
+    const need = (pos) => !on.some((p) => pos.includes(p.pos));
+    for (const pos of [['PG', 'SG'], ['PF', 'C']]) if (need(pos)) {
+      const inn = sc.find((x) => !on.includes(x.p) && pos.includes(x.p.pos));
+      if (inn) { const out = on.slice().reverse().find((p) => !(['PG', 'SG'].includes(p.pos) && on.filter((q) => ['PG', 'SG'].includes(q.pos)).length === 1) && !(['PF', 'C'].includes(p.pos) && on.filter((q) => ['PF', 'C'].includes(q.pos)).length === 1)); if (out) on[on.indexOf(out)] = inn.p; }
+    }
+    s.on = on;
+  }
+  if (m.gt > 0 && !m.done) {
+    const ins = s.on.filter((p) => !before.includes(p)), outs = before.filter((p) => !s.on.includes(p));
+    if (ins.length && outs.length) {
+      const why = (p) => m.ej[p.id] ? 'ejected' : (s.en[p.id] ?? 100) < 55 ? 'needs a breather' : (s.heat[p.id] || 0) < -0.45 ? 'gone cold' : 'rest';
+      const pairs = ins.map((p, i) => outs[i] ? `${pname(p, 1)} in for ${pname(outs[i], 1)} (${why(outs[i])})` : `${pname(p, 1)} in`);
+      push(m, 'sub', m.sides.indexOf(s), `Assistant sub: ${pairs.join(', ')}.`, { subIn: ins.map((p) => p.id), subOut: outs.map((p) => p.id) });
+    }
+  }
 }
 const ordered = (arr) => arr.slice().sort((a, b) => POS.indexOf(a.pos) - POS.indexOf(b.pos));
 
@@ -318,6 +357,10 @@ function stepMatch(m) {
     m.plog.push({ g0, g1: g0 + len, oi, on, acts, s0, out: m.out, hs: m.sides[0].pts, as: m.sides[1].pts });
   }
   m.acts = null;
+  for (const s of m.sides) for (const p of s.list) {
+    if (s.on.includes(p)) s.en[p.id] = Math.max(15, (s.en[p.id] ?? 100) - len * (0.062 - p.a.sta * 0.0016) * (s.t.defense === 'press' ? 1.25 : 1) * (s.t.intensity === 'high' ? 1.12 : s.t.intensity === 'low' ? 0.9 : 1));
+    else s.en[p.id] = Math.min(100, (s.en[p.id] ?? 100) + len * 0.1);
+  }
   for (const s of m.sides) for (const p of s.on) {
     s.played[p.id] += len; m.box[p.id].min += len;
     s.mood[p.id] += ((s.base[p.id] || 0) - s.mood[p.id]) * 0.004;
