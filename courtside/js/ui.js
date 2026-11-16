@@ -166,8 +166,11 @@ function render() {
   document.body.classList.toggle('live-on', UI.view === 'match');
   if (S && userTeam()) {
     const t = userTeam();
-    document.documentElement.style.setProperty('--team', t.c1);
-    document.documentElement.style.setProperty('--team2', readableOn(t.c1, t.c2));
+    // Club colour drives the highlights, but only if it stands out on the dark panels (black or navy clubs fall back to their trim, then to brand orange).
+    const vis = (c) => c && /^#[0-9a-f]{6}$/i.test(c) && contrast(c, '#1d1916') >= 2.2;
+    const acc = vis(t.c1) ? t.c1 : vis(t.c2) ? t.c2 : '#ff6b1a';
+    document.documentElement.style.setProperty('--team', acc);
+    document.documentElement.style.setProperty('--team2', readableOn(acc, acc === t.c1 ? t.c2 : t.c1));
     document.documentElement.style.setProperty('--trim', t.c2);
   }
   $('#top').innerHTML = inGame ? topBar() : '';
