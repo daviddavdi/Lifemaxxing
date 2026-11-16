@@ -223,6 +223,7 @@ function rebuildPlan(S, m, s, initial) {
 function push(m, type, side, text, meta) {
   const e = { g: m.gt, q: m.q, c: Math.max(0, Math.round(m.clock)), type, side, text, hs: m.sides[0].pts, as: m.sides[1].pts };
   if (meta) Object.assign(e, meta);
+  e.ai = m.acts ? (e.next ? m.acts.length : m.acts.length - 1) : -1;
   if (m.nextHL && (type === 'score' || type === 'three')) { e.hl = true; e.lbl = m.nextHL; m.nextHL = null; }
   if (e.hl && m.snap) {
     if (!e.force && m.gt - m.lastHL < (e.lbl && e.lbl.startsWith('CLUTCH') ? 45 : 150)) e.hl = false;
@@ -236,6 +237,8 @@ function push(m, type, side, text, meta) {
   m.events.push(e);
   return e;
 }
+// Ordered actions of the current possession, replayed exactly on the 2D court (live matches only).
+function act(m, a) { if (!m.snap || !m.acts) return; a.hs = m.sides[0].pts; a.as = m.sides[1].pts; m.acts.push(a); }
 const heatAdd = (s, p, v) => { s.heat[p.id] = clamp((s.heat[p.id] || 0) + v, -1, 1); };
 function rivalOn(m, p, side) { const l = m.rv && m.rv[p.id]; return l ? side.on.find((x) => l.includes(x.id)) || null : null; }
 
@@ -296,15 +299,25 @@ function stepMatch(m) {
   const len = Math.min(m.clock, m.avgLen * R.f(0.45, 1.55));
   const g0 = m.gt, c0 = m.clock, n0 = m.events.length, oi = m.poss;
   const on = m.snap ? m.sides.map((s) => ordered(s.on).map((p) => p.id)) : null;
-  m.out = null;
+  m.out = null; m.acts = m.snap ? [] : null;
+  const s0 = [m.sides[0].pts, m.sides[1].pts];
   possession(m, m.poss);
   m.clock -= len; m.gt += len;
   if (m.snap) {
-    // events happen when the shot is taken, near the end of the possession
-    const tShot = g0 + len * 0.85;
-    for (let i = n0; i < m.events.length; i++) { m.events[i].g = tShot; m.events[i].c = Math.max(0, Math.round(c0 - len * 0.85)); }
-    m.plog.push({ g0, g1: g0 + len, oi, on, out: m.out, hs: m.sides[0].pts, as: m.sides[1].pts });
+    // spread the actions over the possession: set-up first, then each shot / free throw / rebound in order
+    const W = { shot: 1, ft: 0.55, reb: 0.4, to: 0.7 };
+    const acts = m.acts, tot = acts.reduce((x, a) => x + (W[a.t] || 0.5), 0) || 1;
+    const start = g0 + len * (acts.length > 3 ? 0.25 : 0.42), span = g0 + len * 0.96 - start;
+    let cur = start;
+    for (const a of acts) { a.ts = cur; cur += span * (W[a.t] || 0.5) / tot; a.te = cur; }
+    for (let i = n0; i < m.events.length; i++) {
+      const e = m.events[i], a = acts[Math.min(Math.max(e.ai, 0), acts.length - 1)];
+      const tt = a ? (e.ai < 0 ? a.ts : a.te) : g0 + len * 0.5;
+      e.g = tt; e.c = Math.max(0, Math.round(c0 - (tt - g0)));
+    }
+    m.plog.push({ g0, g1: g0 + len, oi, on, acts, s0, out: m.out, hs: m.sides[0].pts, as: m.sides[1].pts });
   }
+  m.acts = null;
   for (const s of m.sides) for (const p of s.on) {
     s.played[p.id] += len; m.box[p.id].min += len;
     s.mood[p.id] += ((s.base[p.id] || 0) - s.mood[p.id]) * 0.004;
@@ -359,12 +372,15 @@ function possession(m, oi) {
     const loser = R.wpick(off, (p) => usage(m, O, p) * (22 - p.a.han));
     m.box[loser.id].tov++;
     m.out = { k: 'to', p: loser.id };
+    let stl = null;
     if (R.chance(0.55)) {
       const st = R.wpick(def, (p) => Math.pow(eff(m, D, p, 'stl'), 2));
-      m.box[st.id].stl++; heatAdd(D, st, 0.08); m.out.s = st.id; heatAdd(O, loser, -0.08);
+      m.box[st.id].stl++; heatAdd(D, st, 0.08); m.out.s = st.id; heatAdd(O, loser, -0.08); stl = st;
+      act(m, { t: 'to', s: oi, p: loser.id, st: st.id });
       m.trans[1 - oi] = dt.defense === 'press' && R.chance(0.3) ? 0.06 : 0.03;
-      if (R.chance(0.45)) push(m, 'stl', 1 - oi, R.pick([`${pname(st, 1)} picks off the pass!`, `Steal by ${pname(st, 1)}.`, `${pname(st, 1)} strips ${pname(loser, 1)} clean!`]), { p: st.id, v: loser.id, k: 'stl', hl: (D.heat[st.id] || 0) > 0.45 || (m.q >= 4 && m.clock < 120) });
+      push(m, 'stl', 1 - oi, R.pick([`${pname(st, 1)} picks off the pass!`, `Steal by ${pname(st, 1)}.`, `${pname(st, 1)} strips ${pname(loser, 1)} clean!`]), { p: st.id, v: loser.id, k: 'stl', hl: (D.heat[st.id] || 0) > 0.45 || (m.q >= 4 && m.clock < 120) });
     }
+    if (!stl) { act(m, { t: 'to', s: oi, p: loser.id }); push(m, 'to', oi, R.pick([`${pname(loser, 1)} throws it away.`, `Turnover — ${pname(loser, 1)} steps out of bounds.`, `${pname(loser, 1)} loses the handle.`])); }
     return;
   }
   let tries = 0;
@@ -418,8 +434,8 @@ function possession(m, oi) {
         const lvl = R.chance(0.15) ? 2 : 1;
         m.flags[dfn.id] = Math.max(m.flags[dfn.id] || 0, lvl);
         heatAdd(D, dfn, -0.3);
-        if (lvl === 2) { m.ej[dfn.id] = true; push(m, 'flag', di, `FLAGRANT 2! ${pname(dfn, 1)} is EJECTED after a dangerous foul on ${pname(sh, 1)}!`, { p: dfn.id, v: sh.id, k: 'flag', hl: true, force: true, lbl: 'FLAGRANT 2 · EJECTED' }); pickLineup(m, D, true); }
-        else push(m, 'flag', di, `FLAGRANT 1 on ${pname(dfn, 1)} — he wraps up ${pname(sh, 1)} on the drive.`, { p: dfn.id, v: sh.id, k: 'flag', hl: true, force: true, lbl: 'FLAGRANT 1' });
+        if (lvl === 2) { m.ej[dfn.id] = true; push(m, 'flag', di, `FLAGRANT 2! ${pname(dfn, 1)} is EJECTED after a dangerous foul on ${pname(sh, 1)}!`, { p: dfn.id, v: sh.id, k: 'flag', hl: true, force: true, lbl: 'FLAGRANT 2 · EJECTED', next: true }); pickLineup(m, D, true); }
+        else push(m, 'flag', di, `FLAGRANT 1 on ${pname(dfn, 1)} — he wraps up ${pname(sh, 1)} on the drive.`, { p: dfn.id, v: sh.id, k: 'flag', hl: true, force: true, lbl: 'FLAGRANT 1', next: true });
       }
     }
     const made = R.chance(fouled ? p * 0.55 : p);
@@ -449,33 +465,45 @@ function possession(m, oi) {
       m.fireShown = m.fireShown || {};
       const newFire = fire && !m.fireShown[sh.id]; if (fire) m.fireShown[sh.id] = true;
       if (fire && R.chance(0.3)) txt += R.pick([` ${pname(sh, 1)} is ON FIRE!`, ` He can't miss!`, ` ${pname(sh, 1)} is heating up!`]);
-      if (fouled) {
-        txt = 'And one! ' + txt;
-        b.fta++;
-        if (R.chance(0.5 + eff(m, O, sh, 'ft') * 0.022)) { b.ftm++; b.pts++; O.pts++; }
-      }
+      if (fouled) txt = 'And one! ' + txt;
+      act(m, { t: 'shot', s: oi, k: type, p: sh.id, a: ast ? ast.id : null, made: true, pts: val, foul: fouled });
       m.out = { k: type, p: sh.id, a: ast ? ast.id : null, made: true };
-      trackRun(m, oi, val + (fouled ? 1 : 0));
       push(m, type === 'thr' ? 'three' : 'score', oi, txt + at, { p: sh.id, a: ast ? ast.id : null, k: type, made: true, hl: late || newFire || (type === 'in' && sh.a.jmp >= 16 && R.chance(0.08)), lbl: late ? 'CLUTCH' : newFire ? 'ON FIRE' : null });
+      let ftPts = 0;
+      if (fouled) {
+        b.fta++;
+        const ok = R.chance(0.5 + eff(m, O, sh, 'ft') * 0.022);
+        if (ok) { b.ftm++; b.pts++; O.pts++; ftPts = 1; }
+        act(m, { t: 'ft', s: oi, p: sh.id, made: ok, n: 1, of: 1, and1: true });
+        push(m, 'ft', oi, ok ? `${pname(sh, 1)} completes the ${type === 'thr' ? 'four' : 'three'}-point play at the line.` : `${pname(sh, 1)} misses the and-one free throw.`);
+      }
+      trackRun(m, oi, val + ftPts);
       if (rvOn && R.chance(0.22 + Math.max(0, sh.hid.trash - 10) * 0.02)) trashTalk(m, O, D, sh, rvOn, oi, true);
       else if (sh.hid.trash >= 14 && R.chance((sh.hid.trash - 12) * 0.04)) trashTalk(m, O, D, sh, dfn, oi);
       return;
     }
     if (fouled) {
       let k = 0;
-      for (let i = 0; i < val; i++) { b.fta++; if (R.chance(clamp(0.48 + eff(m, O, sh, 'ft') * 0.022 + (late ? (sh.hid.clutch - 10) * 0.006 : 0), 0.4, 0.95))) { k++; b.ftm++; b.pts++; } }
-      O.pts += k;
+      act(m, { t: 'shot', s: oi, k: type, p: sh.id, made: false, foul: true });
+      for (let i = 0; i < val; i++) {
+        b.fta++;
+        const ok = R.chance(clamp(0.48 + eff(m, O, sh, 'ft') * 0.022 + (late ? (sh.hid.clutch - 10) * 0.006 : 0), 0.4, 0.95));
+        if (ok) { k++; b.ftm++; b.pts++; O.pts++; }
+        act(m, { t: 'ft', s: oi, p: sh.id, made: ok, n: i + 1, of: val });
+      }
       m.out = { k: 'ft', p: sh.id, made: k > 0 };
       if (k) trackRun(m, oi, k);
-      if (R.chance(0.3) || late) push(m, 'ft', oi, `${pname(sh, 1)} goes ${k}/${val} from the line.`);
+      push(m, 'ft', oi, `${pname(sh, 1)} ${k === val ? `makes ${val === 3 ? 'all three' : 'both'}` : k === 0 ? `misses ${val === 3 ? 'all three' : 'both'}` : `makes ${k} of ${val}`} from the line${type === 'thr' ? ' after being fouled on a three' : ''}.`);
       if (k === val || R.chance(0.6)) return;
     } else {
       b.fga++; if (type === 'thr') b.tpa++;
       m.out = { k: type, p: sh.id, made: false };
       heatAdd(O, sh, -0.08 * (1.25 - sh.hid.res / 40) * (rivalOn(m, sh, D) ? 1.6 : 1));
+      const shotAct = { t: 'shot', s: oi, k: type, p: sh.id, made: false };
+      act(m, shotAct);
       if (type === 'in' && R.chance(0.1 * (avgE(m, D, def, 'blk') / 10) * 1.4)) {
         const bl = R.wpick(def, (x) => Math.pow(eff(m, D, x, 'blk'), 2.5) * (x.h / 200));
-        m.box[bl.id].blk++; m.out.b = bl.id; heatAdd(D, bl, 0.12); heatAdd(O, sh, -0.06);
+        m.box[bl.id].blk++; m.out.b = bl.id; shotAct.b = bl.id; heatAdd(D, bl, 0.12); heatAdd(O, sh, -0.06);
         if (R.chance(0.6)) push(m, 'blk', 1 - oi, R.pick([`Rejected! ${pname(bl, 1)} swats ${pname(sh, 1)}.`, `${pname(bl, 1)} with the block!`, `Get that outta here! ${pname(bl, 1)} denies ${pname(sh, 1)}.`]), { p: bl.id, v: sh.id, k: 'blk', hl: late || (D.heat[bl.id] || 0) > 0.45, lbl: late ? 'CLUTCH STOP' : null });
       } else if (late && R.chance(0.4)) push(m, 'miss', oi, `${pname(sh, 1)} ${type === 'thr' ? 'misses the three' : 'can\'t get it to drop'} in crunch time.`, { p: sh.id, k: type, made: false, hl: true, lbl: 'CLUTCH' });
       else if (type === 'thr' && R.chance(0.06)) push(m, 'miss', oi, `${pname(sh, 1)} misses from three.`);
@@ -487,11 +515,13 @@ function possession(m, oi) {
       const rb = R.wpick(off, (x) => Math.pow(eff(m, O, x, 'reb'), 1.6) * (x.h / 200) * (eff(m, O, x, 'jmp') + 10) * roleMod(O, x, 'reb'));
       m.box[rb.id].reb++; m.box[rb.id].oreb++;
       if (m.out) m.out.r = rb.id;
+      act(m, { t: 'reb', s: oi, p: rb.id, off: true });
       continue;
     }
     const rb = R.wpick(def, (x) => Math.pow(eff(m, D, x, 'reb'), 1.6) * (x.h / 200) * (eff(m, D, x, 'jmp') + 10) * roleMod(D, x, 'reb'));
     m.box[rb.id].reb++;
     if (m.out) m.out.r = rb.id;
+    act(m, { t: 'reb', s: oi, p: rb.id, off: false });
     m.trans[1 - oi] = ot.oreb === 'crash' ? 0.02 : ot.oreb === 'back' ? -0.01 : 0;
     return;
   }
@@ -501,12 +531,15 @@ function technical(m, O, D, p, text) {
   O.mood[p.id] = clamp((O.mood[p.id] || 0) - 0.15, -1, 1);
   heatAdd(O, p, -0.2);
   const si = m.sides.indexOf(O);
-  push(m, 'tech', si, text, { p: p.id, k: 'tech', hl: true, force: true, lbl: 'TECHNICAL FOUL' });
+  push(m, 'tech', si, text, { p: p.id, k: 'tech', hl: true, force: true, lbl: 'TECHNICAL FOUL', next: true });
   if (m.techs[p.id] >= 2 && !m.ej[p.id]) { m.ej[p.id] = true; push(m, 'flag', si, `${pname(p, 1)} has been EJECTED after his second technical!`, { p: p.id, k: 'flag', hl: true, force: true, lbl: 'EJECTED' }); pickLineup(m, O, true); }
   const sh = D.on.slice().sort((a, b) => b.a.ft - a.a.ft)[0];
   if (!sh) return;
   m.box[sh.id].fta++;
-  if (R.chance(0.5 + sh.a.ft * 0.022)) { D.pts++; m.box[sh.id].pts++; m.box[sh.id].ftm++; }
+  const ok = R.chance(0.5 + sh.a.ft * 0.022);
+  if (ok) { D.pts++; m.box[sh.id].pts++; m.box[sh.id].ftm++; }
+  act(m, { t: 'ft', s: m.sides.indexOf(D), p: sh.id, made: ok, n: 1, of: 1, tech: true });
+  push(m, 'ft', m.sides.indexOf(D), `${pname(sh, 1)} ${ok ? 'hits' : 'misses'} the technical free throw.`);
 }
 function trackRun(m, oi, v) {
   const run = m.run;

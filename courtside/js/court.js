@@ -7,7 +7,8 @@ const Court = {
     if (this.m !== m) { this.dots = {}; this.ball = null; }
     this.cv = cv; this.m = m;
     const dpr = window.devicePixelRatio || 1;
-    const w = cv.parentElement.clientWidth || 340;
+    const pe = cv.parentElement, cs = getComputedStyle(pe);
+    const w = Math.floor((pe.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0)) || 340);
     this.W = w; this.H = Math.round(w * 50 / 94);
     cv.width = Math.round(this.W * dpr); cv.height = Math.round(this.H * dpr);
     cv.style.width = this.W + 'px'; cv.style.height = this.H + 'px';
@@ -99,12 +100,14 @@ const Court = {
     return att === 0 ? [x, y] : [94 - x, y];
   },
   shotSpot(k, base, att) {
-    const r = (x, y) => (att === 0 ? [x, y] : [94 - x, y]);
-    if (k === 'in') return r(85, base[1] > 25 ? 27 : 23);
-    if (k === 'mid') return r(76, base[1] > 25 ? 31 : 19);
-    if (k === 'ft') return r(75, 25);
     const bx = att === 0 ? 88.75 : 5.25;
-    return Math.hypot(base[0] - bx, base[1] - 25) < 23 ? r(66, base[1] > 25 ? 40 : 10) : base;
+    let ang = Math.atan2(base[1] - 25, base[0] - bx);
+    if (Math.abs(Math.cos(ang)) < 0.05) ang = (att === 0 ? Math.PI : 0) + (base[1] > 25 ? -0.4 : 0.4);
+    const r = k === 'thr' ? 25.5 : k === 'mid' ? 15 : 3.5;
+    let x = bx + Math.cos(ang) * r, y = 25 + Math.sin(ang) * r;
+    if (k === 'thr' && (y < 2.5 || y > 47.5)) { y = y < 25 ? 2 : 48; x = att === 0 ? 88 : 6; } // corner three
+    if ((att === 0 && x > bx) || (att === 1 && x < bx)) x = bx + (att === 0 ? -1 : 1) * Math.abs(x - bx);
+    return [x, y];
   },
   current() {
     const L = Live, m = L.m; if (!m || !m.plog || !m.plog.length) return null;
@@ -120,7 +123,7 @@ const Court = {
     const targets = {};
     const sideOf = {};
     let ballT = null, ballZ = 0, ballExact = false, focus = null;
-    if (!P) { // jump ball
+    if (!P) { this.deadBall = false; // jump ball
       m.sides.forEach((s, si) => ordered(s.on).forEach((p, i) => {
         const ang = (i / 5) * Math.PI * 2;
         targets[p.id] = i === 4 ? [47 + (si ? 1.2 : -1.2), 25] : [47 + (si ? 1 : -1) * (7 + Math.cos(ang) * 4), 25 + Math.sin(ang) * 9];
@@ -128,62 +131,85 @@ const Court = {
       }));
       ballT = [47, 25]; ballZ = 0.6 + 0.4 * Math.sin(nowS * 3); ballExact = true;
     } else {
-      const oi = P.oi, att = oi === 0 ? 0 : 1;
-      const bx = att === 0 ? 88.75 : 5.25;
-      const len = Math.max(1, P.g1 - P.g0), u = clamp((L.t - P.g0) / len, 0, 1);
-      const out = P.out || {};
-      const offIds = P.on[oi] || [], defIds = P.on[1 - oi] || [];
-      const shooter = offIds.includes(out.p) ? out.p : offIds[Math.floor(P.g0) % Math.max(1, offIds.length)];
-      const setUp = Math.min(1, u / 0.2);
-      offIds.forEach((id, i) => {
-        let [x, y] = this.spot(i, att);
-        // transition: start from the other half and flow into the half court
-        if (setUp < 1) { const sx = att === 0 ? x - 40 : x + 40; x = sx + (x - sx) * setUp; }
-        x += Math.sin(nowS * 0.8 + i * 1.9 + P.g0) * 2.2 * setUp; y += Math.cos(nowS * 0.6 + i * 1.3 + P.g0) * 2.6 * setUp;
-        if (id === shooter && out.k && out.k !== 'to' && u > 0.6) { const s = this.shotSpot(out.k, [x, y], att); const k = clamp((u - 0.6) / 0.18, 0, 1); x += (s[0] - x) * k; y += (s[1] - y) * k; }
-        if (out.k === 'to' && out.s == null && id === out.p && u > 0.55) { y += (y > 25 ? 1 : -1) * (u - 0.55) * 30; }
-        targets[id] = [x, y]; sideOf[id] = oi;
-      });
-      defIds.forEach((id, i) => {
-        const o = this.dots[offIds[i]] || { x: targets[offIds[i]]?.[0] ?? 47, y: targets[offIds[i]]?.[1] ?? 25 };
-        let x = o.x + (bx - o.x) * 0.3, y = o.y + (25 - o.y) * 0.22;
-        if (out.k === 'to' && id === out.s && u > 0.6) { x = att === 0 ? 30 - (u - 0.6) * 20 : 64 + (u - 0.6) * 20; y = 25; }
-        targets[id] = [x, y]; sideOf[id] = 1 - oi;
-      });
-      // ball: PG brings it up, swings it, finds the shooter
-      const pg = offIds[0];
-      let mid = out.a && out.a !== shooter && offIds.includes(out.a) ? out.a : offIds[(Math.floor(P.g0 * 7) % 4) + 1] || pg;
-      if (mid === shooter) mid = pg;
+      const acts = P.acts || [];
+      let ai = -1; for (let i = 0; i < acts.length; i++) if (L.t >= acts[i].ts) ai = i;
+      const A = ai >= 0 ? acts[ai] : null;
+      const so = A ? A.s : P.oi;                       // side with the ball for this step
+      const att = so === 0 ? 0 : 1, bx = att === 0 ? 88.75 : 5.25, rim = [bx, 25];
+      const offIds = P.on[so] || [], defIds = P.on[1 - so] || [];
+      const firstTs = acts.length ? acts[0].ts : P.g1;
+      const setUp = clamp((L.t - P.g0) / Math.max(0.5, (firstTs - P.g0) * 0.7), 0, 1);
+      const u = A ? clamp((L.t - A.ts) / Math.max(0.05, A.te - A.ts), 0, 1) : 0;
+      const ft = A && A.t === 'ft'; this.deadBall = ft;
+      const mir = (x, y) => (att === 0 ? [x, y] : [94 - x, y]);
       const pos = (id) => { const d = this.dots[id]; return d ? [d.x, d.y] : targets[id] || [47, 25]; };
       const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      // offense
+      const laneO = [mir(80.5, 17.5), mir(80.5, 32.5), mir(66, 9), mir(66, 41)];
+      let lo = 0;
+      offIds.forEach((id, i) => {
+        let [x, y] = this.spot(i, att);
+        if (!A && setUp < 1 && so === P.oi) { const sx = att === 0 ? x - 40 : x + 40; x = sx + (x - sx) * setUp; }
+        if (ft) { [x, y] = id === A.p ? mir(75, 25) : laneO[lo++ % 4]; }
+        else {
+          x += Math.sin(nowS * 0.8 + i * 1.9 + P.g0) * 2 * setUp; y += Math.cos(nowS * 0.6 + i * 1.3 + P.g0) * 2.4 * setUp;
+          if (A && A.t === 'shot' && id === A.p) { const sp = this.shotSpot(A.k, [x, y], att); const k = clamp(u / 0.45, 0, 1); x += (sp[0] - x) * k; y += (sp[1] - y) * k; }
+          if (A && A.t === 'reb' && A.off && id === A.p) { const k = clamp(u / 0.6, 0, 1); [x, y] = lerp([x, y], mir(84, y > 25 ? 28 : 22), k); }
+        }
+        targets[id] = [x, y]; sideOf[id] = so;
+      });
+      // defense: shadow their man, or line the lane on free throws
+      const laneD = [mir(84, 17.5), mir(84, 32.5), mir(77, 17.5), mir(77, 32.5), mir(62, 25)];
+      defIds.forEach((id, i) => {
+        let x, y;
+        if (ft) [x, y] = laneD[i];
+        else {
+          const o = this.dots[offIds[i]] || { x: targets[offIds[i]]?.[0] ?? 47, y: targets[offIds[i]]?.[1] ?? 25 };
+          x = o.x + (bx - o.x) * 0.3; y = o.y + (25 - o.y) * 0.22;
+          if (A && A.t === 'reb' && !A.off && id === A.p) { const k = clamp(u / 0.6, 0, 1); [x, y] = lerp([x, y], mir(83, y > 25 ? 27 : 23), k); }
+          if (A && A.t === 'shot' && A.b === id) { const k = clamp((u - 0.5) / 0.3, 0, 1); [x, y] = lerp([x, y], pos(A.p), k * 0.7); }
+          if (A && A.t === 'to' && A.st === id && u > 0.5) { const k = clamp((u - 0.5) / 0.5, 0, 1); x = x + ((att === 0 ? 40 : 54) - x) * k; }
+        }
+        targets[id] = [x, y]; sideOf[id] = 1 - so;
+      });
+      // ball
+      const pg = offIds[0];
       const hold = (id) => { const p = pos(id); ballT = [p[0] + 0.8, p[1] + 0.6]; ballZ = Math.abs(Math.sin(nowS * 9)) * 0.12; };
-      if (out.k === 'to') {
-        if (u < 0.35) hold(pg);
-        else if (u < 0.42) { ballT = lerp(pos(pg), pos(mid), (u - 0.35) / 0.07); ballZ = 0.2; ballExact = true; }
-        else if (u < 0.55) hold(mid);
-        else if (out.s != null) { if (u < 0.6) { ballT = lerp(pos(mid), pos(out.s), (u - 0.55) / 0.05); ballExact = true; } else hold(out.s); focus = out.s; }
-        else { ballT = [pos(out.p)[0], pos(out.p)[1] > 25 ? 51 : -1]; ballExact = false; }
-      } else if (out.k) {
-        const rim = [bx, 25];
-        if (u < 0.33) hold(pg);
-        else if (u < 0.4) { ballT = lerp(pos(pg), pos(mid), (u - 0.33) / 0.07); ballZ = 0.2; ballExact = true; }
-        else if (u < 0.55) hold(mid);
-        else if (u < 0.62) { ballT = lerp(pos(mid), pos(shooter), (u - 0.55) / 0.07); ballZ = 0.2; ballExact = true; }
-        else if (u < 0.8) hold(shooter);
-        else if (u < 0.9) {
-          const k = (u - 0.8) / 0.1, stop = out.b != null ? 0.55 : 1;
-          const kk = Math.min(k, stop);
-          ballT = lerp(pos(shooter), rim, kk); ballZ = Math.sin(kk * Math.PI) * (out.k === 'thr' ? 1.3 : out.k === 'in' ? 0.6 : 0.9); ballExact = true;
-          if (k > stop) { ballT = [ballT[0] + (att === 0 ? -1 : 1) * (k - stop) * 18, ballT[1] + (k - stop) * 14]; ballZ = 0.2; }
-        } else if (out.made) { ballT = [bx, 25 + (u - 0.9) * 12]; ballZ = 0; ballExact = true; }
-        else if (out.r != null) { ballT = lerp(rim, pos(out.r), (u - 0.9) / 0.1); ballZ = 0.4 * (1 - (u - 0.9) / 0.1); ballExact = true; }
-        else { ballT = [bx + (att === 0 ? -6 : 6) * (u - 0.9) * 10, 25]; ballExact = true; }
-        focus = L.hlLabel ? shooter : null;
-      } else hold(pg);
+      const prev = ai > 0 ? acts[ai - 1] : null;
+      if (!A) hold(pg);
+      else if (A.t === 'shot') {
+        const from = A.a && offIds.includes(A.a) ? A.a : prev && prev.t === 'reb' && prev.p === A.p ? A.p : pg;
+        if (u < 0.15 || from === A.p) { if (u < 0.6) hold(from === A.p || u >= 0.15 ? A.p : from); }
+        if (from !== A.p && u >= 0.15 && u < 0.3) { ballT = lerp(pos(from), pos(A.p), (u - 0.15) / 0.15); ballZ = 0.2; ballExact = true; }
+        else if (u >= 0.3 && u < 0.6) hold(A.p);
+        if (u >= 0.6) {
+          const k = (u - 0.6) / 0.4, stop = A.b != null ? 0.45 : 1, kk = Math.min(k, stop);
+          ballT = lerp(pos(A.p), rim, kk); ballZ = Math.sin(kk * Math.PI) * (A.k === 'thr' ? 1.3 : A.k === 'in' ? 0.5 : 0.9); ballExact = true;
+          if (k > stop) { ballT = [ballT[0] + (att === 0 ? -1 : 1) * (k - stop) * 16, ballT[1] + (k - stop) * 12]; ballZ = 0.15; }
+          if (u >= 1 && A.made) { ballT = [bx, 25 + Math.min(2.5, (L.t - A.te) * 3)]; ballZ = 0; }
+        }
+        focus = A.p;
+      } else if (A.t === 'ft') {
+        if (u < 0.55) hold(A.p);
+        else { const k = (u - 0.55) / 0.45; ballT = lerp(pos(A.p), rim, k); ballZ = Math.sin(k * Math.PI) * 1.1; ballExact = true; if (u >= 1) { ballT = A.made ? [bx, 26.5] : [bx + (att === 0 ? -3 : 3), 25 + 3]; ballZ = 0; } }
+        focus = A.p;
+      } else if (A.t === 'reb') {
+        if (u < 0.5) { ballT = lerp(rim, pos(A.p), u / 0.5); ballZ = 0.6 * (1 - u / 0.5); ballExact = true; } else hold(A.p);
+        focus = A.p;
+      } else if (A.t === 'to') {
+        if (u < 0.5) hold(A.p);
+        else if (A.st != null) { if (u < 0.62) { ballT = lerp(pos(A.p), pos(A.st), (u - 0.5) / 0.12); ballExact = true; } else hold(A.st); focus = A.st; }
+        else { const p0 = pos(A.p); ballT = [p0[0], p0[1] > 25 ? 51 : -1]; }
+      }
+      // result flash right after each step, and a caption for the step in progress
+      const done = acts.filter((a) => a.te <= L.t && L.t - a.te < 1.6).pop();
+      if (done) this.flash = { txt: this.resultText(done), col: this.resultCol(done), at: done.t === 'ft' || done.t === 'shot' ? [done.s === 0 ? 88.75 : 5.25, 25] : pos(done.st ?? done.p), k: (L.t - done.te) / 1.6 };
+      else this.flash = null;
+      this.caption = A && L.t < A.te + 0.3 ? this.stepText(A, m) : !A ? `${m.sides[so].team.abbr} bring it up` : null;
     }
     // bench for everyone else
     const rate = L.curRate || 6;
-    const vmax = Math.min(45, 14 + rate * 1.1); // feet per real second — always a run, never a teleport
+    const vmax = this.deadBall ? 70 : Math.min(45, 14 + rate * 1.1); // feet per real second — always a run, never a teleport (faster reset to the lane on free throws)
     m.sides.forEach((s, si) => s.list.forEach((p, i) => {
       if (!targets[p.id]) { targets[p.id] = [47 + (si ? 6 : -6) + (i % 5) * (si ? 1.6 : -1.6), 53]; sideOf[p.id] = si; }
     }));
@@ -215,6 +241,31 @@ const Court = {
       else { const dx = ballT[0] - this.ball.x, dy = ballT[1] - this.ball.y, dist = Math.hypot(dx, dy), st = Math.min(dist, Math.max(70 * dt, dist * Math.min(1, dt * 8))); if (dist > 0.01) { this.ball.x += dx / dist * st; this.ball.y += dy / dist * st; } }
       this.drawBall(this.ball.x, this.ball.y, ballZ);
     }
+    if (this.flash) this.floatText(this.flash.txt, this.flash.at[0], this.flash.at[1], this.flash.col, this.flash.k);
+    if (P && this.caption) this.captionBar(this.caption);
     if (L.hlLabel) this.banner(`★ ${L.hlLabel}`);
+  },
+  who(id) { const p = S.players[id]; return p ? `#${p.num ?? ''} ${p.last}` : '?'; },
+  stepText(a) {
+    if (a.t === 'shot') return `${this.who(a.p)} · ${a.k === 'thr' ? '3-point attempt' : a.k === 'mid' ? '2-point jumper' : '2-point drive at the rim'}`;
+    if (a.t === 'ft') return `${this.who(a.p)} · ${a.tech ? 'Technical free throw' : a.and1 ? 'And-one free throw' : `Free throw ${a.n} of ${a.of}`}`;
+    if (a.t === 'reb') return `${this.who(a.p)} · ${a.off ? 'Offensive rebound' : 'Defensive rebound'}`;
+    if (a.t === 'to') return a.st != null ? `${this.who(a.st)} · Steal` : `${this.who(a.p)} · Turnover`;
+    return '';
+  },
+  resultText(a) {
+    if (a.t === 'shot') return a.made ? (a.foul ? `+${a.pts} AND-1` : `+${a.pts}`) : a.b != null ? 'BLOCKED' : a.foul ? 'FOUL' : 'MISS';
+    if (a.t === 'ft') return a.made ? `✓ FT +1` : '✗ FT';
+    if (a.t === 'reb') return a.off ? 'O-REB' : 'REB';
+    if (a.t === 'to') return a.st != null ? 'STEAL' : 'TURNOVER';
+    return '';
+  },
+  resultCol(a) { return (a.t === 'shot' && a.made) || (a.t === 'ft' && a.made) ? '#4cc38a' : a.t === 'reb' ? '#c6cbd8' : a.t === 'to' ? '#9fd0ff' : '#f06a6a'; },
+  floatText(t, x, y, col, k) { const c = this.ctx; c.globalAlpha = Math.max(0, 1 - k); c.fillStyle = col; c.font = '900 14px -apple-system, Segoe UI, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t, this.X(x), this.Y(y) - 16 - k * 14); c.globalAlpha = 1; },
+  captionBar(t) {
+    const c = this.ctx; c.font = '700 11px -apple-system, Segoe UI, sans-serif';
+    const w = c.measureText(t).width + 18;
+    c.fillStyle = 'rgba(10,12,16,.8)'; c.beginPath(); if (c.roundRect) c.roundRect(8, this.H - 26, w, 19, 5); else c.rect(8, this.H - 26, w, 19); c.fill();
+    c.fillStyle = '#e7e9ef'; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(t, 17, this.H - 16.5);
   },
 };

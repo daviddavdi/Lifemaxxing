@@ -196,7 +196,7 @@ VIEWS.inbox = () => {
   return `${header('Inbox', { right: list.some((m) => !m.read) ? `<button class="btn sm" data-act="readAll">Mark all read</button>` : '' })}
   ${S.phase === 'sacked' ? `<div class="pad"><div class="card warn"><b>You have been sacked.</b><p>Hit <b>Find Job</b> to see which clubs are interested.</p></div></div>` : ''}
   <div class="list mails">${list.length ? list.map((m) => `<button class="li mail ${m.read ? '' : 'unread'} ${m.type === 'whisper' ? 'whisper' : ''}" data-act="mail" data-id="${m.id}">
-    ${m.pid && S.players[m.pid] ? `<span class="mfrom-face">${playerFace(S.players[m.pid], 36)}</span>` : `<span class="mfrom-ic ${m.type || ''}">${m.type === 'whisper' ? '🤫' : esc((m.from || '?')[0])}</span>`}
+    <span class="mfrom-ic ${m.type || ''}">${m.type === 'whisper' ? '🤫' : esc((m.from || '?')[0])}</span>
     <div class="grow"><div class="mrow"><span class="mfrom">${esc(m.from)}</span><span class="mdate">${fmtDate(m.season, m.day, true)}</span></div>
     <div class="msub">${esc(m.subject)}</div>${m.actions && !m.done ? '<span class="tagx">Action needed</span>' : ''}</div></button>`).join('') : '<p class="empty">No messages.</p>'}</div>`;
 };
@@ -226,7 +226,7 @@ VIEWS.squad = () => {
   if (tab === 'ov') {
     const rs = sortSquad(r, 'ov');
     body = `<table class="tbl"><thead><tr>${sth('ov', 'num', '#')}${sth('ov', 'pos', 'Pos')}${sth('ov', 'name', 'Player', 'l')}${sth('ov', 'age', 'Age')}${sth('ov', 'ca', 'Ability')}${sth('ov', 'pot', 'Pot.')}${sth('ov', 'cond', 'Cond')}${sth('ov', 'mor', 'Morale')}</tr></thead><tbody>
-    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td><span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm"><span class="mini">${playerFace(p, 26)}</span>${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
+    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td><span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
     </tbody></table>`;
   } else if (tab === 'st') {
     const rs = sortSquad(r, 'st');
@@ -634,7 +634,7 @@ VIEWS.prematch = () => {
     ${previewCard(f, H, A)}
     ${pressCard('pre', f)}
     ${myInj.length || tired.length ? `<div class="card">${myInj.length ? `<p class="neg">Unavailable: ${myInj.map((p) => esc(pname(p, true))).join(', ')}</p>` : ''}${tired.length ? `<p class="warn-t">Tired: ${tired.map((p) => `${esc(pname(p, true))} (${Math.round(p.cond)}%)`).join(', ')}</p>` : ''}</div>` : ''}
-    <div class="card"><h3>Your starting five</h3>${starters.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="mini">${playerFace(p, 28)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span><span class="grow">${injHTML(p)}${esc(pname(p))}${p.instrLock || (userTeam().instr[p.id] || {}).lock ? ' <span class="tagx">🔒 Stopper</span>' : ''}</span><span class="muted sm">${ROLES[(userTeam().instr[p.id] || {}).role || 'bal'].n}</span>${condHTML(p.cond)}</div>`).join('')}
+    <div class="card"><h3>Your starting five</h3>${starters.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span><span class="grow">${injHTML(p)}${esc(pname(p))}${p.instrLock || (userTeam().instr[p.id] || {}).lock ? ' <span class="tagx">🔒 Stopper</span>' : ''}</span><span class="muted sm">${ROLES[(userTeam().instr[p.id] || {}).role || 'bal'].n}</span>${condHTML(p.cond)}</div>`).join('')}
       <div class="row-btns"><button class="btn sm" data-act="go" data-v="tactics" data-keep="1">Change tactics</button></div></div>
   </div>
   <div class="sticky-cta two-btn"><button class="btn big" data-act="playMatch" data-watch="0">Quick Result</button><button class="btn primary big" data-act="playMatch" data-watch="1">${icon('play')} Go to Match</button></div>`;
@@ -684,7 +684,13 @@ const Live = {
   },
   shownScore() {
     const m = this.m;
-    for (let i = m.plog.length - 1; i >= 0; i--) { const P = m.plog[i]; if (P.g0 + (P.g1 - P.g0) * 0.85 <= this.t) return [P.hs, P.as]; }
+    for (let i = m.plog.length - 1; i >= 0; i--) {
+      const P = m.plog[i]; if (P.g0 > this.t) continue;
+      if (P.g1 <= this.t) return [P.hs, P.as];
+      let sc = P.s0 || [0, 0];
+      for (const a of P.acts || []) if (a.te <= this.t) sc = [a.hs, a.as];
+      return sc;
+    }
     return [0, 0];
   },
   visibleCount() { const m = this.m; let n = 0; for (const e of m.events) if (e.g <= this.t) n++; return n; },
@@ -1115,7 +1121,7 @@ function duoTalk(goingId, ctx, mailId) {
     : h.loy >= 15 ? `Coach, I've given everything to this club. ${going.first} and I have something special. Please tell me the rumours aren't true.`
     : h.ego >= 15 ? `Look, I'll still get mine. But ${going.first} makes my life easy out there. Think about what you're doing.`
     : `Coach, can we talk? I heard you might move ${going.first}. He's my guy — we just click. Are you really doing this?`;
-  modal(`<div class="talk-head"><span class="mfrom-face">${playerFace(partner, 48)}</span><div><b>${esc(pname(partner))}</b><div class="muted sm">⚡ Dynamic Duo with ${esc(pname(going))} · ${personalityVisible(partner) ? esc(personality(partner)) : ''}</div></div></div>
+  modal(`<div class="talk-head"><div><b>${esc(pname(partner))}</b><div class="muted sm">⚡ Dynamic Duo with ${esc(pname(going))} · ${personalityVisible(partner) ? esc(personality(partner)) : ''}</div></div></div>
     <p class="quote">“${esc(quote)}”</p>
     <div class="tones one">
       <button class="tone t-demand" data-act="duoAnswer" data-a="business" data-g="${goingId}" data-ctx="${ctx}" data-mail="${mailId || ''}"><b>"It's a business decision."</b><span>Go ahead with the trade. He won't like it.</span></button>
@@ -1141,7 +1147,7 @@ VIEWS.staff = () => {
   const ex = (S.staff || []).filter((s) => s.ex && s.team !== S.userTeam && s.team != null).slice(-20).reverse();
   return `${header('Staff')}
   <div class="pad"><p class="hint">Your backroom team. Retired players with the right mentality can become coaches and scouts — legends of your club will ask to join you.</p></div>
-  <div class="list">${mine.map((st) => `<button class="li" data-act="go" data-v="staffProfile" data-sid="${st.id}"><span class="mfrom-face">${staffFace(st, 36)}</span><span class="grow"><b>${esc(st.first)} ${esc(st.last)}</b>${st.ex ? ' <span class="tagx ok">Ex-player</span>' : ''}<div class="muted sm">${STAFF_ROLES[st.role].n} · ${STAFF_ROLES[st.role].d}</div></span>${attrCell(Math.round(staffScores(st.a)[st.role]))}</button>`).join('')}</div>
+  <div class="list">${mine.map((st) => `<button class="li" data-act="go" data-v="staffProfile" data-sid="${st.id}"><span class="grow"><b>${esc(st.first)} ${esc(st.last)}</b>${st.ex ? ' <span class="tagx ok">Ex-player</span>' : ''}<div class="muted sm">${STAFF_ROLES[st.role].n} · ${STAFF_ROLES[st.role].d}</div></span>${attrCell(Math.round(staffScores(st.a)[st.role]))}</button>`).join('')}</div>
   ${ex.length ? `<h3 class="sec pad">Former players coaching elsewhere</h3><div class="list">${ex.map((st) => `<button class="li" data-act="go" data-v="staffProfile" data-sid="${st.id}">${badge(team(st.team))}<span class="grow"><b>${esc(st.first)} ${esc(st.last)}</b><div class="muted sm">${STAFF_ROLES[st.role].n} · ${st.ex.gp} career games</div></span>${attrCell(Math.round(staffScores(st.a)[st.role]))}</button>`).join('')}</div>` : ''}`;
 };
 VIEWS.staffProfile = ({ sid }) => {
