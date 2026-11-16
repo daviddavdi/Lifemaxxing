@@ -2,9 +2,9 @@
 'use strict';
 
 const DIFFICULTY = {
-  easy: { n: 'Easy', d: 'Patient board, bigger budget, AI clubs easier to deal with. Your team gets a small edge.', gain: 1.25, loss: 0.6, trade: 0.9, budget: 1.15, edge: 0.012, inj: 0.8, sackMid: 5, sackEnd: 13 },
+  easy: { n: 'Easy', d: 'Patient board, bigger budget, other clubs easier to deal with. Your team gets a small edge.', gain: 1.25, loss: 0.6, trade: 0.9, budget: 1.15, edge: 0.012, inj: 0.8, sackMid: 5, sackEnd: 13 },
   normal: { n: 'Normal', d: 'The intended experience.', gain: 1, loss: 1, trade: 1, budget: 1, edge: 0, inj: 1, sackMid: 10, sackEnd: 20 },
-  hard: { n: 'Hard', d: 'Impatient board, tighter budget, AI clubs drive hard bargains, more injuries.', gain: 0.85, loss: 1.4, trade: 1.15, budget: 0.9, edge: -0.008, inj: 1.2, sackMid: 15, sackEnd: 26 },
+  hard: { n: 'Hard', d: 'Impatient board, tighter budget, other clubs drive hard bargains, more injuries.', gain: 0.85, loss: 1.4, trade: 1.15, budget: 0.9, edge: -0.008, inj: 1.2, sackMid: 15, sackEnd: 26 },
 };
 const diffCfg = () => DIFFICULTY[(S && S.diff) || 'normal'] || DIFFICULTY.normal;
 
