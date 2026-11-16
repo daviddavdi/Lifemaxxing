@@ -680,8 +680,11 @@ const Live = {
     let rate = SPEEDS[this.speed] || 4;
     this.hlLabel = null;
     if (this.hlOn) { const e = this.nearHL(); if (e) { rate = Math.min(rate, 1.6); this.hlLabel = e.lbl || 'KEY MOMENT'; } }
-    this.curRate = rate;
-    let nt = this.t + dt * rate;
+    this.curRate = rate; this.baseRate = rate;
+    // the court can ask the clock to ease off so players reach their spots naturally (never a teleport)
+    const sl = typeof Court !== 'undefined' && Court.m === m && Court.slow != null ? Court.slow : 1;
+    this.slowK = (this.slowK ?? 1) + (sl - (this.slowK ?? 1)) * Math.min(1, dt * (sl < (this.slowK ?? 1) ? 12 : 3));
+    let nt = this.t + dt * rate * this.slowK;
     if (m.brk || m.done) nt = Math.min(nt, m.gt);
     const t0 = this.t; this.t = nt;
     if (!m.brk && !m.done) simUntil(m, this.t + 0.01);

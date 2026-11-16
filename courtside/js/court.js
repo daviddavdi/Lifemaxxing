@@ -110,7 +110,7 @@ const Court = {
     if (k === 'thr' && corner) return [att === 0 ? 88 : 6, base[1] > 25 ? 48 : 2];
     let ang = Math.atan2(base[1] - 25, base[0] - bx);
     if (Math.abs(Math.cos(ang)) < 0.05) ang = (att === 0 ? Math.PI : 0) + (base[1] > 25 ? -0.4 : 0.4);
-    const r = k === 'thr' ? 25.5 : k === 'mid' ? 15 : 3.5;
+    const r = k === 'thr' ? 26.5 : k === 'mid' ? 14.5 : 3.5;
     let x = bx + Math.cos(ang) * r, y = 25 + Math.sin(ang) * r;
     if (k === 'thr' && (y < 2.5 || y > 47.5)) { y = y < 25 ? 2 : 48; x = att === 0 ? 88 : 6; } // corner three
     if ((att === 0 && x > bx) || (att === 1 && x < bx)) x = bx + (att === 0 ? -1 : 1) * Math.abs(x - bx);
@@ -139,10 +139,14 @@ const Court = {
     this.drawCourt();
     const L = Live, m = L.m; if (!m) return;
     const P = this.current();
+    if (P !== this.lastP) { if (this.lastP && P && L.speed >= 4 && !P.fb && P.oi !== this.lastP.oi) this.cut = { t0: now, done: false }; this.lastP = P; }
+    const ck = this.cut ? (now - this.cut.t0) / 240 : 1; // fast-forward "cut" between possessions: fade out, reset, fade in
+    this.cutA = ck >= 1 ? 1 : ck < 0.5 ? 1 - ck * 2 : (ck - 0.5) * 2;
+    if (ck >= 1) this.cut = null;
     const nowS = now / 1000;
     const targets = {};
     const sideOf = {};
-    let ballT = null, ballZ = 0, ballExact = false, focus = null;
+    let ballT = null, ballZ = 0, ballExact = false, focus = null, crit = null;
     if (!P) { this.deadBall = false; this.rush = null; // jump ball
       m.sides.forEach((s, si) => ordered(s.on).forEach((p, i) => {
         const ang = (i / 5) * Math.PI * 2;
@@ -160,7 +164,7 @@ const Court = {
       const firstTs = acts.length ? acts[0].ts : P.g1;
       const setUp = clamp((L.t - P.g0) / Math.max(0.5, (firstTs - P.g0) * 0.7), 0, 1);
       const u = A ? clamp((L.t - A.ts) / Math.max(0.05, A.te - A.ts), 0, 1) : 0;
-      const ft = A && A.t === 'ft'; this.deadBall = ft; this.rush = null;
+      const ft = A && A.t === 'ft'; this.deadBall = ft; this.rush = null; crit = null;
       const mir = (x, y) => (att === 0 ? [x, y] : [94 - x, y]);
       const pos = (id) => { const d = this.dots[id]; return d ? [d.x, d.y] : targets[id] || [47, 25]; };
       const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
@@ -169,22 +173,28 @@ const Court = {
       let lo = 0;
       offIds.forEach((id, i) => {
         let [x, y] = this.spot(i, att);
-        if (!A && setUp < 1 && so === P.oi && !P.fb) { const sx = att === 0 ? x - 40 : x + 40; x = sx + (x - sx) * setUp; }
+        if (!A && setUp < 1 && so === P.oi && !P.fb && L.speed < 4) { const sx = att === 0 ? x - 40 : x + 40; x = sx + (x - sx) * setUp; }
         if (P.fb && !ft) { // fast break: everyone sprinting the floor, the runner out in front
           const lead = A && A.t === 'shot' && A.play === 'fast' ? A.p : null;
           const k = A ? 1 : setUp, lane = [[70, 25], [66, 8], [66, 42], [56, 18], [54, 32]][i];
           [x, y] = mir(...lane); const sx = att === 0 ? x - 34 : x + 34; x = sx + (x - sx) * k;
           if (id === lead && A.k === 'in') { [x, y] = mir(76, 25 + (i % 2 ? 4 : -4)); }
         }
-        if (ft) { [x, y] = id === A.p ? mir(75, 25) : laneO[lo++ % 4]; }
+        if (ft) { [x, y] = id === A.p ? mir(75, 25) : laneO[lo++ % 4]; if (id === A.p && u < 0.55) crit = { id, spot: [x, y], rt: A.ts + (A.te - A.ts) * 0.5, kind: 'ft' }; }
         else {
           x += Math.sin(nowS * 0.8 + i * 1.9 + P.g0) * 2 * setUp; y += Math.cos(nowS * 0.6 + i * 1.3 + P.g0) * 2.4 * setUp;
+          const nx = !A || A.t !== 'shot' ? acts.find((a) => a.t === 'shot' && a.ts > L.t) : null;
+          if (nx && id === nx.p && !(A && A.t === 'ft')) {
+            const sp0 = this.shotSpot(nx.k, [x, y], att, nx.corner);
+            if (!['cut', 'roll', 'pop', 'putback'].includes(nx.play)) { const k0 = clamp((L.t - P.g0) / Math.max(0.3, nx.ts - P.g0) * 1.6, 0, 1); x += (sp0[0] - x) * k0; y += (sp0[1] - y) * k0; }
+            crit = { id, spot: sp0, rt: nx.ts + (nx.te - nx.ts) * 0.5, kind: 'next-' + nx.play + (A ? '-after-' + A.t : '') };
+          }
           if (A && A.t === 'shot' && A.play && id !== A.p && u < 0.6) [x, y] = this.playMove(A, id, [x, y], u, att, mir, pos);
           if (A && A.t === 'shot' && id === A.p) { const sp = this.shotSpot(A.k, [x, y], att, A.corner); const k = clamp(u / 0.45, 0, 1);
             if ((A.play === 'roll' || A.play === 'pop') && u < 0.3) { const bh = pos(A.ps ?? A.p); const kk = clamp(u / 0.2, 0, 1); x += (bh[0] + (att === 0 ? 2 : -2) - x) * kk; y += (bh[1] - y) * kk; } // screen first
             else if (A.play === 'cut' && u < 0.45) { const wp = mir(85, y > 25 ? 42 : 8); if (u < 0.22) { const kk = u / 0.22; x += (wp[0] - x) * kk; y += (wp[1] - y) * kk; } else { const kk = (u - 0.22) / 0.23; x = wp[0] + (sp[0] - wp[0]) * kk; y = wp[1] + (sp[1] - wp[1]) * kk; } } // baseline cut
             else { x += (sp[0] - x) * k; y += (sp[1] - y) * k; }
-            this.rush = { id, by: A.ts + (A.te - A.ts) * 0.5, snap: u >= 0.5 }; }
+            this.rush = { id, by: A.ts + (A.te - A.ts) * 0.5, snap: u >= 0.5 }; if (u < 0.6) crit = { id, spot: sp, rt: A.ts + (A.te - A.ts) * 0.58, kind: 'shot-' + A.play }; }
           if (A && A.t === 'reb' && A.off && id === A.p) { const k = clamp(u / 0.6, 0, 1); [x, y] = lerp([x, y], mir(84, y > 25 ? 28 : 22), k); }
         }
         targets[id] = [x, y]; sideOf[id] = so;
@@ -244,26 +254,47 @@ const Court = {
       this.caption = A && L.t < A.te + 0.3 ? this.stepText(A, m) : !A ? (P.fb ? `${m.sides[so].team.abbr} on the fast break!` : `${m.sides[so].team.abbr} bring it up`) : null;
     }
     // bench for everyone else
-    const rate = L.curRate || 6;
-    const vmax = this.deadBall ? 70 : Math.min(45, 14 + rate * 1.1); // feet per real second — always a run, never a teleport (faster reset to the lane on free throws)
+    const rate = L.baseRate || L.curRate || 6;
+    const vmax = this.deadBall ? Math.min(80, 30 + rate * 2) : Math.min(160, 14 + rate * 5); // feet per real second — always a run, never a teleport
     m.sides.forEach((s, si) => s.list.forEach((p, i) => {
       if (!targets[p.id]) { targets[p.id] = [47 + (si ? 6 : -6) + (i % 5) * (si ? 1.6 : -1.6), 53]; sideOf[p.id] = si; }
     }));
+    const jumpNow = this.cut && !this.cut.done && (now - this.cut.t0) / 240 >= 0.5;
+    if (jumpNow) this.cut.done = true;
     for (const id in targets) {
       const [tx, ty] = targets[id];
       let d = this.dots[id];
+      if (jumpNow && d && ty < 51) { d.x = tx; d.y = ty; d.vx = 0; d.vy = 0; } // hidden by the fade
       const onCourt = ty < 51;
       if (!d) { const st = P && onCourt ? [47 + (sideOf[id] ? 6 : -6), 53] : [tx, ty]; d = this.dots[id] = { x: st[0], y: st[1], a: onCourt ? (P ? 0.2 : 1) : 0 }; }
       const dx = tx - d.x, dy = ty - d.y, dist = Math.hypot(dx, dy);
       let vm = vmax;
       const ru = this.rush && P && +id === this.rush.id ? this.rush : null;
-      if (ru) { // the shooter must be standing on the exact spot (inside / beyond the arc) when he lets it go
-        if (ru.snap) { d.x = tx; d.y = ty; }
-        else vm = Math.max(vmax, dist / Math.max(0.04, (ru.by - L.t) / Math.max(0.5, rate)) * 1.15);
+      if (ru) { // the shooter has to be on his exact spot (inside / beyond the arc) when he lets it go: a controlled burst, never a jump
+        if (ru.snap && dist < 0.9) { d.x = tx; d.y = ty; d.vx = 0; d.vy = 0; continue; }
+        vm = Math.min(vmax * (L.speed >= 4 ? 2 : 1.5), Math.max(vmax, dist / Math.max(0.12, (ru.by - L.t) / Math.max(0.5, rate)) * 1.1));
       }
-      const step = Math.min(dist, vm * dt * (dist < 1.5 && !ru ? 0.6 : 1));
-      if (dist > 0.01) { d.x += (dx / dist) * step; d.y += (dy / dist) * step; }
+      // steering: accelerate / decelerate smoothly towards the target ("arrive" behaviour) — no instant speed changes
+      const acc = vm * (L.speed >= 4 ? 6 : 3.2);
+      const want = dist > 0.02 ? Math.min(vm, Math.sqrt(2 * acc * dist)) : 0;
+      const wx = dist > 0.02 ? (dx / dist) * want : 0, wy = dist > 0.02 ? (dy / dist) * want : 0;
+      d.vx = d.vx || 0; d.vy = d.vy || 0;
+      let ax = wx - d.vx, ay = wy - d.vy; const am = Math.hypot(ax, ay), lim = acc * dt;
+      if (am > lim) { ax *= lim / am; ay *= lim / am; }
+      d.vx += ax; d.vy += ay;
+      let sx = d.vx * dt, sy = d.vy * dt; const sm = Math.hypot(sx, sy);
+      if (sm > dist && dist > 0) { sx *= dist / sm; sy *= dist / sm; }
+      d.x += sx; d.y += sy;
       d.a += ((onCourt ? 1 : 0) - d.a) * Math.min(1, dt * 3);
+    }
+    // broadcast-style time dilation: if the key player can't reach his spot before the release, the game clock eases off
+    this.slow = 1;
+    if (crit && P && this.dots[crit.id]) {
+      const d = this.dots[crit.id], dist = Math.hypot(crit.spot[0] - d.x, crit.spot[1] - d.y);
+      const eta = dist / (vmax * 1.3) + 0.6 / (L.speed >= 4 ? 6 : 3.2), remain = (crit.rt - L.t) / Math.max(0.5, rate);
+      const floor = P.fb || dist > 5 ? 0.22 : L.speed >= 8 ? 0.6 : L.speed >= 4 ? 0.45 : 0.2; // exact at 1×/2×, light touch when fast-forwarding
+      if (dist > 0.8 && eta > remain * 1.1) this.slow = clamp(remain * 1.1 / eta, floor, 1);
+      if (dist > 0.8 && remain < 0.06 && L.speed <= 4) this.slow = 0.03;
     }
     const onIds = new Set(m.sides.flatMap((s) => s.on.map((p) => p.id)));
     if (m.rv) for (const id of onIds) for (const o of m.rv[id] || []) if (onIds.has(o) && id < o && this.dots[id] && this.dots[o]) {
@@ -276,12 +307,13 @@ const Court = {
       const si = sideOf[id]; if (si == null) continue;
       const s = m.sides[si], p = S.players[id];
       const kit = this.kit(m, si);
-      this.dot(d.x, Math.min(d.y, 49.5), s.team, this.initials(p), s.heat[id] || 0, { alpha: d.a * (m.ej[id] ? 0.35 : 1), focus: focus === +id, fill: kit[0], trim: kit[1] });
+      this.dot(d.x, Math.min(d.y, 49.5), s.team, this.initials(p), s.heat[id] || 0, { alpha: d.a * (m.ej[id] ? 0.35 : 1) * this.cutA, focus: focus === +id, fill: kit[0], trim: kit[1] });
     }
     if (ballT) {
       if (!this.ball || ballExact) this.ball = { x: ballT[0], y: ballT[1] };
       else { const dx = ballT[0] - this.ball.x, dy = ballT[1] - this.ball.y, dist = Math.hypot(dx, dy), st = Math.min(dist, Math.max(70 * dt, dist * Math.min(1, dt * 8))); if (dist > 0.01) { this.ball.x += dx / dist * st; this.ball.y += dy / dist * st; } }
-      this.drawBall(this.ball.x, this.ball.y, ballZ);
+      if (jumpNow) this.ball = { x: ballT[0], y: ballT[1] };
+      this.ctx.globalAlpha = this.cutA; this.drawBall(this.ball.x, this.ball.y, ballZ); this.ctx.globalAlpha = 1;
     }
     if (this.flash) this.floatText(this.flash.txt, this.flash.at[0], this.flash.at[1], this.flash.col, this.flash.k);
     if (P && this.caption) this.captionBar(this.caption);

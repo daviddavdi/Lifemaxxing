@@ -338,7 +338,7 @@ function usage(m, s, p) {
 function stepMatch(m) {
   if (m.done || m.brk) return;
   const fbNow = !!(m.fb && m.fb[m.poss]);
-  const len = Math.min(m.clock, fbNow ? R.f(3.5, 7) : m.avgLen * 1.05 * R.f(0.45, 1.55));
+  const len = Math.min(m.clock, fbNow ? R.f(5, 8) : m.avgLen * 1.05 * R.f(0.45, 1.55));
   const g0 = m.gt, c0 = m.clock, n0 = m.events.length, oi = m.poss;
   const on = m.snap ? m.sides.map((s) => ordered(s.on).map((p) => p.id)) : null;
   m.out = null; m.acts = m.snap ? [] : null;
@@ -349,7 +349,7 @@ function stepMatch(m) {
     // spread the actions over the possession: set-up first, then each shot / free throw / rebound in order
     const W = { shot: 1, ft: 0.55, reb: 0.4, to: 0.7 };
     const acts = m.acts, tot = acts.reduce((x, a) => x + (W[a.t] || 0.5), 0) || 1;
-    const start = g0 + len * (acts.length > 3 ? 0.25 : 0.42), span = g0 + len * 0.96 - start;
+    const start = g0 + len * (acts.length > 3 ? 0.38 : 0.55), span = g0 + len * 0.97 - start;
     let cur = start;
     for (const a of acts) { a.ts = cur; cur += span * (W[a.t] || 0.5) / tot; a.te = cur; }
     for (let i = n0; i < m.events.length; i++) {
