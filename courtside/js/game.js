@@ -584,7 +584,7 @@ function progressPlayoffs(lg) {
     if (P.round === 3) {
       P.champion = seriesWinner(cur[0]);
       lg.state = 'done';
-      if (mine) mail('League Office', `${teamName(team(P.champion))} win the ${lg.name}!`, P.champion === S.userTeam ? '🏆 <b>WE ARE CHAMPIONS!</b> What a season, coach!' : `The ${teamName(team(P.champion))} are the ${S.season}/${String(S.season + 1).slice(2)} ${lg.name} champions.`, { type: 'league' });
+      if (mine) mail('League Office', `${teamName(team(P.champion))} win the ${lg.name}!`, P.champion === S.userTeam ? (typeof icon === 'function' ? icon('trophy') : '') + ' <b>WE ARE CHAMPIONS!</b> What a season, coach!' : `The ${teamName(team(P.champion))} are the ${S.season}/${String(S.season + 1).slice(2)} ${lg.name} champions.`, { type: 'league' });
       return;
     }
     const winners = cur.sort((a, b) => a.slot - b.slot).map(seriesWinner);
@@ -628,7 +628,7 @@ function endSeason() {
     S.history.unshift({ season: S.season, lg: lg.id, champ, champName: teamName(team(champ)), mvp: mvp ? pname(mvp) : '-', mvpId: mvp?.id });
     if (mvp) mvp.awards.push({ s: S.season, k: 'MVP', lg: lg.short });
     roster(champ).forEach((p) => p.awards.push({ s: S.season, k: 'Champion', lg: lg.short }));
-    summary.push(`${COUNTRY_FLAG[lg.country] || ''} <b>${lg.name}</b>: ${teamName(team(champ))}${mvp ? ` · MVP ${plink(mvp, 1)}` : ''}`);
+    summary.push(`${typeof flagSVG === 'function' ? flagSVG(COUNTRY_FLAG[lg.country]) : ''} <b>${lg.name}</b>: ${teamName(team(champ))}${mvp ? ` · MVP ${plink(mvp, 1)}` : ''}`);
   }
   if (S.history.length > 140) S.history.length = 140;
   mail('League Office', 'Around the basketball world', `Champions of the ${S.season}/${String(S.season + 1).slice(2)} season:\n\n${summary.join('\n')}`, { type: 'league' });

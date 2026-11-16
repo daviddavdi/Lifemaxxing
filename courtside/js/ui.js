@@ -18,6 +18,43 @@ const IC = {
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   mega: '<path d="M3 10v4h4l6 4V6L7 10z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
   ball: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8"/>',
+  flame: '<path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-3.2 2.2-5.3 3.6-7.2.4 2 1.4 3.2 2.6 3.7C12 8.6 12.6 5.5 14.6 3c.6 3.3 4 6.4 4 11.3 0 3.9-2.7 6.7-6.6 6.7z"/><path d="M12 21c-1.7 0-2.8-1.2-2.8-2.8 0-1.8 1.4-2.8 2.4-4.2.9 1.6 3.2 2.4 3.2 4.3 0 1.5-1.2 2.7-2.8 2.7z"/>',
+  snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/><path d="M9.5 4.5L12 6l2.5-1.5M9.5 19.5L12 18l2.5 1.5"/>',
+  trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"/>',
+  crown: '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/><path d="M5 15.5h14"/>',
+  bolt: '<path d="M13 2.5L4.5 13.5H11l-1 8 8.5-11H12z"/>',
+  versus: '<path d="M4 4l10 10M20 4L10 14M14 14l2 2M10 14l-2 2M15 17l3 3 2-2-3-3M9 17l-3 3-2-2 3-3"/>',
+  shield: '<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+  warn: '<path d="M12 3.5L21.5 20h-19z"/><path d="M12 10v4.5M12 17.4v.1"/>',
+  vol: '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>',
+  mute: '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  hush: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/>',
+  dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 15.5h.01M12 12h.01M15.5 8.5h.01M8.5 15.5h.01"/>',
+  clip: '<rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3h6v1.5M8.5 10h7M8.5 13.5h7M8.5 17h4"/>',
+  hall: '<path d="M3 9.5L12 4l9 5.5zM4 20.5h16M6.5 11v7M10 11v7M14 11v7M17.5 11v7"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12h.01"/>',
+  up: '<path d="M12 19V6M6.5 11.5L12 6l5.5 5.5"/>',
+  down: '<path d="M12 5v13M6.5 12.5L12 18l5.5-5.5"/>',
+  dash: '<path d="M6.5 12h11"/>',
+  chart: '<path d="M4 20h16M5 16l5-5 3.5 3.5L20 8"/><path d="M15 8h5v5"/>',
+  cycle: '<path d="M19.5 10A8 8 0 0 0 5.7 6.5L4 8.5M4 4v4.5h4.5M4.5 14a8 8 0 0 0 13.8 3.5l1.7-2M20 20v-4.5h-4.5"/>',
+  exit: '<path d="M14 4H5v16h9"/><path d="M10 12h10M16.5 8.5L20 12l-3.5 3.5"/>',
+  news: '<path d="M4 5h13v14a1.5 1.5 0 0 0 1.5 1.5H6A2 2 0 0 1 4 18.5z"/><path d="M17 9h3v9.5a1.5 1.5 0 0 1-3 0M7.5 9h6M7.5 12.5h6M7.5 16h4"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  cross: '<path d="M9.5 4h5v5.5H20v5h-5.5V20h-5v-5.5H4v-5h5.5z"/>',
+  fish: '<path d="M3 12c3-4.5 9-6 14-2l4-3v10l-4-3c-5 4-11 2.5-14-2z"/><path d="M8 11.2h.01"/>',
+  medal: '<circle cx="12" cy="15" r="5.5"/><path d="M8.6 10.6L6 3h4l2 5 2-5h4l-2.6 7.6"/>',
+  cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/>',
+  peak: '<path d="M3 20l6.5-11 4 6 2.5-3.5L21 20z"/><path d="M9.5 9V4l3.5 1.6-3.5 1.6"/>',
+  gem: '<path d="M6.5 4h11L21 9l-9 11L3 9z"/><path d="M3 9h18M9 4l3 5 3-5M12 9v11"/>',
+  heat: '<path d="M12 3a2.5 2.5 0 0 0-2.5 2.5v8.2a4.5 4.5 0 1 0 5 0V5.5A2.5 2.5 0 0 0 12 3z"/><path d="M12 10.5v6"/>',
+  gauge: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4.5-5M4 17h2M18 17h2"/>',
+  globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.5 3.5 5.5 3.5 8.5s-1 6-3.5 8.5c-2.5-2.5-3.5-5.5-3.5-8.5s1-6 3.5-8.5z"/>',
+  star: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8L3.5 9.7l5.9-.8z"/>',
+  storm: '<path d="M7 15a4 4 0 0 1-.5-8A5.5 5.5 0 0 1 17 6.5a4 4 0 0 1 .5 8.5"/><path d="M12.5 12l-2.5 4h4l-2.5 4.5"/>',
 };
 const icon = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n]}</svg>`;
 
@@ -46,9 +83,34 @@ function moraleLabel(m) { return m >= 85 ? ['Superb', 'm5'] : m >= 70 ? ['Very G
 const moraleHTML = (m, short) => { const [l, c] = moraleLabel(m); return `<span class="mor ${c}">${short ? l.replace('Very ', 'V.') : l}</span>`; };
 const condHTML = (c) => `<span class="cond ${c >= 85 ? 'c3' : c >= 65 ? 'c2' : 'c1'}">${Math.round(c)}%</span>`;
 const injHTML = (p) => (p.inj ? `<span class="inj" title="${esc(p.inj.name)}">+</span>` : '') + (p.susp > 0 ? `<span class="inj susp" title="Suspended ${p.susp}">S</span>` : '');
-const flag = (p) => NATS[p.nat]?.flag || '';
+/* Mini flags, drawn (no emoji). Each is a list of [x, y, w, h, colour] stripes on a 30x20 field, plus optional extras. */
+const FLAG_DEF = {
+  USA: { s: [[0, 0, 30, 20, '#b22234'], [0, 3, 30, 2.2, '#fff'], [0, 7.6, 30, 2.2, '#fff'], [0, 12.2, 30, 2.2, '#fff'], [0, 16.8, 30, 2.2, '#fff'], [0, 0, 13, 10.5, '#3c3b6e']] },
+  CAN: { s: [[0, 0, 30, 20, '#fff'], [0, 0, 7.5, 20, '#d52b1e'], [22.5, 0, 7.5, 20, '#d52b1e']], x: '<path d="M15 5l1.4 3 2.2-1-1 4.5 2-1-.6 2.2-3 1V16h-.9v-2.3l-3-1-.6-2.2 2 1-1-4.5 2.2 1z" fill="#d52b1e"/>' },
+  FRA: { s: [[0, 0, 10, 20, '#0055a4'], [10, 0, 10, 20, '#fff'], [20, 0, 10, 20, '#ef4135']] },
+  SRB: { s: [[0, 0, 30, 6.7, '#c6363c'], [0, 6.7, 30, 6.7, '#0c4076'], [0, 13.4, 30, 6.6, '#fff']] },
+  ESP: { s: [[0, 0, 30, 20, '#aa151b'], [0, 5, 30, 10, '#f1bf00']] },
+  LTU: { s: [[0, 0, 30, 6.7, '#fdb913'], [0, 6.7, 30, 6.7, '#006a44'], [0, 13.4, 30, 6.6, '#c1272d']] },
+  AUS: { s: [[0, 0, 30, 20, '#012169'], [0, 4.4, 13, 1.6, '#fff'], [5.7, 0, 1.6, 10.5, '#fff'], [0, 4.7, 13, 1, '#c8102e'], [6, 0, 1, 10.5, '#c8102e']], x: '<g fill="#fff"><circle cx="7" cy="15.5" r="1.6"/><circle cx="22" cy="5" r="1"/><circle cx="25" cy="9" r="1"/><circle cx="19" cy="10" r="1"/><circle cx="22" cy="16" r="1.2"/></g>' },
+  NGA: { s: [[0, 0, 10, 20, '#008751'], [10, 0, 10, 20, '#fff'], [20, 0, 10, 20, '#008751']] },
+  BRA: { s: [[0, 0, 30, 20, '#009c3b']], x: '<path d="M15 2.5L27 10 15 17.5 3 10z" fill="#ffdf00"/><circle cx="15" cy="10" r="4.4" fill="#002776"/>' },
+  GRE: { s: [[0, 0, 30, 20, '#0d5eaf'], [0, 2.2, 30, 2.2, '#fff'], [0, 6.7, 30, 2.2, '#fff'], [0, 11.1, 30, 2.2, '#fff'], [0, 15.6, 30, 2.2, '#fff'], [0, 0, 11, 11, '#0d5eaf'], [0, 4.4, 11, 2.2, '#fff'], [4.4, 0, 2.2, 11, '#fff']] },
+  GER: { s: [[0, 0, 30, 6.7, '#000'], [0, 6.7, 30, 6.7, '#dd0000'], [0, 13.4, 30, 6.6, '#ffce00']] },
+  TUR: { s: [[0, 0, 30, 20, '#e30a17']], x: '<circle cx="11.5" cy="10" r="5" fill="#fff"/><circle cx="12.8" cy="10" r="4" fill="#e30a17"/><path d="M17.5 10l3.6-1.2-2.2 3.1V8.1l2.2 3.1z" fill="#fff"/>' },
+  ARG: { s: [[0, 0, 30, 20, '#74acdf'], [0, 6.7, 30, 6.7, '#fff']], x: '<circle cx="15" cy="10" r="2" fill="#f6b40e"/>' },
+  SLO: { s: [[0, 0, 30, 6.7, '#fff'], [0, 6.7, 30, 6.7, '#005da4'], [0, 13.4, 30, 6.6, '#ed1c24']] },
+  CRO: { s: [[0, 0, 30, 6.7, '#ff0000'], [0, 6.7, 30, 6.7, '#fff'], [0, 13.4, 30, 6.6, '#171796']], x: '<path d="M12 5h6v6a3 3 0 0 1-6 0z" fill="#fff" stroke="#ff0000" stroke-width=".8"/><path d="M12 5h2v2h-2zM16 5h2v2h-2zM14 7h2v2h-2zM12 9h2v2h-2zM16 9h2v2h-2zM14 11h2v2h-2z" fill="#ff0000"/>' },
+  ITA: { s: [[0, 0, 10, 20, '#009246'], [10, 0, 10, 20, '#fff'], [20, 0, 10, 20, '#ce2b37']] },
+  EUR: { s: [[0, 0, 30, 20, '#003399']], x: '<g fill="#ffcc00">' + Array.from({ length: 12 }, (_, i) => `<circle cx="${(15 + 6 * Math.sin(i * Math.PI / 6)).toFixed(2)}" cy="${(10 - 6 * Math.cos(i * Math.PI / 6)).toFixed(2)}" r=".9"/>`).join('') + '</g>' },
+};
+const flagSVG = (code) => {
+  const f = FLAG_DEF[code];
+  if (!f) return code ? `<span class="flagc">${esc(code)}</span>` : '';
+  return `<svg class="flag" viewBox="0 0 30 20" role="img" aria-label="${code}">${f.s.map(([x, y, w, h, c]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`).join('')}${f.x || ''}</svg>`;
+};
+const flag = (p) => flagSVG(NATS[p.nat]?.flag);
 const avg1 = (a, b) => (b ? (a / b).toFixed(1) : '0.0');
-const lgFlag = (lg) => COUNTRY_FLAG[lg.country] || '';
+const lgFlag = (lg) => flagSVG(COUNTRY_FLAG[lg.country]);
 const prestigeStars = (pr) => starsHTML(clamp(Math.round(pr / 2) / 2, 0.5, 5));
 
 function header(title, opts = {}) {
@@ -130,17 +192,20 @@ function navBar() {
 /* ---------- Views ---------- */
 const VIEWS = {};
 
+/* Brand mark: a ball on the move. */
+const brandMark = (cls = 'brand-mark') => `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="bmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a33"/><stop offset="1" stop-color="#e2480c"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bmg)"/><g stroke="#fff4e6" stroke-width="3.4" stroke-linecap="round"><path d="M8 24.5h7M5.5 32h8.5M8 39.5h7"/></g><g transform="rotate(-20 37 32)"><circle cx="37" cy="32" r="18.5" fill="#fff4e6"/><g fill="none" stroke="#14110f" stroke-width="2.8" stroke-linecap="round"><path d="M37 13.5v37M18.5 32h37M24.5 18.5c5.5 7.8 5.5 19.2 0 27M49.5 18.5c-5.5 7.8-5.5 19.2 0 27"/></g></g></svg>`;
+const courtLines = () => `<svg class="title-court" viewBox="0 0 940 500" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><rect x="10" y="10" width="920" height="480"/><path d="M470 10v480"/><circle cx="470" cy="250" r="60"/><path d="M10 30h140a220 220 0 0 1 0 440H10M930 30H790a220 220 0 0 0 0 440h140"/><path d="M10 170h190v160H10M930 170H740v160h190"/><circle cx="200" cy="250" r="60"/><circle cx="740" cy="250" r="60"/></svg>`;
 VIEWS.title = () => `
-  <div class="title-screen">
-    <div class="logo">${icon('ball', 'logo-ic')}<div><div class="l1">COURTSIDE</div><div class="l2">MANAGER</div></div></div>
-    <p class="tag">From the second division in Europe to the biggest league in the world. Call the plays, handle the egos, read the room.</p>
+  <div class="title-screen">${courtLines()}
+    <div class="brand">${brandMark()}<div><div class="wm1">Courtside</div><div class="wm2">Manager</div></div></div>
+    <p class="tag">Take a second-division side all the way to the top. Or get sacked trying.</p>
     <div class="menu">
       ${hasSave() ? `<button class="btn primary big" data-act="loadGame">Continue Career</button>` : ''}
       <button class="btn ${hasSave() ? '' : 'primary'} big" data-act="go" data-v="newgame">New Career</button>
-      <button class="btn big" data-act="go" data-v="achievements">🏆 Achievements (${Object.keys(achStore()).length}/${ACHIEVEMENTS.length})</button>
+      <button class="btn big" data-act="go" data-v="achievements">${icon('trophy')} Achievements (${Object.keys(achStore()).length}/${ACHIEVEMENTS.length})</button>
       <label class="btn big file">Start with Custom Database<input type="file" accept=".json,application/json" data-chg="importDbNew" hidden></label>
     </div>
-    <p class="fine">All players, clubs, leagues and names are fictional. Edit everything in the Database Editor.</p>
+    <p class="fine">Fictional players and clubs. Every name can be edited.</p>
   </div>`;
 
 let NG = null;
@@ -167,7 +232,7 @@ VIEWS.newgame = () => {
       <h2 class="sec">Game mode</h2>
       <div class="pick-grid">
         <button class="pick ${!NG.ironman ? 'on' : ''}" data-act="ngSet" data-k="ironman" data-v="">${'<b>Standard</b><span>Database editor, save backups and restores allowed. No achievements.</span>'}</button>
-        <button class="pick ${NG.ironman ? 'on' : ''}" data-act="ngSet" data-k="ironman" data-v="1" ${NG.custom ? 'disabled' : ''}><b>🛡️ Ironman</b><span>${NG.custom ? 'Not available with a custom database.' : 'One save, no reloading matches, no editor, no restoring backups. Earn achievements.'}</span></button>
+        <button class="pick ${NG.ironman ? 'on' : ''}" data-act="ngSet" data-k="ironman" data-v="1" ${NG.custom ? 'disabled' : ''}><b>${icon('shield')} Ironman</b><span>${NG.custom ? 'Not available with a custom database.' : 'One save, no reloading matches, no editor, no restoring backups. Earn achievements.'}</span></button>
       </div>
       <h2 class="sec">Season length</h2>
       <div class="seg">${[['short', 'Short (~30 games)'], ['long', 'Long (~60 games)']].map(([v, l]) => `<button class="${NG.length === v ? 'on' : ''}" data-act="ngSet" data-k="length" data-v="${v}">${l}</button>`).join('')}</div>
@@ -184,9 +249,9 @@ VIEWS.newgame = () => {
     list = db.teams.filter((t) => t.lg === NG.lg).sort((a, b) => ngStrength(b.id) - ngStrength(a.id));
   }
   return `${header(NG.mode === 'journey' ? 'Job Offers' : 'Choose Your Club', { back: false, right: `<button class="btn sm" data-act="ngBack">Back</button>` })}
-  ${NG.mode === 'journey' ? `<div class="pad"><div class="card"><p>Nobody knows your name yet. These three clubs are willing to give you a chance:</p></div></div>` : `<div class="pad"><div class="chips">${db.leagues.map((l) => `<button class="chip ${NG.lg === l.id ? 'on' : ''}" data-act="ngLg" data-v="${l.id}">${COUNTRY_FLAG[l.country] || ''} ${esc(l.short)}</button>`).join('')}</div></div>`}
+  ${NG.mode === 'journey' ? `<div class="pad"><div class="card"><p>Nobody knows your name yet. These three clubs are willing to give you a chance:</p></div></div>` : `<div class="pad"><div class="chips">${db.leagues.map((l) => `<button class="chip ${NG.lg === l.id ? 'on' : ''}" data-act="ngLg" data-v="${l.id}">${flagSVG(COUNTRY_FLAG[l.country])} ${esc(l.short)}</button>`).join('')}</div></div>`}
   <div class="list">${list.map((t) => { const lg = db.leagues.find((l) => l.id === t.lg); return `<button class="li team-pick ${NG.team === t.id ? 'sel' : ''}" data-act="ngTeam" data-id="${t.id}">
-    ${badge(t, 'lg')}<div class="grow"><div class="b">${esc(t.city)} ${esc(t.nick)}</div><div class="muted sm">${COUNTRY_FLAG[lg.country] || ''} ${esc(lg.name)}${lg.tier === 2 ? ' · 2nd tier' : ''}</div></div>${starsHTML(stars(ngStrength(t.id)))}</button>`; }).join('')}</div>
+    ${badge(t, 'lg')}<div class="grow"><div class="b">${esc(t.city)} ${esc(t.nick)}</div><div class="muted sm">${lgFlag(lg)} ${esc(lg.name)}${lg.tier === 2 ? ' · 2nd tier' : ''}</div></div>${starsHTML(stars(ngStrength(t.id)))}</button>`; }).join('')}</div>
   <div class="sticky-cta"><button class="btn primary big" data-act="ngStart" ${NG.team ? '' : 'disabled'}>Start Career</button></div>`;
 };
 
@@ -196,7 +261,7 @@ VIEWS.inbox = () => {
   return `${header('Inbox', { right: list.some((m) => !m.read) ? `<button class="btn sm" data-act="readAll">Mark all read</button>` : '' })}
   ${S.phase === 'sacked' ? `<div class="pad"><div class="card warn"><b>You have been sacked.</b><p>Hit <b>Find Job</b> to see which clubs are interested.</p></div></div>` : ''}
   <div class="list mails">${list.length ? list.map((m) => `<button class="li mail ${m.read ? '' : 'unread'} ${m.type === 'whisper' ? 'whisper' : ''}" data-act="mail" data-id="${m.id}">
-    ${m.pid && S.players[m.pid] ? `<span class="mfrom-face">${playerFace(S.players[m.pid], 36)}</span>` : `<span class="mfrom-ic ${m.type || ''}">${m.type === 'whisper' ? '🤫' : esc((m.from || '?')[0])}</span>`}
+    ${m.pid && S.players[m.pid] ? `<span class="mfrom-face">${playerFace(S.players[m.pid], 36)}</span>` : `<span class="mfrom-ic ${m.type || ''}">${m.type === 'whisper' ? icon('hush') : esc((m.from || '?')[0])}</span>`}
     <div class="grow"><div class="mrow"><span class="mfrom">${esc(m.from)}</span><span class="mdate">${fmtDate(m.season, m.day, true)}</span></div>
     <div class="msub">${esc(m.subject)}</div>${m.actions && !m.done ? '<span class="tagx">Action needed</span>' : ''}</div></button>`).join('') : '<p class="empty">No messages.</p>'}</div>`;
 };
@@ -206,7 +271,7 @@ VIEWS.mail = ({ id }) => {
   if (!m.read) { m.read = true; save(); setTimeout(() => { const n = $('#nav'); if (n) n.innerHTML = navBar(); }, 0); }
   return `${header(m.type === 'whisper' ? 'The Grapevine' : 'Message')}
   <div class="pad"><div class="card mailview ${m.type === 'whisper' ? 'whisper' : ''}">
-    <div class="mhead"><span class="mfrom-ic ${m.type || ''}">${m.type === 'whisper' ? '🤫' : esc((m.from || '?')[0])}</span><div><div class="b">${esc(m.from)}</div><div class="muted sm">${fmtDate(m.season, m.day)}</div></div></div>
+    <div class="mhead"><span class="mfrom-ic ${m.type || ''}">${m.type === 'whisper' ? icon('hush') : esc((m.from || '?')[0])}</span><div><div class="b">${esc(m.from)}</div><div class="muted sm">${fmtDate(m.season, m.day)}</div></div></div>
     <h2>${esc(m.subject)}</h2>
     <div class="mbody">${m.body.replace(/\n/g, '<br>')}</div>
     ${m.actions ? (m.done ? `<div class="done">✓ ${typeof m.done === 'string' ? esc(m.done) : 'Handled'}</div>` : `<div class="row-btns">${m.actions.map((a, i) => `<button class="btn ${i === 0 ? 'primary' : ''}" data-act="mailAct" data-id="${m.id}" data-a="${a.act}">${esc(a.label)}</button>`).join('')}</div>`) : ''}
@@ -217,7 +282,7 @@ VIEWS.mail = ({ id }) => {
 function sortedRoster(tid) { const t = team(tid); cleanRotation(S, t); return t.rotation.map((id) => S.players[id]); }
 function personalityVisible(p) { return isMine(p) || p.known.length >= 2 || effJA() >= 16; }
 function archVisible(p) { return isMine(p) || p.known.includes('arch') || effJA() >= 15; }
-const archIcons = (p) => archVisible(p) && p.arch && p.arch.length ? `<span class="archi">${p.arch.map((k) => `<i title="${ARCHETYPES[k].n}">${ARCHETYPES[k].ic}</i>`).join('')}</span>` : '';
+const archIcons = (p) => archVisible(p) && p.arch && p.arch.length ? `<span class="archi">${p.arch.map((k) => `<i title="${ARCHETYPES[k].n}">${icon(ARCHETYPES[k].ic)}</i>`).join('')}</span>` : '';
 VIEWS.squad = () => {
   const t = userTeam();
   const r = sortedRoster(t.id);
@@ -226,7 +291,7 @@ VIEWS.squad = () => {
   if (tab === 'ov') {
     const rs = sortSquad(r, 'ov');
     body = `${UI.tab.sq_ov ? '' : '<p class="hint pad-x">Drag ⋮⋮ to move players up or down the rotation.</p>'}<table class="tbl" data-dragzone="squad"><thead><tr>${sth('ov', 'num', '#')}${sth('ov', 'pos', 'Pos')}${sth('ov', 'name', 'Player', 'l')}${sth('ov', 'age', 'Age')}${sth('ov', 'ca', 'Ability')}${sth('ov', 'pot', 'Pot.')}${sth('ov', 'cond', 'Cond')}${sth('ov', 'mor', 'Morale')}</tr></thead><tbody>
-    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" data-drag-row="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td>${UI.tab.sq_ov ? '' : `<span class="dragh" data-drag="${p.id}" aria-label="Drag to move">⋮⋮</span>`}<span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm"><span class="mini">${playerFace(p, 26)}</span>${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? '<i class="duoi">⚡</i>' : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
+    ${rs.map((p, i) => `<tr data-act="player" data-id="${p.id}" data-drag-row="${p.id}" class="${i === 5 && !UI.tab.sq_ov ? 'sep' : ''}"><td>${UI.tab.sq_ov ? '' : `<span class="dragh" data-drag="${p.id}" aria-label="Drag to move">⋮⋮</span>`}<span class="jn">${p.num ?? '–'}</span></td><td><span class="ps">${p.pos}</span></td><td class="l nm"><span class="mini">${playerFace(p, 26)}</span>${injHTML(p)}${esc(pname(p, true))}${archIcons(p)}${duoPartner(p.id) ? `<i class="duoi">${icon('bolt')}</i>` : ''}</td><td>${p.age}</td><td>${starsHTML(stars(calcCA(p)))}</td><td>${starsHTML(stars(seenPot(p)))}</td><td>${condHTML(p.cond)}</td><td>${moraleHTML(p.morale, 1)}</td></tr>`).join('')}
     </tbody></table>`;
   } else if (tab === 'st') {
     const rs = sortSquad(r, 'st');
@@ -244,8 +309,8 @@ VIEWS.squad = () => {
       <div class="card"><h3>Locker room atmosphere</h3><div class="big b ${atm[1]}">${atm[0]}</div><div class="meter"><div class="${avgM >= 60 ? 'ok' : avgM >= 45 ? 'mid' : 'bad'}" style="width:${avgM}%"></div></div></div>
       <div class="card"><h3>Team leaders</h3>${leaders.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="ps">${p.pos}</span><span class="grow">${esc(pname(p))}</span><span class="pers">${esc(personality(p))}</span></div>`).join('')}<p class="hint">Leaders set the tone. Keep them happy and the room follows.</p></div>
       <div class="card"><h3>Unhappy players</h3>${unhappy.length ? unhappy.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="grow">${esc(pname(p))}</span>${moraleHTML(p.morale)}</div>`).join('') : '<p class="muted">Nobody is unhappy right now.</p>'}</div>
-      <div class="card"><h3>⚡ Dynamic Duos</h3>${(S.duos || []).filter((d) => S.players[d.a]?.team === S.userTeam && S.players[d.b]?.team === S.userTeam).map((d) => `<div class="lrow"><span class="grow"><a data-act="player" data-id="${d.a}">${esc(pname(S.players[d.a], true))}</a> + <a data-act="player" data-id="${d.b}">${esc(pname(S.players[d.b], true))}</a></span><span class="muted sm">since ${fmtDate(d.since.season, d.since.day, true)} ${d.since.season}</span></div>`).join('') || '<p class="muted">None yet. Players who share the floor for a long time can — rarely — develop a special chemistry.</p>'}</div>
-      <div class="card"><h3>🤝 Glue guys</h3>${r.filter((p) => hasArch(p, 'glue')).map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="grow">${esc(pname(p))}</span><span class="muted sm">Cushions morale drops · mentors youth</span></div>`).join('') || '<p class="muted">No Locker Room Glue Guy on the roster.</p>'}</div>
+      <div class="card"><h3>${icon('bolt')} Dynamic Duos</h3>${(S.duos || []).filter((d) => S.players[d.a]?.team === S.userTeam && S.players[d.b]?.team === S.userTeam).map((d) => `<div class="lrow"><span class="grow"><a data-act="player" data-id="${d.a}">${esc(pname(S.players[d.a], true))}</a> + <a data-act="player" data-id="${d.b}">${esc(pname(S.players[d.b], true))}</a></span><span class="muted sm">since ${fmtDate(d.since.season, d.since.day, true)} ${d.since.season}</span></div>`).join('') || '<p class="muted">None yet. Players who share the floor for a long time can — rarely — develop a special chemistry.</p>'}</div>
+      <div class="card"><h3>${icon('link')} Glue guys</h3>${r.filter((p) => hasArch(p, 'glue')).map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="grow">${esc(pname(p))}</span><span class="muted sm">Cushions morale drops · mentors youth</span></div>`).join('') || '<p class="muted">No Locker Room Glue Guy on the roster.</p>'}</div>
       <div class="card"><h3>Personalities</h3>${r.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="grow">${esc(pname(p, true))}</span><span class="pers">${esc(personality(p))}</span><span class="muted sm">${p.known.length} note${p.known.length === 1 ? '' : 's'}</span></div>`).join('')}</div>
     </div>`;
   } else {
@@ -278,9 +343,9 @@ VIEWS.player = ({ id }) => {
     const peakNote = mine && p.age >= 27 && (p.known.includes('nfit') || S.coach.a.fit >= 13) ? `<li>Fitness staff expect him to hold his level until around age ${p.peak}.</li>` : '';
     body = `<div class="pad">
       <div class="card"><h3>Bio</h3><p class="bio">${esc(playerBio(p, { pers: personalityVisible(p), arch: archVisible(p), ca: seenCA(p), pot: seenPot(p) }))}</p></div>
-      ${archVisible(p) && p.arch.length ? `<div class="card"><h3>Traits</h3>${p.arch.map((k) => `<div class="lrow"><span class="arch-ic">${ARCHETYPES[k].ic}</span><span class="grow"><b>${ARCHETYPES[k].n}</b><div class="muted sm">${ARCHETYPES[k].d}</div></span></div>`).join('')}</div>` : ''}
-      ${dpp ? `<div class="card duo"><h3>⚡ Dynamic Duo</h3><div class="lrow" data-act="player" data-id="${dpp.id}"><span class="grow"><b>${esc(pname(dpp))}</b><div class="muted sm">+1 to Finishing, Mid-Range, Three Point, Passing and IQ when they share the floor. They look for each other.</div></span></div></div>` : ''}
-      ${playerRivalOf(p.id).length ? `<div class="card rivalcard"><h3>⚔️ Personal rivals</h3>${playerRivalOf(p.id).filter((r) => S.players[r.other]).map((r) => { const o = S.players[r.other]; return `<div class="lrow" data-act="player" data-id="${o.id}"><span class="grow"><b>#${o.num ?? '–'} ${esc(pname(o))}</b> ${o.team != null ? badge(team(o.team)) : ''}<div class="muted sm">${esc(r.reason)} · since ${r.since.season}</div></span></div>`; }).join('')}</div>` : ''}
+      ${archVisible(p) && p.arch.length ? `<div class="card"><h3>Traits</h3>${p.arch.map((k) => `<div class="lrow"><span class="arch-ic">${icon(ARCHETYPES[k].ic)}</span><span class="grow"><b>${ARCHETYPES[k].n}</b><div class="muted sm">${ARCHETYPES[k].d}</div></span></div>`).join('')}</div>` : ''}
+      ${dpp ? `<div class="card duo"><h3>${icon('bolt')} Dynamic Duo</h3><div class="lrow" data-act="player" data-id="${dpp.id}"><span class="grow"><b>${esc(pname(dpp))}</b><div class="muted sm">+1 to Finishing, Mid-Range, Three Point, Passing and IQ when they share the floor. They look for each other.</div></span></div></div>` : ''}
+      ${playerRivalOf(p.id).length ? `<div class="card rivalcard"><h3>${icon('versus')} Personal rivals</h3>${playerRivalOf(p.id).filter((r) => S.players[r.other]).map((r) => { const o = S.players[r.other]; return `<div class="lrow" data-act="player" data-id="${o.id}"><span class="grow"><b>#${o.num ?? '–'} ${esc(pname(o))}</b> ${o.team != null ? badge(team(o.team)) : ''}<div class="muted sm">${esc(r.reason)} · since ${r.since.season}</div></span></div>`; }).join('')}</div>` : ''}
       <div class="card"><h3>Personality</h3><div class="big b">${personalityVisible(p) ? esc(personality(p)) : 'Unknown'}</div>${personalityVisible(p) ? '' : '<p class="hint">Your staff don\'t know him well enough yet.</p>'}</div>
       <div class="card"><h3>Coach's notes</h3>${notes || peakNote ? `<ul class="notes">${notes}${peakNote}</ul>` : `<p class="muted">${mine ? 'Staff are still getting to know him. Keep your ears open around the building.' : 'Nothing on file. Rumours and scouting will fill this in.'}</p>`}</div>
       <div class="card"><h3>Roles</h3>${Object.keys(ROLES).filter((r) => r !== 'bal').map((r) => ({ r, s: roleScore(p, r) })).sort((a, b) => b.s - a.s).slice(0, 4).map(({ r, s }) => `<div class="lrow"><span class="grow">${ROLES[r].n}${r === br ? ' <span class="tagx ok">Best</span>' : ''}${mine && ins.role === r ? ' <span class="tagx">Current</span>' : ''}</span>${starsHTML(stars(s))}</div>`).join('')}
@@ -308,7 +373,7 @@ VIEWS.player = ({ id }) => {
       <div class="ph-sub">${POS_NAME[p.pos]} · ${p.age} yrs · ${flag(p)} ${p.nat} · ${fmtHeight(p.h)}</div>
       <div class="ph-sub">${t ? `<a data-act="go" data-v="team" data-id="${t.id}">${esc(teamName(t))}</a> · ${esc(league(t.lg).short)}` : 'Free Agent'}${p.inj ? ` · <span class="neg">Injured: ${esc(p.inj.name)} (${p.inj.days}d)</span>` : ''}${p.wantsOut ? ' · <span class="warn-t">Wants out</span>' : ''}</div>
       ${personalityVisible(p) ? `<div class="ph-sub">Personality: <b>${esc(personality(p))}</b></div>` : ''}
-      <div class="ph-sub">${archVisible(p) ? p.arch.map((k) => `<span class="atag">${ARCHETYPES[k].ic} ${ARCHETYPES[k].n}</span>`).join('') : ''}${duoPartner(p.id) && S.players[duoPartner(p.id)] ? `<span class="atag duo">⚡ Duo: ${esc(S.players[duoPartner(p.id)].last)}</span>` : ''}${p.susp > 0 ? `<span class="atag bad">Suspended (${p.susp})</span>` : ''}${p.listed ? '<span class="atag tl">Transfer Listed</span>' : ''}${playerRivalOf(p.id).filter((r) => S.players[r.other]).map((r) => `<span class="atag bad">⚔️ ${esc(S.players[r.other].last)}</span>`).join('')}${p.unsettled && isMine(p) ? '<span class="atag bad">Unsettled</span>' : ''}${p.wantsTo && isMine(p) && team(p.wantsTo) ? `<span class="atag bad">Wants ${esc(team(p.wantsTo).nick)}</span>` : ''}${p.movePromise != null && isMine(p) ? '<span class="atag">Promised a move</span>' : ''}</div>
+      <div class="ph-sub">${archVisible(p) ? p.arch.map((k) => `<span class="atag">${icon(ARCHETYPES[k].ic)} ${ARCHETYPES[k].n}</span>`).join('') : ''}${duoPartner(p.id) && S.players[duoPartner(p.id)] ? `<span class="atag duo">${icon('bolt')} Duo: ${esc(S.players[duoPartner(p.id)].last)}</span>` : ''}${p.susp > 0 ? `<span class="atag bad">Suspended (${p.susp})</span>` : ''}${p.listed ? '<span class="atag tl">Transfer Listed</span>' : ''}${playerRivalOf(p.id).filter((r) => S.players[r.other]).map((r) => `<span class="atag bad">${icon('versus')} ${esc(S.players[r.other].last)}</span>`).join('')}${p.unsettled && isMine(p) ? '<span class="atag bad">Unsettled</span>' : ''}${p.wantsTo && isMine(p) && team(p.wantsTo) ? `<span class="atag bad">Wants ${esc(team(p.wantsTo).nick)}</span>` : ''}${p.movePromise != null && isMine(p) ? '<span class="atag">Promised a move</span>' : ''}</div>
       ${isMine(p) && interestFor(p.id).length ? `<div class="ph-sub wantedby">Wanted by: ${interestFor(p.id).slice(0, 4).map((i) => `${badge(team(i.tid))} <span class="ilv ${INTEREST_LVL[i.lvl][1]}">${INTEREST_LVL[i.lvl][0]}</span>`).join(' ')}</div>` : ''}</div></div>
     <div class="ph-stats">
       <div><span>Ability</span>${starsHTML(stars(seenCA(p)))}</div>
@@ -332,7 +397,7 @@ VIEWS.team = ({ id }) => {
   <div class="pad"><div class="card teamcard" style="--pc:${t.c1}">${badge(t, 'xl')}<div class="grow"><div class="b big">${esc(teamName(t))}</div><div class="muted">${lgFlag(lg)} ${esc(lg.name)} · ${t.w}-${t.l} · ${ordinal(teamRank(t.id))}</div>
   <div class="muted sm">${TACTIC_OPTS.system.find((x) => x[0] === tc.system)?.[1] || 'Motion'} offense · ${TACTIC_OPTS.defense.find((x) => x[0] === tc.defense)?.[1]} defense · ${tc.pace} pace</div>
   <div class="muted sm">Prestige ${prestigeStars(t.prestige)} · Payroll ${fmtMoney(teamPayroll(t.id))}</div>
-  ${t.coach && t.id !== S.userTeam ? `<div class="sm">Coach: <b>${esc(t.coach.name)}</b>${coachRival(t) ? ` <span class="rivlvl">⚔️ ${rivalLabel(coachRival(t).pts)}</span>` : ''}</div>` : ''}</div></div></div>
+  ${t.coach && t.id !== S.userTeam ? `<div class="sm">Coach: <b>${esc(t.coach.name)}</b>${coachRival(t) ? ` <span class="rivlvl">${icon('versus')} ${rivalLabel(coachRival(t).pts)}</span>` : ''}</div>` : ''}</div></div></div>
   <div class="scrollx"><table class="tbl"><thead><tr><th>Pos</th><th class="l">Player</th><th>Age</th><th>Ability</th><th>PPG</th><th>Salary</th></tr></thead><tbody>
   ${r.map((p, i) => `<tr data-act="player" data-id="${p.id}" class="${i === 5 ? 'sep' : ''}"><td><span class="ps">${p.pos}</span></td><td class="l nm">${injHTML(p)}${esc(pname(p, true))}</td><td>${p.age}</td><td>${starsHTML(stars(seenCA(p)))}</td><td>${avg1(p.st.pts, p.st.gp)}</td><td>${fmtMoney(p.contract.sal)}</td></tr>`).join('')}
   </tbody></table></div>`;
@@ -351,7 +416,7 @@ function rotationList(r, opts = {}) {
   const slotName = (i) => (i < 5 ? POS[i] : i < 10 ? 'Bench' : 'Reserve');
   const off = (p, i) => i < 5 && p.pos !== POS[i];
   return `<div class="list rot" data-dragzone="${opts.act === 'liveSubSel' ? 'live' : 'rot'}">${r.map((p, i) => `<button class="li rotrow ${UI.sel === p.id ? 'sel' : ''} ${i === 5 || i === 10 ? 'gap' : ''}" data-act="${opts.act || 'rotSel'}" data-id="${p.id}" data-drag-row="${p.id}">
-    <span class="dragh" data-drag="${p.id}" aria-label="Drag to move">⋮⋮</span><span class="slot ${i < 5 ? 'st' : i < 10 ? 'bn' : 'rs'} ${off(p, i) ? 'offpos' : ''}" ${off(p, i) ? `title="${p.pos} playing ${POS[i]}"` : ''}>${off(p, i) ? '⚠ ' : ''}${slotName(i)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span>
+    <span class="dragh" data-drag="${p.id}" aria-label="Drag to move">⋮⋮</span><span class="slot ${i < 5 ? 'st' : i < 10 ? 'bn' : 'rs'} ${off(p, i) ? 'offpos' : ''}" ${off(p, i) ? `title="${p.pos} playing ${POS[i]}"` : ''}>${off(p, i) ? icon('warn') + ' ' : ''}${slotName(i)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span>
     <span class="grow nm">${opts.live ? `<span class="mini">${playerFace(p, 26)}</span>` : ''}${injHTML(p)}${esc(pname(p, true))}</span>${opts.live ? `<span class="mins">${opts.live(p)}</span>` : starsHTML(stars(calcCA(p)))}${opts.live ? '' : condHTML(p.cond)}
     ${opts.live ? '' : `<span class="mins ${setT(p) ? 'set' : ''}" ${setT(p) ? 'title="Your minutes target"' : ''}>${pm[p.id] ? pm[p.id] + "'" : '–'}</span>`}</button>`).join('')}</div>`;
 }
@@ -371,17 +436,17 @@ VIEWS.tactics = () => {
     const pm = planMins(t), fSum = r.reduce((a, p) => a + (t.instr[p.id] && t.instr[p.id].min != null && pm[p.id] != null ? t.instr[p.id].min : 0), 0);
     const nSet = r.filter((p) => t.instr[p.id] && t.instr[p.id].min != null).length;
     body = `<div class="pad"><p class="hint">Give players roles and instructions. Coachable players follow them more closely. One player can be your Defensive Stopper — he shadows the opponent's top scorer.</p>
-    <p class="hint">Minutes targets are what the bench follows during games (5 players × 48' = 240' in total). Players on <b>Auto</b> share whatever your set targets leave over.${nSet ? ` You've set ${nSet} target${nSet > 1 ? 's' : ''} adding up to ${fSum}', leaving ${Math.max(0, 240 - fSum)}' for the rest.` : ''} Tired players, foul trouble and blowouts can still shift things by a few minutes.</p>${fSum > 200 && nSet < 10 ? `<p class="warn-t">⚠ Your targets use ${fSum}' of 240' — everyone else gets squeezed${fSum > 240 ? ', and your targets will be cut down to fit' : ''}.</p>` : ''}</div>
+    <p class="hint">Minutes targets are what the bench follows during games (5 players × 48' = 240' in total). Players on <b>Auto</b> share whatever your set targets leave over.${nSet ? ` You've set ${nSet} target${nSet > 1 ? 's' : ''} adding up to ${fSum}', leaving ${Math.max(0, 240 - fSum)}' for the rest.` : ''} Tired players, foul trouble and blowouts can still shift things by a few minutes.</p>${fSum > 200 && nSet < 10 ? `<p class="warn-t">${icon('warn')} Your targets use ${fSum}' of 240' — everyone else gets squeezed${fSum > 240 ? ', and your targets will be cut down to fit' : ''}.</p>` : ''}</div>
     <div class="list">${r.slice(0, 12).map((p, i) => { const ins = t.instr[p.id] || {}; const rk = ins.role || 'bal'; return `<div class="li rolecard ${i === 5 ? 'gap' : ''}">
       <div class="rc-top"><span class="ps">${p.pos}</span><b class="grow nm" data-act="player" data-id="${p.id}">${esc(pname(p, true))}</b>${starsHTML(stars(roleScore(p, rk)))}</div>
       <div class="rc-row"><select class="inp sm" data-chg="setRole" data-id="${p.id}">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}" ${k === rk ? 'selected' : ''}>${v.n}${k !== 'bal' ? ` (${stars(roleScore(p, k))}★)` : ''}</option>`).join('')}</select></div>
       <div class="rc-row"><span class="muted sm grow">Minutes target</span><span class="stepper"><button data-act="setMin" data-id="${p.id}" data-d="-2">−</button><span class="minv">${ins.min != null ? ins.min + "'" : `Auto${pm[p.id] ? ` · ${pm[p.id]}'` : ''}`}</span><button data-act="setMin" data-id="${p.id}" data-d="2">+</button></span>${ins.min != null ? `<button class="chip" data-act="setMin" data-id="${p.id}" data-d="auto">Auto</button>` : ''}</div>
       <div class="rc-row"><div class="seg mini">${[[-1, 'Fewer shots'], [0, 'Normal'], [1, 'More shots']].map(([v, l]) => `<button class="${(ins.shots || 0) === v ? 'on' : ''}" data-act="setShots" data-id="${p.id}" data-v="${v}">${l}</button>`).join('')}</div>
-      <button class="chip ${ins.lock ? 'on' : ''}" data-act="setLock" data-id="${p.id}">🔒 Stopper</button></div></div>`; }).join('')}</div>`;
+      <button class="chip ${ins.lock ? 'on' : ''}" data-act="setLock" data-id="${p.id}">${icon('lock')} Stopper</button></div></div>`; }).join('')}</div>`;
   } else {
     body = `<div class="pad"><div class="sec-row"><h2 class="sec">Rotation</h2><button class="btn sm" data-act="autoRot">Auto-pick</button></div>
     <label class="check"><input type="checkbox" data-chg="autoRotToggle" ${S.autoRot ? 'checked' : ''}> Let my assistant pick the rotation before every game</label>
-    <p class="hint">Drag ⋮⋮ to slide a player up or down, or tap two players to swap. Top 5 start; bench 6–10 get minutes; reserves don't play.</p>${(() => { const bad = r.slice(0, 5).map((p, i) => p.pos !== POS[i] ? `${esc(p.last)} (${p.pos}) at ${POS[i]}` : null).filter(Boolean); return bad.length ? `<p class="warn-t">⚠ Out of position: ${bad.join(', ')}. Auto-pick puts players in their natural positions.</p>` : ''; })()}</div>${rotationList(r)}`;
+    <p class="hint">Drag ⋮⋮ to slide a player up or down, or tap two players to swap. Top 5 start; bench 6–10 get minutes; reserves don't play.</p>${(() => { const bad = r.slice(0, 5).map((p, i) => p.pos !== POS[i] ? `${esc(p.last)} (${p.pos}) at ${POS[i]}` : null).filter(Boolean); return bad.length ? `<p class="warn-t">${icon('warn')} Out of position: ${bad.join(', ')}. Auto-pick puts players in their natural positions.</p>` : ''; })()}</div>${rotationList(r)}`;
   }
   return `${header('Tactics')}${tabs('tac', [['off', 'Offense'], ['def', 'Defense'], ['roles', 'Roles'], ['rot', 'Rotation']])}${body}`;
 };
@@ -423,7 +488,7 @@ function playoffBracket(lg) {
   const P = lg.po;
   if (!P) return `<p class="empty">The playoffs start after the regular season. Top ${poQualifiers(lgTeams(lg.id).length)} qualify.</p>`;
   const rounds = [1, 2, 3].filter((r) => P.series.some((s) => s.round === r));
-  return `<div class="pad">${P.champion ? `<div class="card champ">🏆 <b>${esc(teamName(team(P.champion)))}</b> are champions!</div>` : ''}${rounds.map((r) => `<h3 class="sec">${ROUND_NAMES[r]} <span class="muted sm">· best of ${bestOf(r)}</span></h3>${P.series.filter((s) => s.round === r).map((s) => { const A = team(s.a), B = team(s.b); const w = seriesWinner(s); return `<div class="card series ${s.a === S.userTeam || s.b === S.userTeam ? 'me' : ''}"><div class="srow ${w === s.a ? 'w' : w ? 'l' : ''}"><span class="seed">${P.seeds.indexOf(s.a) + 1}</span>${badge(A)}<span class="grow">${esc(A.nick)}</span><b>${s.wa}</b></div><div class="srow ${w === s.b ? 'w' : w ? 'l' : ''}"><span class="seed">${P.seeds.indexOf(s.b) + 1}</span>${badge(B)}<span class="grow">${esc(B.nick)}</span><b>${s.wb}</b></div></div>`; }).join('')}`).join('')}</div>`;
+  return `<div class="pad">${P.champion ? `<div class="card champ">${icon('trophy')} <b>${esc(teamName(team(P.champion)))}</b> are champions!</div>` : ''}${rounds.map((r) => `<h3 class="sec">${ROUND_NAMES[r]} <span class="muted sm">· best of ${bestOf(r)}</span></h3>${P.series.filter((s) => s.round === r).map((s) => { const A = team(s.a), B = team(s.b); const w = seriesWinner(s); return `<div class="card series ${s.a === S.userTeam || s.b === S.userTeam ? 'me' : ''}"><div class="srow ${w === s.a ? 'w' : w ? 'l' : ''}"><span class="seed">${P.seeds.indexOf(s.a) + 1}</span>${badge(A)}<span class="grow">${esc(A.nick)}</span><b>${s.wa}</b></div><div class="srow ${w === s.b ? 'w' : w ? 'l' : ''}"><span class="seed">${P.seeds.indexOf(s.b) + 1}</span>${badge(B)}<span class="grow">${esc(B.nick)}</span><b>${s.wb}</b></div></div>`; }).join('')}`).join('')}</div>`;
 }
 
 /* Market */
@@ -485,8 +550,8 @@ VIEWS.more = () => `${header('More')}
     <button class="li" data-act="go" data-v="club"><span class="grow"><b>Club & Board</b><div class="muted sm">Board confidence, finances</div></span>›</button>
     <button class="li" data-act="go" data-v="jobs"><span class="grow"><b>Job Centre</b><div class="muted sm">${S.phase === 'offseason' && S.vacancies.length ? `<span class="pos">${S.vacancies.length} vacancies open</span>` : 'Opens at the end of each season'}</div></span>›</button>
     <button class="li" data-act="go" data-v="training"><span class="grow"><b>Training</b><div class="muted sm">Focus: ${TRAINING[S.training].n}</div></span>›</button>
-    <button class="li" data-act="go" data-v="achievements"><span class="grow"><b>🏆 Achievements</b><div class="muted sm">${Object.keys(achStore()).length}/${ACHIEVEMENTS.length} unlocked${S.ironman ? '' : ' · Ironman careers only'}</div></span>›</button>
-    <button class="li" data-act="go" data-v="editor"><span class="grow"><b>Database Editor</b><div class="muted sm">${S.ironman ? '🔒 Locked in Ironman mode' : 'Leagues, clubs, players, hidden attributes · share files'}</div></span>›</button>
+    <button class="li" data-act="go" data-v="achievements"><span class="grow"><b>${icon('trophy')} Achievements</b><div class="muted sm">${Object.keys(achStore()).length}/${ACHIEVEMENTS.length} unlocked${S.ironman ? '' : ' · Ironman careers only'}</div></span>›</button>
+    <button class="li" data-act="go" data-v="editor"><span class="grow"><b>Database Editor</b><div class="muted sm">${S.ironman ? icon('lock') + ' Locked in Ironman mode' : 'Leagues, clubs, players, hidden attributes · share files'}</div></span>›</button>
     <button class="li" data-act="go" data-v="settings"><span class="grow"><b>Save & Settings</b><div class="muted sm">Backup, restore, start over</div></span>›</button>
     <button class="li" data-act="toTitle"><span class="grow"><b>Main Menu</b></span>›</button>
   </div>`;
@@ -500,7 +565,7 @@ VIEWS.coach = () => {
     <div class="kv"><span>Days in charge</span><b>${daysBetween(c.joined, { season: S.season, day: S.day })}</b></div>
     <div class="kv"><span>Player's Coach</span><b>${attrCell(c.pcoach ?? 10)}</b></div></div>
     <div class="card"><h3>Bio</h3><p class="bio">${esc(coachBio())}</p></div>
-    <div class="card rivalcard"><h3>⚔️ Personal rivals</h3>${(S.rivals?.coach || []).length ? S.rivals.coach.map((r) => { const t = S.teams.find((x) => x.coach && x.coach.name === r.name); return `<div class="lrow"><span class="grow"><b>${esc(r.name)}</b> ${t ? badge(t) : '<span class="muted sm">(out of work)</span>'}<div class="muted sm">${esc(r.reasons.join(' · ') || 'Long-running feud')}</div></span><span class="rivlvl">${rivalLabel(r.pts)}</span></div>`; }).join('') : '<p class="muted">No rivals yet. Clash with coaches in the press, poach their stars or battle them in tight games and the media will make it personal.</p>'}</div></div>
+    <div class="card rivalcard"><h3>${icon('versus')} Personal rivals</h3>${(S.rivals?.coach || []).length ? S.rivals.coach.map((r) => { const t = S.teams.find((x) => x.coach && x.coach.name === r.name); return `<div class="lrow"><span class="grow"><b>${esc(r.name)}</b> ${t ? badge(t) : '<span class="muted sm">(out of work)</span>'}<div class="muted sm">${esc(r.reasons.join(' · ') || 'Long-running feud')}</div></span><span class="rivlvl">${rivalLabel(r.pts)}</span></div>`; }).join('') : '<p class="muted">No rivals yet. Clash with coaches in the press, poach their stars or battle them in tight games and the media will make it personal.</p>'}</div></div>
   <div class="attr-grid three">${COACH_GROUPS.map((g) => `<div class="attr-box"><h3>${g}</h3>${COACH_ATTRS.filter((a) => a.g === g).map((a) => `<div class="arow"><span>${a.n}</span>${attrCell(c.a[a.k])}</div>`).join('')}</div>`).join('')}</div>
   <div class="pad"><p class="hint">Coaching attributes shape matches (Offense, Defense, Tactical Knowledge), development (Player Development, Conditioning), team talks (Motivating, Man Management, Discipline) and how accurately you rate players (Judging Ability / Potential). They grow with experience and success.</p></div>
   <h3 class="sec pad">Career</h3>
@@ -515,7 +580,7 @@ VIEWS.club = () => {
     <div class="card"><h3>Board confidence</h3><div class="meter big"><div style="width:${c}%" class="${c >= 60 ? 'ok' : c >= 35 ? 'mid' : 'bad'}"></div></div>
       <div class="kv"><span>Confidence</span><b>${c}%</b></div><div class="kv"><span>Season expectation</span><b>${esc(S.board.exp.txt)}</b></div><div class="kv"><span>Current position</span><b>${ordinal(teamRank(t.id))}</b></div>
       <p class="hint">Drop too low and you'll be shown the door — mid-season if things get really bad.</p></div>
-    <button class="btn big" data-act="go" data-v="clubHistory">🏛️ Club History & Retired Numbers</button>
+    <button class="btn big" data-act="go" data-v="clubHistory">${icon('hall')} Club History & Retired Numbers</button>
     <div class="card"><h3>Club</h3><div class="kv"><span>League</span><b>${lgFlag(league(t.lg))} ${esc(league(t.lg).name)}</b></div><div class="kv"><span>Prestige</span><b>${prestigeStars(t.prestige)}</b></div></div>
     <div class="card"><h3>Finances</h3>
       <div class="kv"><span>Wage budget</span><b>${fmtMoney(t.budget)}</b></div><div class="kv"><span>Payroll</span><b>${fmtMoney(pay)}</b></div><div class="kv"><span>Room</span><b class="${t.budget - pay >= 0 ? 'pos' : 'neg'}">${fmtMoney(Math.abs(t.budget - pay))}${t.budget - pay < 0 ? ' over' : ''}</b></div>
@@ -538,12 +603,12 @@ VIEWS.settings = () => `${header('Save & Settings')}
     <div class="card"><h3>Press conferences</h3><p class="hint">Face the media yourself, or send your assistant (he keeps it measured — no drama, no rivalry fuel).</p>
       <label class="lbl">Pre-match</label><div class="seg">${[['me', 'I\'ll do it'], ['assistant', 'Assistant']].map(([v, l]) => `<button class="${S.press.pre === v ? 'on' : ''}" data-act="pressSet" data-k="pre" data-v="${v}">${l}</button>`).join('')}</div>
       <label class="lbl">Post-match</label><div class="seg">${[['me', 'I\'ll do it'], ['assistant', 'Assistant']].map(([v, l]) => `<button class="${S.press.post === v ? 'on' : ''}" data-act="pressSet" data-k="post" data-v="${v}">${l}</button>`).join('')}</div></div>
-    <div class="card"><h3>🔊 Sound</h3>
+    <div class="card"><h3>${icon('vol')} Sound</h3>
       <label class="check"><input type="checkbox" data-chg="sndClicks" ${Music.clicks ? 'checked' : ''}> Button click sounds</label>
       <label class="check"><input type="checkbox" data-chg="sndMatch" ${Sound.on ? 'checked' : ''}> Arena sound in matches (crowd, ball, whistles)</label></div>
-    <div class="card"><h3>Career mode</h3><div class="kv"><span>Difficulty</span><b>${DIFFICULTY[S.diff || 'normal'].n}</b></div><div class="kv"><span>Mode</span><b>${S.ironman ? '🛡️ Ironman' : 'Standard'}</b></div></div>
+    <div class="card"><h3>Career mode</h3><div class="kv"><span>Difficulty</span><b>${DIFFICULTY[S.diff || 'normal'].n}</b></div><div class="kv"><span>Mode</span><b>${S.ironman ? icon('shield') + ' Ironman' : 'Standard'}</b></div></div>
     <div class="card"><h3>Save game</h3><p class="hint">Your career auto-saves on this device after every action.</p>
-      ${S.ironman ? '<p class="hint">🔒 Ironman: backups and restores are disabled. Matches you start are final — reloading the app plays them out.</p>' : `<div class="row-btns"><button class="btn" data-act="exportSave">Download backup</button><label class="btn file">Restore backup<input type="file" accept=".json,application/json" data-chg="importSave" hidden></label></div>`}</div>
+      ${S.ironman ? '<p class="hint">' + icon('lock') + ' Ironman: backups and restores are disabled. Matches you start are final — reloading the app plays them out.</p>' : `<div class="row-btns"><button class="btn" data-act="exportSave">Download backup</button><label class="btn file">Restore backup<input type="file" accept=".json,application/json" data-chg="importSave" hidden></label></div>`}</div>
     <div class="card"><h3>Danger zone</h3><div class="row-btns"><button class="btn danger" data-act="deleteSave">Delete career</button></div></div>
     <p class="fine">Courtside Manager · all players, clubs, leagues and names are fictional.</p>
   </div>`;
@@ -603,7 +668,7 @@ VIEWS.editPlayer = ({ id }) => {
   return `${header('Edit Player')}
   <div class="pad"><div class="card">
     <div class="two"><div><label class="lbl">First name</label><input class="inp" id="ep_first" value="${esc(p.first)}" maxlength="20"></div><div><label class="lbl">Last name</label><input class="inp" id="ep_last" value="${esc(p.last)}" maxlength="24"></div></div>
-    <div class="two"><div><label class="lbl">Position</label><select class="inp" id="ep_pos">${POS.map((x) => `<option ${x === p.pos ? 'selected' : ''}>${x}</option>`).join('')}</select></div><div><label class="lbl">Nationality</label><select class="inp" id="ep_nat">${NAT_KEYS.map((k) => `<option value="${k}" ${k === p.nat ? 'selected' : ''}>${NATS[k].flag} ${k}</option>`).join('')}</select></div></div>
+    <div class="two"><div><label class="lbl">Position</label><select class="inp" id="ep_pos">${POS.map((x) => `<option ${x === p.pos ? 'selected' : ''}>${x}</option>`).join('')}</select></div><div><label class="lbl">Nationality</label><select class="inp" id="ep_nat">${NAT_KEYS.map((k) => `<option value="${k}" ${k === p.nat ? 'selected' : ''}>${k}</option>`).join('')}</select></div></div>
     <div class="two"><div><label class="lbl">Age</label>${num('age', p.age, 16, 45)}</div><div><label class="lbl">Height (cm)</label>${num('h', p.h, 165, 235)}</div></div>
     <label class="lbl">Club</label><select class="inp" id="ep_team"><option value="">Free agent</option>${S.leagues.map((l) => `<optgroup label="${esc(l.name)}">${lgTeams(l.id).map((t) => `<option value="${t.id}" ${p.team === t.id ? 'selected' : ''}>${esc(teamName(t))}</option>`).join('')}</optgroup>`).join('')}</select>
     <div class="two"><div><label class="lbl">Salary ($M)</label>${num('sal', p.contract.sal, 0.1, 60, 0.05)}</div><div><label class="lbl">Contract years</label>${num('yrs', p.contract.yrs, 0, 6)}</div></div>
@@ -649,7 +714,7 @@ VIEWS.prematch = () => {
     ${previewCard(f, H, A)}
     ${pressCard('pre', f)}
     ${myInj.length || tired.length ? `<div class="card">${myInj.length ? `<p class="neg">Unavailable: ${myInj.map((p) => esc(pname(p, true))).join(', ')}</p>` : ''}${tired.length ? `<p class="warn-t">Tired: ${tired.map((p) => `${esc(pname(p, true))} (${Math.round(p.cond)}%)`).join(', ')}</p>` : ''}</div>` : ''}
-    <div class="card"><h3>Your starting five</h3>${starters.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="mini">${playerFace(p, 28)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span><span class="grow">${injHTML(p)}${esc(pname(p))}${p.instrLock || (userTeam().instr[p.id] || {}).lock ? ' <span class="tagx">🔒 Stopper</span>' : ''}</span><span class="muted sm">${ROLES[(userTeam().instr[p.id] || {}).role || 'bal'].n}</span>${condHTML(p.cond)}</div>`).join('')}
+    <div class="card"><h3>Your starting five</h3>${starters.map((p) => `<div class="lrow" data-act="player" data-id="${p.id}"><span class="mini">${playerFace(p, 28)}</span><span class="jn">${p.num ?? '–'}</span><span class="ps">${p.pos}</span><span class="grow">${injHTML(p)}${esc(pname(p))}${p.instrLock || (userTeam().instr[p.id] || {}).lock ? ' <span class="tagx">' + icon('lock') + ' Stopper</span>' : ''}</span><span class="muted sm">${ROLES[(userTeam().instr[p.id] || {}).role || 'bal'].n}</span>${condHTML(p.cond)}</div>`).join('')}
       <div class="row-btns"><button class="btn sm" data-act="go" data-v="tactics" data-keep="1">Change tactics</button></div></div>
   </div>
   <div class="sticky-cta two-btn"><button class="btn big" data-act="playMatch" data-watch="0">Quick Result</button><button class="btn primary big" data-act="playMatch" data-watch="1">${icon('play')} Go to Match</button></div>`;
@@ -746,7 +811,7 @@ const Live = {
     const m = this.m, el = $('#clegend'); if (!el || !m) return;
     const hot = [], cold = [];
     m.sides.forEach((s) => s.on.forEach((p) => { const h = s.heat[p.id] || 0; if (h > 0.45) hot.push(`${esc(s.team.abbr)} ${esc(p.last)}`); else if (h < -0.45) cold.push(`${esc(s.team.abbr)} ${esc(p.last)}`); }));
-    const html = `<span class="fire">🔥 ${hot.join(', ') || '—'}</span><span class="ice">🧊 ${cold.join(', ') || '—'}</span>`;
+    const html = `<span class="fire">${icon('flame')} ${hot.join(', ') || '—'}</span><span class="ice">${icon('snow')} ${cold.join(', ') || '—'}</span>`;
     if (el._h !== html) { el._h = html; el.innerHTML = html; }
   },
   paintOnCourt() {
@@ -757,10 +822,10 @@ const Live = {
     const SB = this.shownBox();
     const parts = ids.map((id) => { const p = S.players[id], en = Math.round(s.en[id] ?? 100), h = s.heat[id] || 0, r = rx[id], b = SB[id] || {};
       return { k: [id, Math.round(en / 5), h > 0.45 ? 1 : h < -0.45 ? -1 : 0, r ? r.cls : '', b.pts, m.techs[id] || 0].join(':'),
-        h: `<button class="oc ${r ? r.cls : ''}" data-act="livePlayer" data-id="${id}"><span class="ocf">${playerFace(p, 40)}${r ? `<span class="remo">${REACT_EMO[r.cls] || ''}</span>` : h > 0.45 ? '<span class="remo">🔥</span>' : h < -0.45 ? '<span class="remo">🧊</span>' : ''}</span><span class="ocn">${p.num ?? ''} ${esc(p.last)}</span><span class="ocs">${b.pts || 0} pts${m.techs[id] ? ' · T' : ''}</span><span class="en"><i style="width:${en}%;background:${en > 70 ? '#4cc38a' : en > 50 ? '#e8b94a' : '#f06a6a'}"></i></span>${r ? `<span class="ocr ${r.cls}">${r.label}</span>` : ''}</button>` }; });
+        h: `<button class="oc ${r ? r.cls : ''}" data-act="livePlayer" data-id="${id}"><span class="ocf">${playerFace(p, 40)}${r ? `<span class="remo ${r.cls}">${icon(REACT_IC[r.cls] || 'dash')}</span>` : h > 0.45 ? `<span class="remo r-great">${icon('flame')}</span>` : h < -0.45 ? `<span class="remo r-cold">${icon('snow')}</span>` : ''}</span><span class="ocn">${p.num ?? ''} ${esc(p.last)}</span><span class="ocs">${b.pts || 0} pts${m.techs[id] ? ' · T' : ''}</span><span class="en"><i style="width:${en}%;background:${en > 70 ? '#4cc38a' : en > 50 ? '#e8b94a' : '#f06a6a'}"></i></span>${r ? `<span class="ocr ${r.cls}">${r.label}</span>` : ''}</button>` }; });
     const key = parts.map((x) => x.k).join('|') + (s.asst ? 'A' : '');
     if (el._k === key) return; el._k = key;
-    el.innerHTML = `<div class="ochead"><span>On court <span class="sm muted">· tap a player for his stats</span></span><span class="muted sm">${s.asst ? '🧑‍💼 Assistant is handling subs' : 'You are handling subs'}</span></div><div class="ocrow">${parts.map((x) => x.h).join('')}</div>`;
+    el.innerHTML = `<div class="ochead"><span>On court <span class="sm muted">· tap a player for his stats</span></span><span class="muted sm">${s.asst ? icon('clip') + ' Assistant is handling subs' : 'You are handling subs'}</span></div><div class="ocrow">${parts.map((x) => x.h).join('')}</div>`;
   },
   paint(force) {
     const m = this.m; const root = $('#live'); if (!root || !m) return;
@@ -773,13 +838,13 @@ const Live = {
     const { q, c } = clockAt(this.t);
     const clock = `${Math.floor(c / 60)}:${String(Math.floor(c % 60)).padStart(2, '0')}`;
     $('#sb').innerHTML = `<div class="sbt">${badge(A, 'lg')}<span>${esc(A.abbr)}</span></div><div class="sbs"><b>${as}</b><span>–</span><b>${hs}</b></div><div class="sbt r"><span>${esc(H.abbr)}</span>${badge(H, 'lg')}</div>
-      ${m.rivalGame && !over ? '<div class="sbriv">🔥 Rivalry game — the crowd is up for this one</div>' : ''}<div class="sbq">${over ? 'FINAL' + (m.ot ? ' / OT' : '') : (q <= 4 ? 'Q' + q : 'OT' + (q - 4)) + ' · ' + clock}</div>`;
+      ${m.rivalGame && !over ? '<div class="sbriv">' + icon('flame') + ' Rivalry game — the crowd is up for this one</div>' : ''}<div class="sbq">${over ? 'FINAL' + (m.ot ? ' / OT' : '') : (q <= 4 ? 'Q' + q : 'OT' + (q - 4)) + ' · ' + clock}</div>`;
     const ctlKey = [Sound.on, Sound.ready(), this.speed, this.paused, over, this.tab, this.t === 0, this.hlOn, m.sides[m.us].asst].join('|');
     if (force || this._ctl !== ctlKey) {
       this._ctl = ctlKey;
       $('#lctl').innerHTML = over ? `<button class="btn primary big" data-act="toResult">Match Report ${icon('play')}</button>`
         : this.t === 0 && this.paused ? `<button class="btn primary big" data-act="liveTipoff">${icon('mega')} Pre-match team talk & tip-off</button>`
-        : `<div class="seg">${[1, 2, 4, 8].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="iconbtn snd ${Sound.on && !Sound.ready() ? 'blocked' : ''}" data-act="${Sound.on && !Sound.ready() ? 'liveSoundOn' : 'liveSound'}" aria-label="Sound">${!Sound.on ? '🔇' : Sound.ready() ? '🔊' : '🔈 Tap'}</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
+        : `<div class="seg">${[1, 2, 4, 8].map((s) => `<button class="${this.speed === s ? 'on' : ''}" data-act="liveSpeed" data-v="${s}">${s}×</button>`).join('')}</div><button class="iconbtn" data-act="livePause">${icon(this.paused ? 'play' : 'pause')}</button><button class="chip ${this.hlOn !== false ? 'on' : ''}" data-act="liveHL">★ Key</button><button class="iconbtn snd ${Sound.on && !Sound.ready() ? 'blocked' : ''}" data-act="${Sound.on && !Sound.ready() ? 'liveSoundOn' : 'liveSound'}" aria-label="Sound">${!Sound.on ? icon('mute') : Sound.ready() ? icon('vol') : icon('vol') + ' Tap'}</button><button class="btn sm" data-act="liveSkip">Skip</button>`;
       $('#ltabs').innerHTML = ['feed', 'box'].map((k) => `<button class="tab ${this.tab === k ? 'on' : ''}" data-act="liveTab" data-v="${k}">${k === 'feed' ? 'Commentary' : 'Live Stats'}</button>`).join('');
       $('#lbar').innerHTML = over ? '' : `<button class="btn" data-act="liveShout" ${this.t === 0 ? 'disabled' : ''}>${icon('mega')} Shout</button><button class="btn" data-act="liveTac">Tactics</button><button class="btn" data-act="liveSubs">Subs${m.sides[m.us].asst ? ' · Asst' : ''}</button>`;
     }
@@ -790,7 +855,7 @@ const Live = {
       $('#feed').innerHTML = m.events.filter((e) => e.g <= this.t).reverse().slice(0, 60).map((e) => { const tm = e.side >= 0 ? m.sides[e.side].team : null; return `<div class="ev ${e.type}${e.hl ? ' hl' : ''}" style="--ec:${tm ? tm.c1 : 'transparent'}"><span class="evt">${e.q <= 4 ? 'Q' + e.q : 'OT'} ${Math.floor(e.c / 60)}:${String(e.c % 60).padStart(2, '0')}</span><span class="evx">${esc(e.text)}</span><span class="evs">${e.as}-${e.hs}</span></div>`; }).join('');
     } else {
       const s = m.sides[this.boxSide ?? m.us], SB = this.shownBox(), z = { min: 0, pts: 0, reb: 0, ast: 0, fgm: 0, fga: 0 };
-      $('#feed').innerHTML = `<div class="seg mini boxsw">${[m.us, 1 - m.us].map((si) => `<button class="${(this.boxSide ?? m.us) === si ? 'on' : ''}" data-act="liveBoxSide" data-v="${si}">${esc(m.sides[si].team.abbr)}</button>`).join('')}</div><table class="tbl box"><thead><tr><th class="l">Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>Mood</th><th>Form</th></tr></thead><tbody>${s.list.map((p) => { const b = SB[p.id] || z; const md = s.mood[p.id] || 0; const h = s.heat[p.id] || 0; return `<tr class="${s.on.includes(p) ? 'oncourt' : ''}" data-act="livePlayer" data-id="${p.id}"><td class="l nm">${s.on.includes(p) ? '<i class="st-dot"></i>' : ''}<span class="jn">${p.num ?? ''}</span>${esc(pname(p, true))}${m.ej[p.id] ? ' <span class="neg">EJ</span>' : m.techs[p.id] ? ' <span class="warn-t">T</span>' : ''}</td><td>${Math.round(b.min / 60)}</td><td class="b">${b.pts}</td><td>${b.reb}</td><td>${b.ast}</td><td>${b.fgm}-${b.fga}</td><td>${moodIcon(md)}</td><td>${h > 0.45 ? '🔥' : h < -0.45 ? '🧊' : h > 0.2 ? '<span class="pos">↑</span>' : h < -0.2 ? '<span class="neg">↓</span>' : '<span class="muted">·</span>'}</td></tr>`; }).join('')}</tbody></table>`;
+      $('#feed').innerHTML = `<div class="seg mini boxsw">${[m.us, 1 - m.us].map((si) => `<button class="${(this.boxSide ?? m.us) === si ? 'on' : ''}" data-act="liveBoxSide" data-v="${si}">${esc(m.sides[si].team.abbr)}</button>`).join('')}</div><table class="tbl box"><thead><tr><th class="l">Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>Mood</th><th>Form</th></tr></thead><tbody>${s.list.map((p) => { const b = SB[p.id] || z; const md = s.mood[p.id] || 0; const h = s.heat[p.id] || 0; return `<tr class="${s.on.includes(p) ? 'oncourt' : ''}" data-act="livePlayer" data-id="${p.id}"><td class="l nm">${s.on.includes(p) ? '<i class="st-dot"></i>' : ''}<span class="jn">${p.num ?? ''}</span>${esc(pname(p, true))}${m.ej[p.id] ? ' <span class="neg">EJ</span>' : m.techs[p.id] ? ' <span class="warn-t">T</span>' : ''}</td><td>${Math.round(b.min / 60)}</td><td class="b">${b.pts}</td><td>${b.reb}</td><td>${b.ast}</td><td>${b.fgm}-${b.fga}</td><td>${moodIcon(md)}</td><td>${h > 0.45 ? `<span class="hc hot">${icon('flame')}</span>` : h < -0.45 ? `<span class="hc cold">${icon('snow')}</span>` : h > 0.2 ? '<span class="pos">↑</span>' : h < -0.2 ? '<span class="neg">↓</span>' : '<span class="muted">·</span>'}</td></tr>`; }).join('')}</tbody></table>`;
     }
   },
 };
@@ -805,7 +870,7 @@ function livePlayerCard(id) {
   const cell = (v, l) => `<div class="lsc"><b>${v}</b><span>${l}</span></div>`;
   const lastPlays = m.events.filter((e) => e.g <= Live.t && (e.p === id || e.a === id || e.v === id)).slice(-3).reverse();
   modal(`<div class="lpc-head" style="--pc:${t.c1}"><span class="lpc-face">${playerFace(p, 64)}</span><div class="grow"><div class="lpc-name">${p.num != null ? `<span class="jbig">#${p.num}</span> ` : ''}${esc(p.first)} <b>${esc(p.last)}</b></div>
-      <div class="muted sm">${p.pos} · ${esc(t.city)} ${esc(t.nick)} · ${on ? '<span class="pos">On court</span>' : m.ej[id] ? '<span class="neg">Ejected</span>' : 'On the bench'}${h > 0.45 ? ' · 🔥 On fire' : h < -0.45 ? ' · 🧊 Cold' : ''}${m.techs[id] ? ' · <span class="warn-t">Technical</span>' : ''}</div></div>${badge(t)}</div>
+      <div class="muted sm">${p.pos} · ${esc(t.city)} ${esc(t.nick)} · ${on ? '<span class="pos">On court</span>' : m.ej[id] ? '<span class="neg">Ejected</span>' : 'On the bench'}${h > 0.45 ? ` · <span class="hc hot">${icon('flame')}</span> On fire` : h < -0.45 ? ` · <span class="hc cold">${icon('snow')}</span> Cold` : ''}${m.techs[id] ? ' · <span class="warn-t">Technical</span>' : ''}</div></div>${badge(t)}</div>
     <h3 class="sec">This game</h3>
     <div class="lsgrid big">${cell(b.pts, 'PTS')}${cell(b.reb, 'REB')}${cell(b.ast, 'AST')}${cell(Math.floor(b.min / 60) + "'", 'MIN')}</div>
     <div class="lsgrid">${cell(`${b.fgm}-${b.fga}`, 'FG ' + pct(b.fgm, b.fga))}${cell(`${b.tpm}-${b.tpa}`, '3PT ' + pct(b.tpm, b.tpa))}${cell(`${b.ftm}-${b.fta}`, 'FT ' + pct(b.ftm, b.fta))}${cell(b.oreb, 'OREB')}${cell(b.stl, 'STL')}${cell(b.blk, 'BLK')}${cell(b.tov, 'TOV')}${cell(p.st && p.st.gp ? (p.st.pts / p.st.gp).toFixed(1) : '–', 'Season PPG')}</div>
@@ -820,12 +885,12 @@ function talkModal(title, isBreak) {
     <div class="tones">${Object.entries(TONES).map(([k, v]) => `<button class="tone t-${k}" data-act="doTalk" data-v="${k}" data-brk="${isBreak ? 1 : 0}"><b>${v.n}</b><span>${v.d}</span></button>`).join('')}</div>
     <div class="row-btns"><button class="btn" data-act="skipTalk" data-brk="${isBreak ? 1 : 0}">No talk</button>${isBreak ? `<button class="btn" data-act="liveTac">Tactics</button><button class="btn" data-act="liveSubs">Subs</button>` : ''}</div>`, { locked: true, tall: true });
 }
-const REACT_EMO = { 'r-great': '🔥', 'r-good': '💪', 'r-ok': '🙂', 'r-bad': '😒', 'r-awful': '😡' };
+const REACT_IC = { 'r-great': 'flame', 'r-good': 'up', 'r-ok': 'dash', 'r-bad': 'down', 'r-awful': 'storm' };
 function reactionsHTML(list) {
   const counts = {};
   list.forEach((r) => (counts[r.label] = (counts[r.label] || 0) + 1));
   return `<div class="rsum">${Object.entries(counts).map(([l, n]) => `<span class="rchip ${list.find((r) => r.label === l).cls}">${n} ${l}</span>`).join('')}</div>
-  <div class="rgrid">${list.slice(0, 12).map((r) => `<div class="rcard ${r.cls}"><div class="rface">${playerFace(r.p, 54)}<span class="remo">${REACT_EMO[r.cls] || ''}</span></div><b>${r.p.num != null ? '#' + r.p.num + ' ' : ''}${esc(r.p.last)}</b><span class="rchip ${r.cls}">${r.label}</span></div>`).join('')}</div>`;
+  <div class="rgrid">${list.slice(0, 12).map((r) => `<div class="rcard ${r.cls}"><div class="rface">${playerFace(r.p, 54)}<span class="remo ${r.cls}">${icon(REACT_IC[r.cls] || 'dash')}</span></div><b>${r.p.num != null ? '#' + r.p.num + ' ' : ''}${esc(r.p.last)}</b><span class="rchip ${r.cls}">${r.label}</span></div>`).join('')}</div>`;
 }
 VIEWS.match = () => `<div id="live" class="live"><div id="sb" class="scoreboard"></div><div class="courtwrap"><canvas id="court"></canvas></div><div id="clegend" class="clegend"></div><div id="oncourt" class="oncourt"></div><div id="lctl" class="lctl"></div><div id="ltabs" class="tabs"></div><div id="feed" class="feed"></div><div id="lbar" class="lbar"></div></div>`;
 
@@ -893,7 +958,7 @@ const ACT = {
   go: (d) => { if (d.tab) UI.tab.tac = d.tab; go(d.v, d.sid ? { sid: d.sid } : d.id ? { id: +d.id } : {}, { keep: !!d.keep }); },
   tab: (d) => { UI.tab[d.k] = d.v; render(); },
   player: (d) => { closeModal(); go('player', { id: +d.id }); },
-  loadGame: () => { if (load()) { UI.stack = []; if (ironmanResolve() || IRON_RESOLVED) { IRON_RESOLVED = false; toast('🛡️ Ironman: the match you left was played to the finish.'); UI.tab.rside = null; return go('result'); } go(S.pending ? 'prematch' : S.phase === 'sacked' ? 'sacked' : 'inbox'); } },
+  loadGame: () => { if (load()) { UI.stack = []; if (ironmanResolve() || IRON_RESOLVED) { IRON_RESOLVED = false; toast(icon('shield') + ' Ironman: the match you left was played to the finish.'); UI.tab.rside = null; return go('result'); } go(S.pending ? 'prematch' : S.phase === 'sacked' ? 'sacked' : 'inbox'); } },
   toTitle: () => { save(); UI.stack = []; UI.view = 'title'; render(); },
   ngSet: (d) => { NG.name = ($('#ngName')?.value ?? NG.name); NG[d.k] = d.k === 'ironman' ? !!d.v : d.v; if (d.k === 'mode') { NG.team = null; NG.offers = null; } render(); },
   ngNext: () => {
@@ -1045,7 +1110,7 @@ const ACT = {
   skipTalk: (d) => ACT.talkDone(d),
   talkDone: () => { closeModal(); Live.m.brk = 0; Live.paused = false; Live.paint(true); },
   liveResume: () => { closeModal(); Live.m.brk = 0; Live.paused = false; Live.paint(true); },
-  liveSound: () => { Sound.setPref(!Sound.on); if (Sound.on) { Sound.unlock(); Sound.test(); } toast(Sound.on ? '🔊 Crowd sound on — you should hear a cheer. Nothing? Check the volume and silent switch.' : 'Sound off'); Live.paint(true); },
+  liveSound: () => { Sound.setPref(!Sound.on); if (Sound.on) { Sound.unlock(); Sound.test(); } toast(Sound.on ? icon('vol') + ' Crowd sound on — you should hear a cheer. Nothing? Check the volume and silent switch.' : 'Sound off'); Live.paint(true); },
   liveBoxSide: (d) => { Live.boxSide = +d.v; Live.paint(true); },
   livePlayer: (d) => livePlayerCard(+d.id),
   liveSoundOn: () => { Sound.unlock(); Sound.test(); setTimeout(() => Live.paint(true), 400); },
@@ -1235,7 +1300,7 @@ window.addEventListener('DOMContentLoaded', () => {
 /* ---------- v3: shared history table, duo talk, staff ---------- */
 function historyTable(rows, awards = []) {
   if (!rows.length) return '<p class="empty">No career history yet.</p>';
-  const aw = (r) => awards.filter((a) => a.s === r.s && (!a.lg || a.lg === r.lg)).map((a) => `<span class="aw" title="${a.k}">${a.k === 'MVP' ? 'MVP' : '🏆'}</span>`).join('');
+  const aw = (r) => awards.filter((a) => a.s === r.s && (!a.lg || a.lg === r.lg)).map((a) => `<span class="aw" title="${a.k}">${a.k === 'MVP' ? 'MVP' : icon('trophy')}</span>`).join('');
   const tot = rows.reduce((t, r) => { for (const k of ['gp', 'gs', 'min', 'pts', 'reb', 'ast', 'rat', 'pgp']) t[k] += r[k] || 0; return t; }, { gp: 0, gs: 0, min: 0, pts: 0, reb: 0, ast: 0, rat: 0, pgp: 0 });
   const line = (r, cls = '') => `<tr class="${cls}"><td class="l">${r.live ? '<b>' : ''}${r.s}/${String(r.s + 1).slice(2)}${r.live ? '*</b>' : ''}</td>
     <td class="l nm"><span class="badge" style="background:${r.c1};color:${r.c2}">${esc(r.t)}</span> ${esc(r.club)} ${aw(r)}</td><td>${esc(r.lg)}</td>
@@ -1252,7 +1317,7 @@ function duoTalk(goingId, ctx, mailId) {
     : h.loy >= 15 ? `Coach, I've given everything to this club. ${going.first} and I have something special. Please tell me the rumours aren't true.`
     : h.ego >= 15 ? `Look, I'll still get mine. But ${going.first} makes my life easy out there. Think about what you're doing.`
     : `Coach, can we talk? I heard you might move ${going.first}. He's my guy — we just click. Are you really doing this?`;
-  modal(`<div class="talk-head"><span class="mfrom-face">${playerFace(partner, 48)}</span><div><b>${esc(pname(partner))}</b><div class="muted sm">⚡ Dynamic Duo with ${esc(pname(going))} · ${personalityVisible(partner) ? esc(personality(partner)) : ''}</div></div></div>
+  modal(`<div class="talk-head"><span class="mfrom-face">${playerFace(partner, 48)}</span><div><b>${esc(pname(partner))}</b><div class="muted sm">${icon('bolt')} Dynamic Duo with ${esc(pname(going))} · ${personalityVisible(partner) ? esc(personality(partner)) : ''}</div></div></div>
     <p class="quote">“${esc(quote)}”</p>
     <div class="tones one">
       <button class="tone t-demand" data-act="duoAnswer" data-a="business" data-g="${goingId}" data-ctx="${ctx}" data-mail="${mailId || ''}"><b>"It's a business decision."</b><span>Go ahead with the trade. He won't like it.</span></button>
@@ -1287,7 +1352,7 @@ VIEWS.staffProfile = ({ sid }) => {
   const t = st.team != null ? team(st.team) : null;
   return `${header('Staff Profile')}
   <div class="phero" style="--pc:${t ? t.c1 : '#555'}"><div class="ph-top"><div class="avatar">${staffFace(st, 78)}${t ? `<span class="avbadge">${badge(t)}</span>` : ''}</div><div class="grow"><div class="ph-name">${esc(st.first)} <b>${esc(st.last)}</b></div>
-    <div class="ph-sub">${STAFF_ROLES[st.role].n} · ${st.age} yrs · ${NATS[st.nat]?.flag || ''} ${st.nat}</div><div class="ph-sub">${t ? esc(teamName(t)) : 'Unattached'}${st.ex ? ' · <span class="atag">Former player</span>' : ''}</div></div></div></div>
+    <div class="ph-sub">${STAFF_ROLES[st.role].n} · ${st.age} yrs · ${flagSVG(NATS[st.nat]?.flag)} ${st.nat}</div><div class="ph-sub">${t ? esc(teamName(t)) : 'Unattached'}${st.ex ? ' · <span class="atag">Former player</span>' : ''}</div></div></div></div>
   <div class="pad"><div class="card"><h3>Bio</h3><p class="bio">${esc(staffBio(st))}</p></div></div>
   <div class="attr-grid"><div class="attr-box" style="grid-column:1/-1"><h3>Attributes</h3>${STAFF_ATTRS.map((a) => `<div class="arow"><span>${a.n}</span>${attrCell(st.a[a.k])}</div>`).join('')}</div></div>
   ${st.ex ? `<h3 class="sec pad">Playing career</h3><div class="scrollx">${historyTable(st.ex.career, st.ex.awards)}</div>` : ''}`;
@@ -1328,11 +1393,11 @@ function rumourMillView() {
     const all = hotSeat(lf), myPos = all.findIndex((x) => x.t.id === S.userTeam) + 1;
     body = `${myPos ? `<div class="pad"><div class="card ${S.board.conf < 30 ? 'warn' : ''}"><div class="kv"><span>Your position on the sack race</span><b>${ordinal(myPos)} of ${all.length}</b></div><div class="kv"><span>Odds</span><b>${oddsFor(S.board.conf)}</b></div></div></div>` : ''}
     <div class="scrollx"><table class="tbl"><thead><tr><th>#</th><th class="l">Coach</th><th>Board</th><th>Odds</th></tr></thead><tbody>
-    ${list.map((x, i) => `<tr class="${x.t.id === S.userTeam ? 'me' : ''}" data-act="go" data-v="team" data-id="${x.t.id}"><td>${i + 1}</td><td class="l nm">${badge(x.t)} <b>${esc(coachName(x.t))}</b>${x.t.id === S.userTeam ? ' <span class="tagx">YOU</span>' : coachRival(x.t) ? ' <span class="rivlvl">⚔️</span>' : ''}<div class="muted sm">${esc(x.t.nick)} · ${x.t.w}-${x.t.l} · ${esc(league(x.t.lg).short)}</div></td><td><div class="meter mini"><div class="${x.conf >= 50 ? 'ok' : x.conf >= 25 ? 'mid' : 'bad'}" style="width:${x.conf}%"></div></div></td><td class="b">${oddsFor(x.conf)}</td></tr>`).join('')}
+    ${list.map((x, i) => `<tr class="${x.t.id === S.userTeam ? 'me' : ''}" data-act="go" data-v="team" data-id="${x.t.id}"><td>${i + 1}</td><td class="l nm">${badge(x.t)} <b>${esc(coachName(x.t))}</b>${x.t.id === S.userTeam ? ' <span class="tagx">YOU</span>' : coachRival(x.t) ? ` <span class="rivlvl">${icon('versus')}</span>` : ''}<div class="muted sm">${esc(x.t.nick)} · ${x.t.w}-${x.t.l} · ${esc(league(x.t.lg).short)}</div></td><td><div class="meter mini"><div class="${x.conf >= 50 ? 'ok' : x.conf >= 25 ? 'mid' : 'bad'}" style="width:${x.conf}%"></div></div></td><td class="b">${oddsFor(x.conf)}</td></tr>`).join('')}
     </tbody></table></div><p class="hint pad">Next coach to leave his job — bookmaker odds based on board confidence.</p>`;
   } else if (sub === 'news') {
     const items = (S.news || []).filter((n) => inLg(n.lg) || n.mine).slice(0, 50);
-    const ic = { hot: '🔥', sack: '🪑', rumour: '🗞️', trade: '🔁', sign: '✍️' };
+    const ic = { hot: icon('flame'), sack: icon('exit'), rumour: icon('news'), trade: icon('market'), sign: icon('edit') };
     body = `<div class="list">${items.map((n) => `<div class="li newsrow ${n.mine ? 'mine' : ''}" ${n.pid && S.players[n.pid] ? `data-act="player" data-id="${n.pid}"` : ''}><span class="nic">${ic[n.kind] || '•'}</span><span class="grow"><span class="sm">${esc(n.text)}</span><div class="muted sm">${fmtDate(n.season, n.day, true)} ${n.season}${n.lg && league(n.lg) ? ' · ' + esc(league(n.lg).short) : ''}</div></span></div>`).join('') || '<p class="empty">Quiet out there. Rumours will start flying soon.</p>'}</div>`;
   } else if (sub === 'trades') {
     const ds = (S.deals || []).filter((d) => d.kind === 'trade' && (inLg(d.lg) || inLg(d.lg2)) && d.season >= S.season - 1).sort((a, b) => b.season - a.season || b.val - a.val).slice(0, 25);
@@ -1351,15 +1416,15 @@ function rumourMillView() {
 /* ---------- v5: Ironman & achievements ---------- */
 let IRON_RESOLVED = false;
 function ironLocked() {
-  return `${header('Locked')}<div class="pad"><div class="card"><h3>🛡️ Ironman career</h3><p>The database editor is disabled in Ironman mode so achievements stay earned, not edited.</p><p class="hint">Start a Standard career to use the editor.</p></div></div>`;
+  return `${header('Locked')}<div class="pad"><div class="card"><h3>${icon('shield')} Ironman career</h3><p>The database editor is disabled in Ironman mode so achievements stay earned, not edited.</p><p class="hint">Start a Standard career to use the editor.</p></div></div>`;
 }
 VIEWS.achievements = () => {
   const st = achStore();
   const n = Object.keys(st).length;
   return `${header('Achievements')}
   <div class="pad"><div class="card"><div class="kv"><span>Unlocked</span><b>${n} / ${ACHIEVEMENTS.length}</b></div><div class="meter"><div class="ok" style="width:${(n / ACHIEVEMENTS.length) * 100}%"></div></div>
-  <p class="hint">Achievements can only be earned in <b>🛡️ Ironman</b> careers. They are kept on this device across all careers.</p></div></div>
-  <div class="achgrid pad">${ACHIEVEMENTS.map((a) => { const u = st[a.k]; return `<div class="ach ${u ? 'on' : ''}"><div class="achic">${u ? a.ic : '🔒'}</div><div class="grow"><b>${a.n}</b><div class="muted sm">${a.d}</div>${u ? `<div class="sm achmeta">${esc(u.team)} · ${u.season}/${String(u.season + 1).slice(2)} · ${DIFFICULTY[u.diff]?.n || ''}</div>` : ''}</div></div>`; }).join('')}</div>`;
+  <p class="hint">Achievements can only be earned in <b>${icon('shield')} Ironman</b> careers. They are kept on this device across all careers.</p></div></div>
+  <div class="achgrid pad">${ACHIEVEMENTS.map((a) => { const u = st[a.k]; return `<div class="ach ${u ? 'on' : ''}"><div class="achic">${icon(u ? a.ic : 'lock')}</div><div class="grow"><b>${a.n}</b><div class="muted sm">${a.d}</div>${u ? `<div class="sm achmeta">${esc(u.team)} · ${u.season}/${String(u.season + 1).slice(2)} · ${DIFFICULTY[u.diff]?.n || ''}</div>` : ''}</div></div>`; }).join('')}</div>`;
 };
 
 /* ---------- v6: match preview, club history ---------- */
@@ -1376,7 +1441,7 @@ function previewCard(f, H, A) {
   roster(S.userTeam).forEach((p) => (rmap[p.id] || []).forEach((oid) => { const o = S.players[oid]; if (o && o.team === oppT.id) prv.push([p, o]); }));
   return `<div class="card preview">
     <h3>Match Preview</h3>
-    ${cr ? `<div class="grudge">⚔️ <b>GRUDGE MATCH</b> — you vs ${esc(cr.name)} · ${rivalLabel(cr.pts)}<div class="sm">Board confidence and locker-room swings are doubled tonight.</div></div>` : ''}
+    ${cr ? `<div class="grudge">${icon('versus')} <b>GRUDGE MATCH</b> — you vs ${esc(cr.name)} · ${rivalLabel(cr.pts)}<div class="sm">Board confidence and locker-room swings are doubled tonight.</div></div>` : ''}
     <div class="wp-row"><span class="b">${esc(A.abbr)} ${pa}%</span><span class="muted sm">Win probability</span><span class="b">${ph}% ${esc(H.abbr)}</span></div>
     <div class="wpbar"><div style="width:${pa}%;background:${A.c1}"></div><div style="width:${ph}%;background:${H.c1}"></div></div>
     <div class="odds">
@@ -1386,8 +1451,8 @@ function previewCard(f, H, A) {
     </div>
     <p class="hint">Based on available players, condition, morale, form and home court. ${pv.pUs < 0.35 ? 'An upset here would lift the board and the locker room.' : pv.pUs > 0.65 ? 'We are clear favourites — losing this one would hurt.' : ''}</p>
     <h3 class="sec2">Assistant's scouting</h3>
-    <ul class="scout">${pv.bullets.map((b) => `<li><span>${b.ic}</span><div>${b.html}</div></li>`).join('')}${prv.map(([a, o]) => `<li><span>⚔️</span><div><b>#${a.num} ${esc(a.last)}</b> vs <b>#${o.num} ${esc(o.last)}</b> — personal rivals. Expect trash talk, big swings and foul trouble when they share the floor.</div></li>`).join('')}</ul>
-    ${tw.changes.length || stopTxt ? `<div class="tweak"><div class="muted sm">Recommended tweak</div><div class="sm">${tw.changes.map((c) => esc(c.label)).concat(stopTxt ? [`🔒 ${esc(stopTxt)}`] : []).join(' · ')}</div>
+    <ul class="scout">${pv.bullets.map((b) => `<li><span>${icon(b.ic)}</span><div>${b.html}</div></li>`).join('')}${prv.map(([a, o]) => `<li><span>${icon('versus')}</span><div><b>#${a.num} ${esc(a.last)}</b> vs <b>#${o.num} ${esc(o.last)}</b> — personal rivals. Expect trash talk, big swings and foul trouble when they share the floor.</div></li>`).join('')}</ul>
+    ${tw.changes.length || stopTxt ? `<div class="tweak"><div class="muted sm">Recommended tweak</div><div class="sm">${tw.changes.map((c) => esc(c.label)).concat(stopTxt ? [`${icon('lock')} ${esc(stopTxt)}`] : []).join(' · ')}</div>
       <button class="btn ${applied ? '' : 'primary'} big" data-act="applyTweak" ${applied ? 'disabled' : ''}>${applied ? '✓ Tweak applied' : 'Apply Assistant\'s Tweak'}</button></div>` : ''}
   </div>`;
 }
@@ -1400,9 +1465,9 @@ VIEWS.clubHistory = () => {
   <div class="pad">
     <div class="card"><h3>${esc(teamName(t))}</h3><div class="kv"><span>League</span><b>${esc(league(t.lg).name)}</b></div><div class="kv"><span>Titles in your era</span><b>${titles.length}</b></div></div>
     <h3 class="sec">Retired numbers</h3>
-    ${ret.length ? `<div class="banners">${ret.map((r) => `<div class="banner" style="--bc:${t.c1};--bt:${readableOn(t.c1, t.c2)}"><div class="bnum">${r.num}</div><div class="bname">${esc(r.name)}</div><div class="bmeta">${r.pos} · ${r.seasons} seasons · ${r.gp} games<br>${r.gp ? (r.pts / r.gp).toFixed(1) : '0'} ppg · ${r.gp ? (r.rat / r.gp).toFixed(2) : '-'} avg rating${r.titles ? `<br>🏆 ${r.titles}` : ''}</div><div class="bseason">Retired ${r.season}</div></div>`).join('')}</div>` : '<p class="empty">No numbers retired yet. When a club legend hangs up his sneakers, the board can raise his number to the rafters.</p>'}
+    ${ret.length ? `<div class="banners">${ret.map((r) => `<div class="banner" style="--bc:${t.c1};--bt:${readableOn(t.c1, t.c2)}"><div class="bnum">${r.num}</div><div class="bname">${esc(r.name)}</div><div class="bmeta">${r.pos} · ${r.seasons} seasons · ${r.gp} games<br>${r.gp ? (r.pts / r.gp).toFixed(1) : '0'} ppg · ${r.gp ? (r.rat / r.gp).toFixed(2) : '-'} avg rating${r.titles ? `<br>${icon('trophy')} ${r.titles}` : ''}</div><div class="bseason">Retired ${r.season}</div></div>`).join('')}</div>` : '<p class="empty">No numbers retired yet. When a club legend hangs up his sneakers, the board can raise his number to the rafters.</p>'}
     <h3 class="sec">Championships</h3>
-    ${titles.length ? titles.map((h) => `<div class="lrow"><span>🏆</span><span class="grow">${h.season}/${String(h.season + 1).slice(2)} ${esc(league(h.lg)?.name || '')}</span><span class="muted sm">MVP ${esc(h.mvp)}</span></div>`).join('') : '<p class="muted">No titles yet.</p>'}
+    ${titles.length ? titles.map((h) => `<div class="lrow"><span>${icon('trophy')}</span><span class="grow">${h.season}/${String(h.season + 1).slice(2)} ${esc(league(h.lg)?.name || '')}</span><span class="muted sm">MVP ${esc(h.mvp)}</span></div>`).join('') : '<p class="muted">No titles yet.</p>'}
     <h3 class="sec">Your seasons here</h3>
     ${myHist.length ? myHist.map((h) => `<div class="lrow"><span class="grow">${h.season}/${String(h.season + 1).slice(2)} · ${esc(h.rec)}</span><span class="muted sm">${esc([h.finish, h.note].filter(Boolean).join(' · '))}</span></div>`).join('') : '<p class="muted">Your first season is under way.</p>'}
   </div>`;
@@ -1414,8 +1479,8 @@ function pressCard(kind, f) {
   if (!f) return '';
   ensureRivals();
   const label = kind === 'pre' ? 'Pre-match press conference' : 'Post-match press conference';
-  if (S.pressDone[kind] === f.id) return `<div class="card press done"><h3>🎙️ ${label}</h3><p class="muted sm">${S.press[kind] === 'assistant' ? 'Your assistant handled the media and kept it measured.' : 'Done.'}</p></div>`;
-  return `<div class="card press"><h3>🎙️ ${label}</h3><p class="hint">The media are waiting. Your answers affect morale, the board and your rivalries.</p>
+  if (S.pressDone[kind] === f.id) return `<div class="card press done"><h3>${icon('mic')} ${label}</h3><p class="muted sm">${S.press[kind] === 'assistant' ? 'Your assistant handled the media and kept it measured.' : 'Done.'}</p></div>`;
+  return `<div class="card press"><h3>${icon('mic')} ${label}</h3><p class="hint">The media are waiting. Your answers affect morale, the board and your rivalries.</p>
     <div class="row-btns"><button class="btn primary" data-act="pressStart" data-k="${kind}" data-f="${f.id}">Face the press</button><button class="btn" data-act="pressAssistant" data-k="${kind}" data-f="${f.id}">Send assistant</button></div></div>`;
 }
 function pressFixture(fid) { return S.schedule.find((x) => x.id === +fid) || (S.lastResult && S.lastResult.fid === +fid ? { id: +fid, h: S.lastResult.h, a: S.lastResult.a } : null); }
@@ -1423,10 +1488,10 @@ function pressModal() {
   const P = UI.press, q = P.qs[P.i];
   if (!q) {
     S.pressDone[P.kind] = P.f.id; save(); closeModal();
-    toast(P.notes.length ? `🎙️ Press done · ${esc(P.notes.join(' · '))}` : '🎙️ Press conference done.');
+    toast(P.notes.length ? `${icon('mic')} Press done · ${esc(P.notes.join(' · '))}` : icon('mic') + ' Press conference done.');
     return render();
   }
-  modal(`<div class="muted sm">🎙️ ${P.kind === 'pre' ? 'Pre-match' : 'Post-match'} press conference · question ${P.i + 1} of ${P.qs.length}</div><h2 class="pq">${esc(q.q)}</h2>
+  modal(`<div class="muted sm">${icon('mic')} ${P.kind === 'pre' ? 'Pre-match' : 'Post-match'} press conference · question ${P.i + 1} of ${P.qs.length}</div><h2 class="pq">${esc(q.q)}</h2>
     <div class="tones one">${q.opts.map((o, i) => `<button class="tone ${['t-berate', 't-calm', 't-encourage'][i]}" data-act="pressAnswer" data-i="${i}"><b>${esc(o.t)}</b><span>${esc(o.d)}</span></button>`).join('')}</div>
     <p class="hint">Your Media Handling (${S.coach.a.med}) affects how well your words land.</p>`, { locked: true, tall: true });
 }
@@ -1466,7 +1531,7 @@ ACT.sortBy = (d) => {
 function lookEditor(L, target) {
   const sw = (k, v, col, on) => `<button class="swatch ${on ? 'on' : ''}" style="background:${col}" data-act="lookSet" data-t="${target}" data-k="${k}" data-v="${v}" aria-label="${k} ${v}"></button>`;
   const chip = (k, v, label, on) => `<button class="chip ${on ? 'on' : ''}" data-act="lookSet" data-t="${target}" data-k="${k}" data-v="${v}">${label}</button>`;
-  return `<div class="card looked"><div class="lookprev">${faceSVG(L, { size: 104, kind: 'coach', c1: target === 'coach' ? userTeam().c1 : '#c92a2a' })}<button class="btn sm" data-act="lookRandom" data-t="${target}">🎲 Randomize</button></div>
+  return `<div class="card looked"><div class="lookprev">${faceSVG(L, { size: 104, kind: 'coach', c1: target === 'coach' ? userTeam().c1 : '#c92a2a' })}<button class="btn sm" data-act="lookRandom" data-t="${target}">${icon('dice')} Randomize</button></div>
     <label class="lbl">Skin</label><div class="swrow">${SKINS.map((c, i) => sw('skin', i, c, L.skin === i)).join('')}</div>
     <label class="lbl">Hair</label><div class="chips wrap">${HAIR_STYLES.map((h) => chip('hair', h, HAIR_NAMES[h], L.hair === h)).join('')}</div>
     <label class="lbl">Hair colour</label><div class="swrow">${Object.entries(HAIR_COLS).map(([k, c]) => sw('hairColor', k, c, L.hairColor === k)).join('')}</div>

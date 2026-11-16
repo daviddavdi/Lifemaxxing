@@ -78,24 +78,24 @@ for (const p of POS) {
 }
 
 const NATS = {
-  USA: { flag: '🇺🇸', w: 55,
+  USA: { flag: 'USA', w: 55,
     first: ['Marcus','Jalen','Tyrese','Darnell','Isaiah','Andre','Malik','Trey','Devin','Corey','Jaylen','Dominic','Terrance','Brandon','Cameron','Elijah','Xavier','Desmond','Quentin','Reggie','Tavon','Kendrick','Omar','Garrett','Wyatt','Cole','Brody','Mason','Logan','Hunter','Tristan','Jamal','Darius','Cedric','Lamar','Nate','Rashad','Keon','Javon','Damon','Avery','Colby','Grant','Jordan','Tyler','Bryce','Caleb','Micah','Zion','Amari'],
     last: ['Whitfield','Banks','Holloway','Pruitt','Merriweather','Gaines','Rollins','Hargrove','Sutton','Batts','Kinnard','Lockhart','Roe','Calloway','Fennell','Dorsey','Trotter','Boykins','Strickland','McCall','Raines','Thibodeaux','Haskins','Pettway','Ellery','Hale','Crenshaw','Faulk','Grayson','Hightower','Kimbrough','Langston','Fox','Nesbitt','Oakes','Pendleton','Quarles','Ridley','Stokes','Tolliver','Upshaw','Vance','Winslow','Yates','Ashby','Brantley','Coleridge','Dabney','Everhart','Fairley','Goodwin','Hatcher','Lee','Jessup','Kirkland','Lyles','Cox','Norwood','Overton','Pickens'] },
-  CAN: { flag: '🇨🇦', w: 5, first: ['Liam','Owen','Dillon','Kofi','Mathis','Ryder','Malcolm','Noah','Kieran','Andrew'], last: ['Beaulieu','MacInnis','Okonjo','Thibault','Lachance','Fraser','Boateng','Gauthier','Mensah','Ward'] },
-  FRA: { flag: '🇫🇷', w: 5, first: ['Théo','Killian','Mathéo','Rudy','Évan','Bastien','Moussa','Yanis','Lucas','Nolan'], last: ['Diallo','Ferrand','Lemoine','Bouchet','Traoré','Marchand','Roux','Delorme','Fofana','Garnier'] },
-  SRB: { flag: '🇷🇸', w: 4, first: ['Nemanja','Stefan','Luka','Bogdan','Miloš','Vasilije','Dušan','Aleksa','Filip','Marko'], last: ['Petrović','Jovanović','Stanković','Marinković','Radulović','Simić','Lazić','Kovačević','Đurić','Milutinović'] },
-  ESP: { flag: '🇪🇸', w: 4, first: ['Sergio','Álvaro','Marc','Iker','Rubén','Joan','Dario','Adrián','Hugo','Mateo'], last: ['Navarrete','Albareda','Castell','Ibáñez','Ferrer','Montoro','Prat','Llorente','Vidal','Echeverría'] },
-  LTU: { flag: '🇱🇹', w: 3, first: ['Mindaugas','Rokas','Tadas','Domantas','Arnas','Lukas','Ignas','Gytis'], last: ['Kazlauskas','Butkevičius','Jankus','Paulauskas','Valančius','Rasimas','Žukauskas','Sabaliauskas'] },
-  AUS: { flag: '🇦🇺', w: 4, first: ['Jock','Mitch','Lachlan','Callum','Josh','Dante','Harrison','Tom'], last: ['Kearney','Whitlock','Mabior','O\'Rourke','Pemberton','Dunstan','Ngata','Fairbairn'] },
-  NGA: { flag: '🇳🇬', w: 4, first: ['Chidi','Emeka','Tobi','Obinna','Ifeanyi','Femi','Segun','Kelechi'], last: ['Adeyemi','Okwuosa','Nwankwo','Eze','Babatunde','Olaniyan','Chukwu','Ogunleye'] },
-  BRA: { flag: '🇧🇷', w: 3, first: ['Thiago','Caio','Rafael','Gui','Bruno','Vitor','Leandro'], last: ['Albuquerque','Bezerra','Cavalcanti','Teixeira','Moraes','Siqueira','Fontes'] },
-  GRE: { flag: '🇬🇷', w: 3, first: ['Giorgos','Kostas','Nikos','Thanasis','Vangelis','Dimitris'], last: ['Papadakis','Kalogeropoulos','Mavridis','Stavropoulos','Antonakos','Lekkas'] },
-  GER: { flag: '🇩🇪', w: 4, first: ['Moritz','Jonas','Niklas','Lennard','Felix','Tim','Johannes'], last: ['Hartmann','Brückner','Vogelsang','Lindemann','Eichhorn','Steinmetz','Wagenknecht'] },
-  TUR: { flag: '🇹🇷', w: 3, first: ['Emre','Can','Furkan','Mert','Burak','Kerem'], last: ['Yıldırım','Aksoy','Demirel','Korkmaz','Özdemir','Çelikkaya'] },
-  ARG: { flag: '🇦🇷', w: 2, first: ['Facundo','Nicolás','Gabriel','Tomás','Agustín'], last: ['Bertoldi', 'Cáceres', 'Ledesma', 'Villarreal', 'Quiroga'] },
-  SLO: { flag: '🇸🇮', w: 2, first: ['Klemen','Žiga','Jaka','Rok','Matic'], last: ['Novak', 'Blažič', 'Hrovat', 'Kranjc', 'Zupančič'] },
-  CRO: { flag: '🇭🇷', w: 2, first: ['Ante','Mario','Ivica','Dario','Toni'], last: ['Babić', 'Horvat', 'Kos', 'Perković', 'Ban'] },
-  ITA: { flag: '🇮🇹', w: 2, first: ['Alessandro','Matteo','Simone','Davide','Nico'], last: ['Rossi', 'Conte', 'Bianchi', 'Moro', 'Ricci'] },
+  CAN: { flag: 'CAN', w: 5, first: ['Liam','Owen','Dillon','Kofi','Mathis','Ryder','Malcolm','Noah','Kieran','Andrew'], last: ['Beaulieu','MacInnis','Okonjo','Thibault','Lachance','Fraser','Boateng','Gauthier','Mensah','Ward'] },
+  FRA: { flag: 'FRA', w: 5, first: ['Théo','Killian','Mathéo','Rudy','Évan','Bastien','Moussa','Yanis','Lucas','Nolan'], last: ['Diallo','Ferrand','Lemoine','Bouchet','Traoré','Marchand','Roux','Delorme','Fofana','Garnier'] },
+  SRB: { flag: 'SRB', w: 4, first: ['Nemanja','Stefan','Luka','Bogdan','Miloš','Vasilije','Dušan','Aleksa','Filip','Marko'], last: ['Petrović','Jovanović','Stanković','Marinković','Radulović','Simić','Lazić','Kovačević','Đurić','Milutinović'] },
+  ESP: { flag: 'ESP', w: 4, first: ['Sergio','Álvaro','Marc','Iker','Rubén','Joan','Dario','Adrián','Hugo','Mateo'], last: ['Navarrete','Albareda','Castell','Ibáñez','Ferrer','Montoro','Prat','Llorente','Vidal','Echeverría'] },
+  LTU: { flag: 'LTU', w: 3, first: ['Mindaugas','Rokas','Tadas','Domantas','Arnas','Lukas','Ignas','Gytis'], last: ['Kazlauskas','Butkevičius','Jankus','Paulauskas','Valančius','Rasimas','Žukauskas','Sabaliauskas'] },
+  AUS: { flag: 'AUS', w: 4, first: ['Jock','Mitch','Lachlan','Callum','Josh','Dante','Harrison','Tom'], last: ['Kearney','Whitlock','Mabior','O\'Rourke','Pemberton','Dunstan','Ngata','Fairbairn'] },
+  NGA: { flag: 'NGA', w: 4, first: ['Chidi','Emeka','Tobi','Obinna','Ifeanyi','Femi','Segun','Kelechi'], last: ['Adeyemi','Okwuosa','Nwankwo','Eze','Babatunde','Olaniyan','Chukwu','Ogunleye'] },
+  BRA: { flag: 'BRA', w: 3, first: ['Thiago','Caio','Rafael','Gui','Bruno','Vitor','Leandro'], last: ['Albuquerque','Bezerra','Cavalcanti','Teixeira','Moraes','Siqueira','Fontes'] },
+  GRE: { flag: 'GRE', w: 3, first: ['Giorgos','Kostas','Nikos','Thanasis','Vangelis','Dimitris'], last: ['Papadakis','Kalogeropoulos','Mavridis','Stavropoulos','Antonakos','Lekkas'] },
+  GER: { flag: 'GER', w: 4, first: ['Moritz','Jonas','Niklas','Lennard','Felix','Tim','Johannes'], last: ['Hartmann','Brückner','Vogelsang','Lindemann','Eichhorn','Steinmetz','Wagenknecht'] },
+  TUR: { flag: 'TUR', w: 3, first: ['Emre','Can','Furkan','Mert','Burak','Kerem'], last: ['Yıldırım','Aksoy','Demirel','Korkmaz','Özdemir','Çelikkaya'] },
+  ARG: { flag: 'ARG', w: 2, first: ['Facundo','Nicolás','Gabriel','Tomás','Agustín'], last: ['Bertoldi', 'Cáceres', 'Ledesma', 'Villarreal', 'Quiroga'] },
+  SLO: { flag: 'SLO', w: 2, first: ['Klemen','Žiga','Jaka','Rok','Matic'], last: ['Novak', 'Blažič', 'Hrovat', 'Kranjc', 'Zupančič'] },
+  CRO: { flag: 'CRO', w: 2, first: ['Ante','Mario','Ivica','Dario','Toni'], last: ['Babić', 'Horvat', 'Kos', 'Perković', 'Ban'] },
+  ITA: { flag: 'ITA', w: 2, first: ['Alessandro','Matteo','Simone','Davide','Nico'], last: ['Rossi', 'Conte', 'Bianchi', 'Moro', 'Ricci'] },
 };
 const NAT_KEYS = Object.keys(NATS);
 
@@ -249,7 +249,7 @@ const LEAGUE_DEFS = [
   { id: 'GER1', name: 'Korbliga', short: 'KBL', country: 'GER', tier: 1, size: 10, lv: [9.1, 10.7], pr: [8, 12] },
   { id: 'GER2', name: 'Korbliga Zwei', short: 'KBL2', country: 'GER', tier: 2, size: 10, lv: [7.3, 8.9], pr: [2, 6] },
 ];
-const COUNTRY_FLAG = { USA: '🇺🇸', ESP: '🇪🇸', ITA: '🇮🇹', GER: '🇩🇪' };
+const COUNTRY_FLAG = { USA: 'USA', ESP: 'ESP', ITA: 'ITA', GER: 'GER' };
 const EURO_CLUBS = {
   ESP: { cities: ['Valdemora', 'Castellar', 'Puerto Alba', 'Montelinde', 'Villaroja', 'Peñafría', 'Arenas Blancas', 'Costaverde', 'Torremar', 'Río Claro', 'Sierra Leal', 'Navalcruz', 'Bellamar', 'Almendral', 'Cabo Dorado', 'Fuentesol', 'Lomaverde', 'Santa Brisa', 'Aguasol', 'Mirabal'],
     nicks: ['Delfines', 'Lobos', 'Toros', 'Halcones', 'Piratas', 'Leones', 'Tiburones', 'Águilas', 'Corsarios', 'Zorros', 'Linces', 'Cóndores'] },
@@ -268,11 +268,11 @@ Object.assign(TRAIT_NOTES, {
   trash: { hi: 'Talks constantly on the court — gets into opponents\' heads.', lo: 'Never says a word to opponents. Lets his game speak.' },
 });
 const ARCHETYPES = {
-  fast: { n: 'Fast Learner', ic: '⚡', d: 'Picks things up quickly — develops much faster than his peers.' },
-  slow: { n: 'Slow Learner', ic: '🐢', d: 'Takes his time to absorb coaching. Develops slowly.' },
-  injury: { n: 'Injury Prone', ic: '🩹', d: 'Gets hurt more often and stays out longer.' },
-  iron: { n: 'Ironman', ic: '🛡️', d: 'Rarely gets injured and recovers quickly when he does.' },
-  glue: { n: 'Locker Room Glue Guy', ic: '🤝', d: 'Cushions morale drops for the whole team and mentors young players.' },
+  fast: { n: 'Fast Learner', ic: 'bolt', d: 'Picks things up quickly — develops much faster than his peers.' },
+  slow: { n: 'Slow Learner', ic: 'clock', d: 'Takes his time to absorb coaching. Develops slowly.' },
+  injury: { n: 'Injury Prone', ic: 'cross', d: 'Gets hurt more often and stays out longer.' },
+  iron: { n: 'Ironman', ic: 'shield', d: 'Rarely gets injured and recovers quickly when he does.' },
+  glue: { n: 'Locker Room Glue Guy', ic: 'link', d: 'Cushions morale drops for the whole team and mentors young players.' },
 };
 Object.assign(TONES, {
   fireup: { n: 'Fire Up', d: 'Get them pumped. Turns up the heat — hotheads may boil over.' },
@@ -370,7 +370,7 @@ LEAGUE_DEFS.push(
   { id: 'EUR1', name: 'Continental League', short: 'CONT', country: 'EUR', tier: 1, size: 16, lv: [9.3, 11.0], pr: [9, 14], teams: EURO_TEAMS.EUR1 },
   { id: 'EUR2', name: 'Continental League Two', short: 'CONT2', country: 'EUR', tier: 2, size: 16, lv: [7.5, 9.2], pr: [3, 8], teams: EURO_TEAMS.EUR2 },
 );
-COUNTRY_FLAG.EUR = '🇪🇺';
+COUNTRY_FLAG.EUR = 'EUR';
 
 /* Colour helpers: pick readable text on a team colour, keep the secondary as trim */
 function hexLum(h) {

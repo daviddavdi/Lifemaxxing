@@ -130,6 +130,14 @@ Every player gets a generated face that stays the same all career.
 - **Your coach:** you design your own face in New Career (skin, hair, hair colour, facial hair, glasses, or Randomize), shown in a suit with a team-colour tie. Change it any time from the Coach Profile.
 - **Staff:** they get faces too.
 
+## Look & brand
+
+- **Type:** Barlow for text and Barlow Condensed for headings, buttons and scores. Both are bundled in `fonts/` under the SIL Open Font License (`fonts/OFL.txt`), so nothing loads from the internet.
+- **Colour:** a warm "arena at night" palette: dark walnut panels, cream text and ball orange (`--brand`). In-game screens still pick up your club's colours.
+- **Logo:** an orange tile with a ball on the move (`icon.svg`, `brandMark()` in `ui.js`). Home-screen icons are `icon-192.png` and `icon-512.png`.
+- **Icons:** one hand-drawn line icon set (`IC` in `ui.js`). The game uses no emoji. Nationalities show as small drawn flags (`FLAG_DEF`).
+- **Court:** dark hardwood with orange-painted lanes.
+
 ## Code map
 
 - `js/data.js` — name pools, attributes, default teams, helpers

@@ -7,7 +7,7 @@ const touch = 'data:image/png;base64,' + fs.readFileSync(path.join(dir, 'icon-19
 html = html.replace(/<link rel="manifest"[^>]*>\n?/, '')
   .replace('href="icon.svg"', 'href="' + icon + '"')
   .replace('href="icon-192.png"', 'href="' + touch + '"')
-  .replace('<link rel="stylesheet" href="css/style.css">', () => '<style>\n' + rd('css/style.css') + '\n</style>')
+  .replace('<link rel="stylesheet" href="css/style.css">', () => '<style>\n' + rd('css/style.css').replace(/url\('\.\.\/fonts\/([^']+)'\)/g, (_, f) => "url('data:font/woff2;base64," + fs.readFileSync(path.join(dir, 'fonts', f)).toString('base64') + "')") + '\n</style>')
   .replace(/<script src="(js\/[^"]+)"><\/script>/g, (_, f) => {
     let js = rd(f).replace(/<\/script/gi, '<\\/script');
     if (f === 'js/ui.js') js = js.replace(/.*navigator\.serviceWorker\.register.*\n/, '');

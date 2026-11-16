@@ -33,15 +33,18 @@ const Court = {
   /* ---------- drawing primitives ---------- */
   drawCourt() {
     const c = this.ctx, W = this.W, H = this.H;
-    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#222b38'); g.addColorStop(1, '#1a212c');
+    // dark hardwood: warm gradient + faint floorboards
+    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#33251a'); g.addColorStop(1, '#261b13');
     c.fillStyle = g; c.fillRect(0, 0, W, H);
-    c.strokeStyle = 'rgba(255,255,255,.28)'; c.lineWidth = 1.2;
+    c.fillStyle = 'rgba(0,0,0,.10)'; const bw = H / 14; for (let i = 1; i < 14; i += 2) c.fillRect(0, i * bw, W, bw);
+    c.fillStyle = 'rgba(255,255,255,.025)'; for (let i = 0; i < 14; i++) c.fillRect(((i * 37) % 11) / 11 * W * 0.5, i * bw, W * 0.18, 1);
+    c.strokeStyle = 'rgba(255,240,222,.36)'; c.lineWidth = 1.2;
     c.strokeRect(1, 1, W - 2, H - 2);
     c.beginPath(); c.moveTo(W / 2, 0); c.lineTo(W / 2, H); c.stroke();
     c.beginPath(); c.arc(W / 2, H / 2, this.X(6), 0, Math.PI * 2); c.stroke();
     for (const side of [0, 1]) {
       const bx = side ? 88.75 : 5.25, dir = side ? -1 : 1, base = side ? 94 : 0;
-      c.fillStyle = 'rgba(255,255,255,.05)';
+      c.fillStyle = 'rgba(255,107,26,.16)';
       const px = side ? this.X(94 - 19) : 0;
       c.fillRect(px, this.Y(17), this.X(19), this.Y(16)); c.strokeRect(px, this.Y(17), this.X(19), this.Y(16));
       c.beginPath(); c.arc(this.X(base + dir * 19), this.Y(25), this.X(6), 0, Math.PI * 2); c.stroke();
@@ -53,7 +56,7 @@ const Court = {
       c.lineTo(this.X(base), this.Y(47)); c.stroke();
       c.beginPath(); c.moveTo(this.X(base + dir * 4), this.Y(22)); c.lineTo(this.X(base + dir * 4), this.Y(28)); c.stroke();
       c.strokeStyle = '#ff8c2a'; c.beginPath(); c.arc(this.X(bx), this.Y(25), Math.max(2.5, this.X(0.9)), 0, Math.PI * 2); c.stroke();
-      c.strokeStyle = 'rgba(255,255,255,.28)';
+      c.strokeStyle = 'rgba(255,240,222,.36)';
     }
   },
   dot(x, y, team, label, heat, opts = {}) {
@@ -73,7 +76,7 @@ const Court = {
     const fill = opts.fill || team.c1, trim = opts.trim || team.c2;
     c.fillStyle = fill; c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
     c.lineWidth = opts.focus ? 2.5 : 2; c.strokeStyle = opts.focus ? '#f2c94c' : (colorDist(trim, fill) > 60 ? trim : 'rgba(255,255,255,.55)'); c.stroke();
-    c.fillStyle = readableOn(fill, trim); c.font = `800 ${Math.round(r * (label.length > 1 ? 0.92 : 1.05))}px -apple-system, Segoe UI, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = readableOn(fill, trim); c.font = `800 ${Math.round(r * (label.length > 1 ? 0.92 : 1.05))}px "Barlow Condensed", -apple-system, Segoe UI, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(label, px, py + 0.5);
     c.globalAlpha = 1;
   },
@@ -85,9 +88,9 @@ const Court = {
   },
   banner(txt) {
     const c = this.ctx;
-    c.font = '800 11px -apple-system, Segoe UI, sans-serif';
+    c.font = '800 11px "Barlow Condensed", -apple-system, Segoe UI, sans-serif';
     const w = c.measureText(txt).width + 22;
-    c.fillStyle = 'rgba(10,12,16,.85)'; c.beginPath(); if (c.roundRect) c.roundRect(this.W / 2 - w / 2, 6, w, 20, 6); else c.rect(this.W / 2 - w / 2, 6, w, 20); c.fill();
+    c.fillStyle = 'rgba(20,15,11,.85)'; c.beginPath(); if (c.roundRect) c.roundRect(this.W / 2 - w / 2, 6, w, 20, 6); else c.rect(this.W / 2 - w / 2, 6, w, 20); c.fill();
     c.fillStyle = '#f2c94c'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, this.W / 2, 16);
   },
   kit(m, si) { // away team wears its alternate when colours clash
@@ -339,11 +342,11 @@ const Court = {
     return '';
   },
   resultCol(a) { return (a.t === 'shot' && a.made) || (a.t === 'ft' && a.made) ? '#4cc38a' : a.t === 'reb' ? '#c6cbd8' : a.t === 'to' ? '#9fd0ff' : '#f06a6a'; },
-  floatText(t, x, y, col, k) { const c = this.ctx; c.globalAlpha = Math.max(0, 1 - k); c.fillStyle = col; c.font = '900 14px -apple-system, Segoe UI, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t, this.X(x), this.Y(y) - 16 - k * 14); c.globalAlpha = 1; },
+  floatText(t, x, y, col, k) { const c = this.ctx; c.globalAlpha = Math.max(0, 1 - k); c.fillStyle = col; c.font = '900 14px "Barlow Condensed", -apple-system, Segoe UI, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t, this.X(x), this.Y(y) - 16 - k * 14); c.globalAlpha = 1; },
   captionBar(t) {
-    const c = this.ctx; c.font = '700 11px -apple-system, Segoe UI, sans-serif';
+    const c = this.ctx; c.font = '700 11px "Barlow Condensed", -apple-system, Segoe UI, sans-serif';
     const w = c.measureText(t).width + 18;
-    c.fillStyle = 'rgba(10,12,16,.8)'; c.beginPath(); if (c.roundRect) c.roundRect(8, this.H - 26, w, 19, 5); else c.rect(8, this.H - 26, w, 19); c.fill();
-    c.fillStyle = '#e7e9ef'; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(t, 17, this.H - 16.5);
+    c.fillStyle = 'rgba(20,15,11,.82)'; c.beginPath(); if (c.roundRect) c.roundRect(8, this.H - 26, w, 19, 5); else c.rect(8, this.H - 26, w, 19); c.fill();
+    c.fillStyle = '#f3ece2'; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(t, 17, this.H - 16.5);
   },
 };

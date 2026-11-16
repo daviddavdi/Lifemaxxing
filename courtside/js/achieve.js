@@ -9,24 +9,24 @@ const DIFFICULTY = {
 const diffCfg = () => DIFFICULTY[(S && S.diff) || 'normal'] || DIFFICULTY.normal;
 
 const ACHIEVEMENTS = [
-  { k: 'first', ic: '🏀', n: 'First Blood', d: 'Win your first game.' },
-  { k: 'streak', ic: '🔥', n: 'On a Roll', d: 'Win 8 games in a row.' },
-  { k: 'century', ic: '💯', n: 'Track Meet', d: 'Score 130+ points in a game.' },
-  { k: 'comeback', ic: '🧗', n: 'Comeback Kid', d: 'Win a game after trailing by 20 or more.' },
-  { k: 'dominant', ic: '📈', n: 'Juggernaut', d: 'Finish a regular season winning 80% of your games.' },
-  { k: 'champ', ic: '🏆', n: 'Champion', d: 'Win a league title.' },
-  { k: 'dynasty', ic: '👑', n: 'Dynasty', d: 'Win 3 league titles.' },
-  { k: 'promo', ic: '⬆️', n: 'Going Up', d: 'Win promotion.' },
-  { k: 'bigtime', ic: '🇺🇸', n: 'The Big Time', d: 'Start as a Journeyman and coach in the Pro Hoops League.' },
-  { k: 'rags', ic: '💎', n: 'Rags to Riches', d: 'Win the Pro Hoops League title after a Journeyman start.' },
-  { k: 'hard', ic: '🥵', n: 'Hard Knocks', d: 'Win a league title on Hard.' },
-  { k: 'survivor', ic: '🪑', n: 'Survivor', d: 'Fall below 25% board confidence and still keep your job at season end.' },
-  { k: 'comebackjob', ic: '🔄', n: 'Back in the Game', d: 'Land a new job after being sacked.' },
-  { k: 'pcoach', ic: '🤝', n: "Player's Coach", d: "Reach a Player's Coach rating of 15." },
-  { k: 'duo', ic: '⚡', n: 'Dynamic Duo', d: 'See two of your players form a Dynamic Duo.' },
-  { k: 'bigfish', ic: '🐋', n: 'Big Fish', d: 'Sign a 5-star free agent.' },
-  { k: 'honour', ic: '🫡', n: 'Man of His Word', d: 'Accept a player\'s transfer request.' },
-  { k: 'veteran', ic: '📅', n: 'Lifer', d: 'Coach 5 full seasons.' },
+  { k: 'first', ic: 'ball', n: 'First Blood', d: 'Win your first game.' },
+  { k: 'streak', ic: 'flame', n: 'On a Roll', d: 'Win 8 games in a row.' },
+  { k: 'century', ic: 'gauge', n: 'Track Meet', d: 'Score 130+ points in a game.' },
+  { k: 'comeback', ic: 'peak', n: 'Comeback Kid', d: 'Win a game after trailing by 20 or more.' },
+  { k: 'dominant', ic: 'chart', n: 'Juggernaut', d: 'Finish a regular season winning 80% of your games.' },
+  { k: 'champ', ic: 'trophy', n: 'Champion', d: 'Win a league title.' },
+  { k: 'dynasty', ic: 'crown', n: 'Dynasty', d: 'Win 3 league titles.' },
+  { k: 'promo', ic: 'up', n: 'Going Up', d: 'Win promotion.' },
+  { k: 'bigtime', ic: 'globe', n: 'The Big Time', d: 'Start as a Journeyman and coach in the Pro Hoops League.' },
+  { k: 'rags', ic: 'gem', n: 'Rags to Riches', d: 'Win the Pro Hoops League title after a Journeyman start.' },
+  { k: 'hard', ic: 'heat', n: 'Hard Knocks', d: 'Win a league title on Hard.' },
+  { k: 'survivor', ic: 'exit', n: 'Survivor', d: 'Fall below 25% board confidence and still keep your job at season end.' },
+  { k: 'comebackjob', ic: 'cycle', n: 'Back in the Game', d: 'Land a new job after being sacked.' },
+  { k: 'pcoach', ic: 'link', n: "Player's Coach", d: "Reach a Player's Coach rating of 15." },
+  { k: 'duo', ic: 'bolt', n: 'Dynamic Duo', d: 'See two of your players form a Dynamic Duo.' },
+  { k: 'bigfish', ic: 'fish', n: 'Big Fish', d: 'Sign a 5-star free agent.' },
+  { k: 'honour', ic: 'medal', n: 'Man of His Word', d: 'Accept a player\'s transfer request.' },
+  { k: 'veteran', ic: 'cal', n: 'Lifer', d: 'Coach 5 full seasons.' },
 ];
 const ACH_KEY = 'courtside_achievements';
 function achStore() { try { return JSON.parse(localStorage.getItem(ACH_KEY) || '{}'); } catch (e) { return {}; } }
@@ -37,8 +37,8 @@ function unlock(k) {
   const a = ACHIEVEMENTS.find((x) => x.k === k); if (!a) return;
   st[k] = { season: S.season, coach: S.coach.name, team: teamName(userTeam()), diff: S.diff || 'normal', at: Date.now() };
   try { localStorage.setItem(ACH_KEY, JSON.stringify(st)); } catch (e) {}
-  mail('Courtside', `Achievement unlocked: ${a.n}`, `${a.ic} <b>${a.n}</b>\n\n${a.d}\n\nEarned in Ironman mode on ${DIFFICULTY[S.diff || 'normal'].n}.`, { type: 'league' });
-  if (typeof toast === 'function') setTimeout(() => toast(`${a.ic} Achievement unlocked: <b>${esc(a.n)}</b>`), 50);
+  mail('Courtside', `Achievement unlocked: ${a.n}`, `${typeof icon === 'function' ? icon(a.ic) : ''} <b>${a.n}</b>\n\n${a.d}\n\nEarned in Ironman mode on ${DIFFICULTY[S.diff || 'normal'].n}.`, { type: 'league' });
+  if (typeof toast === 'function') setTimeout(() => toast(`${icon(a.ic)} Achievement unlocked: <b>${esc(a.n)}</b>`), 50);
 }
 // hooks
 function achAfterMatch(m, won, us, them) {

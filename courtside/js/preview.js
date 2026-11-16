@@ -47,7 +47,7 @@ function matchPreview(f) {
   const star = hot ? hot.p : oppR.sort((a, b) => calcCA(b) - calcCA(a))[0];
   if (star) {
     const ppg = star.st.gp ? (star.st.pts / star.st.gp).toFixed(1) : null;
-    bullets.push({ ic: '🔥', html: hot ? `<b>${plink(star)}</b> #${star.num} is their hottest player — ${hot.f.toFixed(1)} average rating over his last ${star.form.length} games${ppg ? `, ${ppg} ppg` : ''}.` : `<b>${plink(star)}</b> #${star.num} is their go-to man${ppg ? ` (${ppg} ppg)` : ''}. Everything runs through him.` });
+    bullets.push({ ic: 'flame', html: hot ? `<b>${plink(star)}</b> #${star.num} is their hottest player — ${hot.f.toFixed(1)} average rating over his last ${star.form.length} games${ppg ? `, ${ppg} ppg` : ''}.` : `<b>${plink(star)}</b> #${star.num} is their go-to man${ppg ? ` (${ppg} ppg)` : ''}. Everything runs through him.` });
   }
   // 2. key weakness, relative to the league's starting fives
   const lg = lgTeams(opp.lg).map((t) => starterAvg(t.id));
@@ -64,8 +64,8 @@ function matchPreview(f) {
   if (hh) cands.push({ s: 1.4 + (7 - hh.hid.temp) * 0.2, txt: `${plink(hh)} #${hh.num} has a short fuse${hh.techs ? ` — ${hh.techs} technical${hh.techs > 1 ? 's' : ''} this season` : ''}. Attack him early and get him into foul trouble.`, k: 'focus', v: 'inside' });
   if (ot.defense === 'zone') cands.push({ s: 1.2, txt: 'They sit in a zone, which leaves shooters open. Get the ball moving and fire from three.', k: 'focus', v: 'outside' });
   const weak = cands.sort((a, b) => b.s - a.s)[0];
-  if (weak && weak.s > 0.55) { bullets.push({ ic: '🎯', html: weak.txt }); add(weak.k, weak.v); }
-  else bullets.push({ ic: '🎯', html: 'No glaring weakness — a well-balanced group. Stick to what we do well.' });
+  if (weak && weak.s > 0.55) { bullets.push({ ic: 'target', html: weak.txt }); add(weak.k, weak.v); }
+  else bullets.push({ ic: 'target', html: 'No glaring weakness — a well-balanced group. Stick to what we do well.' });
   // 3. their approach and a counter
   const counters = {
     pnr: ['They run everything through the pick & roll. Switching every screen takes it away.', 'defense', 'switch'],
@@ -76,8 +76,8 @@ function matchPreview(f) {
   };
   let [ctxt, ck, cv] = counters[ot.system] || counters.motion;
   if (o.thr > L('thr') + 1.2) { ctxt = `A shooting team — their starters average ${o.thr.toFixed(1)} Three Point. Run them off the line.`; ck = 'help'; cv = 'perimeter'; }
-  if (changes.some((c) => c.k === ck)) bullets.push({ ic: '🧠', html: ctxt });
-  else { bullets.push({ ic: '🧠', html: ctxt }); add(ck, cv); }
+  if (changes.some((c) => c.k === ck)) bullets.push({ ic: 'tactics', html: ctxt });
+  else { bullets.push({ ic: 'tactics', html: ctxt }); add(ck, cv); }
   const stopper = star ? STOPPER(sortedRosterIds(S.userTeam).map((id) => S.players[id])) : null;
   return { pUs, pH, pA: 1 - pH, oddsH: oddsFrom(pH), oddsA: oddsFrom(1 - pH), formH: teamForm(f.h), formA: teamForm(f.a), bullets, tweak: { changes, stopper: stopper && star ? { id: stopper.id, star: star.id } : null } };
 }
