@@ -3060,7 +3060,7 @@ function journeymanOffers(db) {
 function newGame({ name, style, mode, teamId, db, length, diff, ironman, look }) {
   db = JSON.parse(JSON.stringify(db));
   S = {
-    v: 5, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
+    v: 6, season: 2026, day: 0, phase: 'season', cycles: length === 'long' ? 4 : 2, duos: [], pairs: {}, staff: [], nextSid: 0,
     coach: makeCoach(name, style, mode), userTeam: teamId, diff: DIFFICULTY[diff] ? diff : 'normal', ironman: !!ironman, matchLock: null,
     leagues: db.leagues.map((l) => ({ ...l, state: 'regular', po: null, final: [] })),
     teams: [], players: {}, schedule: [], inbox: [], nextPid: db.nextPid || 1, nextMid: 1, nextFx: 1,
@@ -3115,6 +3115,28 @@ function relegationLeague(lg) { return lg.tier === 1 && S.leagues.some((l) => l.
 function promotionLeague(lg) { return lg.tier === 2 && S.leagues.some((l) => l.country === lg.country && l.tier === 1); }
 
 /* ---------- Schedule ---------- */
+/* Decide who hosts each game, round by round: alternate home and away as much as possible (road trips and
+   home stands of at most 2-3 games), keep each team's home/away count level, and split repeat meetings
+   between both buildings. */
+function orientHomeAway(rounds, mem = { st: {}, pair: {} }, fixed = false) {
+  const st = mem.st, pair = mem.pair;
+  const S0 = (t) => st[t] || (st[t] = { h: 0, a: 0, last: '', run: 0 });
+  const runCost = (t, side) => { const x = S0(t); return x.last === side ? (x.run >= 2 ? 30 : 3) : 0; };
+  const bal = (t, side) => { const x = S0(t); return side === 'H' ? x.h - x.a : x.a - x.h; };
+  const pk = (a, b) => (a < b ? a + '-' + b : b + '-' + a);
+  const hosted = (h, a) => { const p = pair[pk(h, a)] || {}; return (p[h] || 0) - (p[a] || 0); };
+  const rec = (t, side) => { const x = S0(t); if (side === 'H') x.h++; else x.a++; x.run = x.last === side ? x.run + 1 : 1; x.last = side; };
+  for (const games of rounds) {
+    for (let i = 0; i < games.length; i++) {
+      const [x, y] = games[i];
+      const cost = (h, a) => runCost(h, 'H') + runCost(a, 'A') + 6 * hosted(h, a) + 0.8 * (bal(h, 'H') + bal(a, 'A')) + Math.random() * 0.1;
+      const [h, a] = fixed ? [x, y] : cost(x, y) <= cost(y, x) ? [x, y] : [y, x];
+      games[i] = [h, a]; rec(h, 'H'); rec(a, 'A');
+      const p = pair[pk(h, a)] || (pair[pk(h, a)] = {}); p[h] = (p[h] || 0) + 1;
+    }
+  }
+  return mem;
+}
 function buildLeagueSchedule(lid, cycles, startDay) {
   const list = lgTeams(lid).map((t) => t.id);
   if (list.length % 2) list.push(null);
@@ -3126,16 +3148,30 @@ function buildLeagueSchedule(lid, cycles, startDay) {
     for (let i = 0; i < n / 2; i++) {
       const a = arr[i], b = arr[n - 1 - i];
       if (a == null || b == null) continue;
-      games.push((r + i) % 2 === 0 ? [a, b] : [b, a]);
+      games.push([a, b]);
     }
     rounds.push(games);
     arr = [arr[0], arr[n - 1], ...arr.slice(1, n - 1)];
   }
-  const all = [];
-  for (let c = 0; c < cycles; c++) {
-    const order = c === 0 ? rounds : R.shuffle(rounds);
-    for (const g of order) all.push(g.map(([h, a]) => (c % 2 ? [a, h] : [h, a])));
-  }
+  // odd cycles replay the previous cycle with venues swapped, so every pair meets once in each building
+  const attempt = () => {
+    const out = [], mem = { st: {}, pair: {} };
+    let prev = null;
+    for (let c = 0; c < cycles; c++) {
+      let cyc;
+      if (c % 2 && prev) { cyc = prev.map((g) => g.map(([h, a]) => [a, h])); orientHomeAway(cyc, mem, true); }
+      else { cyc = R.shuffle(rounds.slice()).map((g) => g.map((p) => p.slice())); orientHomeAway(cyc, mem); }
+      out.push(...cyc); prev = cyc;
+    }
+    // score: long runs are worst, then uneven home/away totals
+    const seq = {}; for (const g of out) for (const [h, a] of g) { (seq[h] = seq[h] || []).push(1); (seq[a] = seq[a] || []).push(0); }
+    let score = 0;
+    for (const t in seq) { const q = seq[t]; let run = 1; for (let i = 1; i < q.length; i++) { run = q[i] === q[i - 1] ? run + 1 : 1; if (run >= 3) score += run >= 4 ? 50 : 4; } const d = Math.abs(q.reduce((x, y) => x + y, 0) * 2 - q.length); score += Math.max(0, d - 1) * 6; }
+    return { out, score };
+  };
+  let best = attempt();
+  for (let k = 0; k < 24 && best.score > 0; k++) { const t = attempt(); if (t.score < best.score) best = t; }
+  const all = best.out;
   const span = cycles > 2 ? 150 : 90;
   const gap = Math.max(2, Math.floor(span / all.length));
   const fx = [];
@@ -4600,7 +4636,7 @@ function ironmanResolve() {
 /* Courtside Manager — schema versioning & save migrations */
 'use strict';
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 // Upgrade any older save to the current schema without losing the career.
 function migrateSave(o) {
@@ -4625,7 +4661,27 @@ function migrateSave(o) {
   }
   if (o.coach && !o.coach.look) o.coach.look = randomCoachLook(strSeed(o.coach.name));
   if (o.v < 5) { const prev = S; S = o; try { ensureRivals(); o.v = Math.max(o.v, 5); } finally { if (prev) S = prev; } }
+  if (o.v < 6) { try { rebalanceVenues(o); } catch (e) { console.warn(e); } o.v = 6; }
   return o;
+}
+// v6: older schedules could send a team on a season-long road trip. Re-pick who hosts each remaining
+// regular-season game (same dates and opponents), carrying on from the games already played.
+function rebalanceVenues(o) {
+  if (!o.schedule || typeof orientHomeAway !== 'function') return;
+  const byLg = {};
+  for (const f of o.schedule) if (f.type === 'reg') (byLg[f.lg] = byLg[f.lg] || []).push(f);
+  for (const lid in byLg) {
+    const fx = byLg[lid].sort((a, b) => a.day - b.day || a.id - b.id);
+    const mem = { st: {}, pair: {} };
+    orientHomeAway(fx.filter((f) => f.played || f.id === o.pending).map((f) => [[f.h, f.a]]), mem, true);
+    const todo = fx.filter((f) => !f.played && f.id !== o.pending);
+    const days = [...new Set(todo.map((f) => f.day))];
+    for (const d of days) {
+      const list = todo.filter((f) => f.day === d), round = list.map((f) => [f.h, f.a]);
+      orientHomeAway([round], mem);
+      list.forEach((f, i) => { f.h = round[i][0]; f.a = round[i][1]; });
+    }
+  }
 }
 
 </script>
