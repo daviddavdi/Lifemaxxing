@@ -38,7 +38,7 @@ const Sound = {
   generate() {
     if (this.genQ || typeof Crowd === 'undefined') return;
     const jobs = [['bedL', () => Crowd.bed()], ['bounce', () => Crowd.bounce()], ['cheer0', () => Crowd.cheer()], ['bedR', () => Crowd.bed()], ['cheer1', () => Crowd.cheer()],
-      ['groan0', () => Crowd.groan()], ['ooh0', () => Crowd.ooh()], ['sq0', () => Crowd.squeak()], ['sq1', () => Crowd.squeak()], ['sq2', () => Crowd.squeak()],
+      ['hey', () => Crowd.hey()], ['groan0', () => Crowd.groan()], ['ooh0', () => Crowd.ooh()], ['sq0', () => Crowd.squeak()], ['sq1', () => Crowd.squeak()], ['sq2', () => Crowd.squeak()],
       ['cheer2', () => Crowd.cheer(3, 30)], ['roar', () => Crowd.cheer(5, 52, true)], ['groan1', () => Crowd.groan(1.6)], ['ooh1', () => Crowd.ooh(1.3)], ['chant', () => Crowd.chant()]];
     this.genQ = jobs;
     const next = () => { const j = this.genQ.shift(); if (!j) return; try { const a = j[1](); const b = this.ctx.createBuffer(1, a.length, Crowd.SR); b.getChannelData(0).set(a); this.B[j[0]] = b; } catch (e) { console.warn('crowd gen', e); } setTimeout(next, 40); };

@@ -1,9 +1,10 @@
-/* Courtside — menu click sounds and a generated lo-fi background beat for the menus.
+/* Courtside — menu click sounds and a generated basketball-arena hip-hop beat for the menus
+   (dribbling ball as percussion, sneaker squeaks, arena organ riffs, crowd "HEY!" shouts, whistle accents).
    The music is composed live (never the same loop twice): chord progressions, an electric-piano
    comp, bass, swung drums, a pentatonic melody with echo and a little vinyl crackle.
    It fades out during live matches (the arena takes over) and comes back afterwards. */
 const Music = {
-  g: null, on: true, clicks: true, timer: 0, next: 0, step: 0, bar: 0, prog: null, key: 57, bpm: 84, delay: null,
+  g: null, on: true, clicks: true, timer: 0, next: 0, step: 0, bar: 0, prog: null, key: 57, bpm: 90, delay: null,
   pref(k, d) { try { const v = localStorage.getItem('courtside_' + k); return v == null ? d : v === '1'; } catch (e) { return d; } },
   save(k, v) { try { localStorage.setItem('courtside_' + k, v ? '1' : '0'); } catch (e) {} },
   init() { this.on = this.pref('music', true); this.clicks = this.pref('clicks', true); },
@@ -39,8 +40,29 @@ const Music = {
     this.newSection(); this.next = c.currentTime + 0.15; this.step = 0;
     this.timer = setInterval(() => this.schedule(), 60);
   },
-  stop() { clearInterval(this.timer); this.timer = 0; if (this.g && Sound.ctx) this.g.gain.setTargetAtTime(0.0001, Sound.ctx.currentTime, 0.3); },
-  newSection() { this.prog = this.PROGS[Math.floor(Math.random() * this.PROGS.length)]; this.key = 55 + Math.floor(Math.random() * 6); this.bar = 0; this.mel = Math.random() < 0.7; this.busy = 0.25 + Math.random() * 0.35; },
+  stop() { clearInterval(this.timer); this.timer = 0; try { if (this.bedSrc) this.bedSrc.stop(); } catch (e) {} this.bedSrc = null; if (this.g && Sound.ctx) this.g.gain.setTargetAtTime(0.0001, Sound.ctx.currentTime, 0.3); },
+  newSection() {
+    const first = !this.prog;
+    this.prog = this.PROGS[Math.floor(Math.random() * this.PROGS.length)]; this.key = 55 + Math.floor(Math.random() * 6); this.bar = 0;
+    const r = Math.random(); this.kind = first ? 'groove' : r < 0.45 ? 'groove' : r < 0.8 ? 'organ' : 'break';
+    this.mel = this.kind === 'groove' && Math.random() < 0.6; this.busy = 0.2 + Math.random() * 0.3; this.drib = this.kind !== 'organ' || Math.random() < 0.5;
+    // organ riff: 8 eighth-notes of chord tones, arena style
+    this.riff = Array.from({ length: 8 }, (_, i) => (i === 7 || (i % 2 && Math.random() < 0.35) ? null : Math.floor(Math.random() * 4)));
+    if (!first && Math.random() < 0.5) this.whistleNext = true;
+  },
+  buf(name, t, gain, rate = 1, pan = 0) {
+    const c = this.ctx(), b = Sound.B && Sound.B[name]; if (!c || !b) return;
+    const s = c.createBufferSource(), g = c.createGain(); s.buffer = b; s.playbackRate.value = rate; g.gain.value = gain; s.connect(g);
+    if (c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = pan; g.connect(p); p.connect(this.bus); } else g.connect(this.bus);
+    s.start(t);
+  },
+  organ(t, n, len) {
+    const c = this.ctx(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 6.2; lg.gain.value = 3; lfo.connect(lg);
+    [[1, 1], [2, 0.7], [3, 0.45], [4, 0.3], [6, 0.15]].forEach(([h, a]) => { const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.value = this.hz(n) * h; lg.connect(o.detune); og.gain.value = a; o.connect(og); og.connect(g); o.start(t); o.stop(t + len + 0.1); });
+    g.connect(this.bus); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.03, t + 0.01); g.gain.setValueAtTime(0.03, t + len * 0.85); g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06);
+    lfo.start(t); lfo.stop(t + len + 0.1);
+  },
+  tweet(t) { const c = this.ctx(); for (const [d, l] of [[0, 0.09], [0.14, 0.2]]) { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = 3050; o.connect(g); g.connect(this.bus); this.env(g, t + d, 0.01, 0.022, l); o.start(t + d); o.stop(t + d + l + 0.05); } },
   level() { return typeof UI !== 'undefined' && UI.view === 'match' ? 0.0001 : 1.0; },
   schedule() {
     const c = this.ctx(); if (!c || !this.on) return;
@@ -49,8 +71,19 @@ const Music = {
     const s16 = 60 / this.bpm / 4;
     while (this.next < c.currentTime + 0.25) {
       const st = this.step % 16, swing = st % 2 ? s16 * 0.18 : 0, t = this.next + swing;
-      if (st === 0) { if (this.bar >= 8) this.newSection(); this.chordBar(t, this.prog[this.bar % 4], s16 * 16); this.bar++; }
-      this.drums(t, st);
+      if (st === 0) {
+        if (this.bar >= 8) this.newSection();
+        if (this.whistleNext) { this.whistleNext = false; this.tweet(t); }
+        this.chordBar(t, this.prog[this.bar % 4], s16 * 16); this.bar++;
+        if (!this.bedSrc && Sound.B && Sound.B.bedL) { const c = this.ctx(), s = c.createBufferSource(), g = c.createGain(); s.buffer = Sound.B.bedL; s.loop = true; g.gain.value = 0.05; s.connect(g); g.connect(this.bus); s.start(t); this.bedSrc = s; } // faint arena crowd under the beat
+      }
+      const ch = this.prog[(this.bar - 1 + 4) % 4], root = this.key + ch[0], tones = ch.slice(1);
+      if (this.kind !== 'break' || st % 4 === 0) this.drums(t, st);
+      if (this.drib && st % 4 === 0) this.buf('bounce', t, this.kind === 'break' ? 0.16 : 0.11, 0.97 + Math.random() * 0.06, Math.sin(this.step * 0.3) * 0.4); // the dribble keeps time
+      if (this.kind === 'break' && st % 4 === 2 && Math.random() < 0.3) this.buf('bounce', t, 0.08, 1.05, 0.2); // crossover
+      if (st === 6 && Math.random() < 0.3) this.buf('sq' + Math.floor(Math.random() * 3), t, 0.035, 1, (Math.random() - 0.5) * 1.2);
+      if (this.kind === 'organ' && st % 2 === 0) { const r = this.riff[st / 2]; if (r != null) this.organ(t, root + 12 + tones[r % tones.length], s16 * 1.7); }
+      if (this.kind === 'organ' && st === 12 && this.bar % 2 === 0) this.buf('hey', t - 0.03, 0.22, 1, 0);
       if (this.mel && st % 2 === 0 && Math.random() < this.busy) this.melody(t, s16);
       this.next += s16; this.step++;
     }

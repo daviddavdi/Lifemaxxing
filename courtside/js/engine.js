@@ -327,7 +327,7 @@ function usage(m, s, p) {
   if (t.system === 'pnr' && (p.pos === 'PG' || p.pos === 'SG')) base += (p.a.han - 10) * 0.25 * tacK;
   if (t.system === 'pnr' && (p.pos === 'C' || p.pos === 'PF')) base += (p.a.jmp - 10) * 0.2 * tacK;
   if (t.system === 'post' && (p.pos === 'C' || p.pos === 'PF')) base += 2.2 * tacK;
-  const exp = t.system === 'iso' ? 2.6 : t.system === 'motion' ? 1.55 : 1.9;
+  const exp = t.system === 'iso' ? 2.3 : t.system === 'motion' ? 1.4 : 1.7;
   let u = Math.pow(Math.max(1, base), exp);
   u *= roleMod(s, p, 'use');
   const ins = s.ins[p.id];
@@ -399,6 +399,7 @@ function endQuarter(m) {
 function simUntil(m, g) { while (!m.done && !m.brk && m.gt < g) stepMatch(m); }
 function simToEnd(m) { while (!m.done) { m.brk = 0; stepMatch(m); } }
 
+const TEAM_REB = 0.11;
 function possession(m, oi) {
   const O = m.sides[oi], D = m.sides[1 - oi];
   const off = ordered(O.on), def = ordered(D.on);
@@ -490,10 +491,10 @@ function possession(m, oi) {
       b.fga++; b.fgm++; if (type === 'thr') { b.tpa++; b.tpm++; }
       b.pts += val; O.pts += val;
       let ast = null;
-      const astP = (type === 'thr' ? 0.82 : type === 'mid' ? 0.55 : 0.58) + (ot.system === 'motion' ? 0.08 : ot.system === 'iso' ? -0.18 : ot.system === 'pnr' ? 0.04 : 0) + (fgOn ? 0.06 : 0);
+      const astP = (type === 'thr' ? 0.74 : type === 'mid' ? 0.46 : 0.5) + (ot.system === 'motion' ? 0.08 : ot.system === 'iso' ? -0.18 : ot.system === 'pnr' ? 0.04 : 0) + (fgOn ? 0.06 : 0);
       if (R.chance(clamp(astP, 0.2, 0.95))) {
         const mates = off.filter((x) => x !== sh);
-        ast = R.wpick(mates, (x) => Math.pow(eff(m, O, x, 'pas'), 2.5) * roleMod(O, x, 'ast') * (O.duo[sh.id] === x.id ? 2.5 : 1));
+        ast = R.wpick(mates, (x) => Math.pow(eff(m, O, x, 'pas'), 1.65) * roleMod(O, x, 'ast') * (O.duo[sh.id] === x.id ? 2.5 : 1));
         m.box[ast.id].ast++;
       }
       const n = pname(sh, 1);
@@ -557,14 +558,14 @@ function possession(m, oi) {
     const crash = ot.oreb === 'crash' ? 1.25 : ot.oreb === 'back' ? 0.78 : 1;
     const oP = clamp(0.24 * Math.pow(orb / drb, 1.6) * crash, 0.1, 0.42);
     if (R.chance(oP)) {
-      const rb = R.wpick(off, (x) => Math.pow(eff(m, O, x, 'reb'), 1.6) * (x.h / 200) * (eff(m, O, x, 'jmp') + 10) * roleMod(O, x, 'reb'));
-      m.box[rb.id].reb++; m.box[rb.id].oreb++;
+      const rb = R.wpick(off, (x) => Math.pow(eff(m, O, x, 'reb'), 1.5) * (x.h / 200) * (eff(m, O, x, 'jmp') + 14) * roleMod(O, x, 'reb'));
+      if (!R.chance(TEAM_REB)) { m.box[rb.id].reb++; m.box[rb.id].oreb++; }
       if (m.out) m.out.r = rb.id;
       act(m, { t: 'reb', s: oi, p: rb.id, off: true });
       continue;
     }
-    const rb = R.wpick(def, (x) => Math.pow(eff(m, D, x, 'reb'), 1.6) * (x.h / 200) * (eff(m, D, x, 'jmp') + 10) * roleMod(D, x, 'reb'));
-    m.box[rb.id].reb++;
+    const rb = R.wpick(def, (x) => Math.pow(eff(m, D, x, 'reb'), 1.5) * (x.h / 200) * (eff(m, D, x, 'jmp') + 14) * roleMod(D, x, 'reb'));
+    if (!R.chance(TEAM_REB)) m.box[rb.id].reb++; // some boards go down as team rebounds (out of bounds, tipped around), as in real box scores
     if (m.out) m.out.r = rb.id;
     act(m, { t: 'reb', s: oi, p: rb.id, off: false });
     m.trans[1 - oi] = ot.oreb === 'crash' ? 0.02 : ot.oreb === 'back' ? -0.01 : 0;

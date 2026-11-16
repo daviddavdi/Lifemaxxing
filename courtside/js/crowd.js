@@ -141,5 +141,12 @@ const Crowd = (() => {
       out[i] = (Math.sin(6.283 * ph) + 0.35 * Math.sin(12.566 * ph) + 0.15 * (R() * 2 - 1)) * e; }
     return normalize(out, 0.8);
   }
-  return { SR, cheer, groan, ooh, chant, bed, bounce, squeak };
+  function hey() { // a section of the crowd shouting "HEY!" on the beat
+    const dur = 0.7, out = new Float32Array(Math.floor(dur * SR));
+    for (let v = 0; v < 30; v++) { const m = R() < 0.7, j = R() * 0.04;
+      noise(out, j, 0.05, 0.25, 600, 5000, (u) => Math.sin(Math.PI * u)); // the "h"
+      voice(out, { t0: j + 0.03, dur: 0.24 + R() * 0.08, f0: (m ? 150 + R() * 70 : 260 + R() * 80), v1: 'eh', v2: 'ee', morph: 0.8, amp: 0.5 + R() * 0.5, att: 0.015, rel: 0.1, breath: 0.3, tilt: 0.65, pitch: (u) => 1.1 - 0.12 * u }); }
+    return fade(normalize(out, 0.85), 0.002, 0.15);
+  }
+  return { SR, hey, cheer, groan, ooh, chant, bed, bounce, squeak };
 })();
