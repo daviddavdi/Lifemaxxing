@@ -13,6 +13,12 @@ const Court = {
     cv.width = Math.round(this.W * dpr); cv.height = Math.round(this.H * dpr);
     cv.style.width = this.W + 'px'; cv.style.height = this.H + 'px';
     this.ctx = cv.getContext('2d'); this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!cv._tap) { cv._tap = true; cv.style.cursor = 'pointer'; cv.addEventListener('click', (e) => { // tap a player's dot to see his game
+      const r = cv.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width * 94, fy = (e.clientY - r.top) / r.height * 50;
+      let best = null, bd = 6;
+      for (const id in this.dots) { const d = this.dots[id]; if (d.a < 0.5 || d.y > 50) continue; const dd = Math.hypot(d.x - fx, Math.min(d.y, 49.5) - fy); if (dd < bd) { bd = dd; best = +id; } }
+      if (best != null && typeof livePlayerCard === 'function') livePlayerCard(best);
+    }); }
     if (!this.raf) { this.lastNow = performance.now(); this.loop(); }
   },
   loop() {
@@ -99,8 +105,9 @@ const Court = {
     const [x, y] = OFF[i] || [70, 25];
     return att === 0 ? [x, y] : [94 - x, y];
   },
-  shotSpot(k, base, att) {
+  shotSpot(k, base, att, corner) {
     const bx = att === 0 ? 88.75 : 5.25;
+    if (k === 'thr' && corner) return [att === 0 ? 88 : 6, base[1] > 25 ? 48 : 2];
     let ang = Math.atan2(base[1] - 25, base[0] - bx);
     if (Math.abs(Math.cos(ang)) < 0.05) ang = (att === 0 ? Math.PI : 0) + (base[1] > 25 ? -0.4 : 0.4);
     const r = k === 'thr' ? 25.5 : k === 'mid' ? 15 : 3.5;
@@ -108,6 +115,19 @@ const Court = {
     if (k === 'thr' && (y < 2.5 || y > 47.5)) { y = y < 25 ? 2 : 48; x = att === 0 ? 88 : 6; } // corner three
     if ((att === 0 && x > bx) || (att === 1 && x < bx)) x = bx + (att === 0 ? -1 : 1) * Math.abs(x - bx);
     return [x, y];
+  },
+  // off-ball movement for each half-court play (screens, rolls, drives, cuts, clear-outs)
+  playMove(A, id, cur, u, att, mir, pos) {
+    const sh = pos(A.p), rim = mir(87, 25), lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], k1 = clamp(u / 0.3, 0, 1);
+    const pl = A.play;
+    if (pl === 'pnr' && id === A.sc) return lerp(cur, [sh[0] + (att === 0 ? 2.2 : -2.2), sh[1] + (sh[1] > 25 ? -2 : 2)], k1); // sets the screen on the ball
+    if ((pl === 'roll' || pl === 'pop') && id === A.ps) { // ball-handler comes off the shooter's screen, then gives it up
+      return lerp(cur, mir(70, cur[1] > 25 ? 30 : 20), clamp(u / 0.34, 0, 1));
+    }
+    if (pl === 'kick' && id === A.ps) return lerp(cur, mir(80, 25 + (cur[1] > 25 ? 5 : -5)), clamp(u / 0.3, 0, 1)); // drives to collapse the defense
+    if (pl === 'iso') { const away = cur[1] > 25 ? 44 : 6; return lerp(cur, mir(82, away), k1 * 0.9); } // clear out
+    if (pl === 'post' && id === A.ps) return lerp(cur, mir(70, sh[1] > 25 ? 40 : 10), k1); // entry pass from the wing
+    return cur;
   },
   current() {
     const L = Live, m = L.m; if (!m || !m.plog || !m.plog.length) return null;
@@ -149,11 +169,22 @@ const Court = {
       let lo = 0;
       offIds.forEach((id, i) => {
         let [x, y] = this.spot(i, att);
-        if (!A && setUp < 1 && so === P.oi) { const sx = att === 0 ? x - 40 : x + 40; x = sx + (x - sx) * setUp; }
+        if (!A && setUp < 1 && so === P.oi && !P.fb) { const sx = att === 0 ? x - 40 : x + 40; x = sx + (x - sx) * setUp; }
+        if (P.fb && !ft) { // fast break: everyone sprinting the floor, the runner out in front
+          const lead = A && A.t === 'shot' && A.play === 'fast' ? A.p : null;
+          const k = A ? 1 : setUp, lane = [[70, 25], [66, 8], [66, 42], [56, 18], [54, 32]][i];
+          [x, y] = mir(...lane); const sx = att === 0 ? x - 34 : x + 34; x = sx + (x - sx) * k;
+          if (id === lead && A.k === 'in') { [x, y] = mir(76, 25 + (i % 2 ? 4 : -4)); }
+        }
         if (ft) { [x, y] = id === A.p ? mir(75, 25) : laneO[lo++ % 4]; }
         else {
           x += Math.sin(nowS * 0.8 + i * 1.9 + P.g0) * 2 * setUp; y += Math.cos(nowS * 0.6 + i * 1.3 + P.g0) * 2.4 * setUp;
-          if (A && A.t === 'shot' && id === A.p) { const sp = this.shotSpot(A.k, [x, y], att); const k = clamp(u / 0.45, 0, 1); x += (sp[0] - x) * k; y += (sp[1] - y) * k; this.rush = { id, by: A.ts + (A.te - A.ts) * 0.5, snap: u >= 0.5 }; }
+          if (A && A.t === 'shot' && A.play && id !== A.p && u < 0.6) [x, y] = this.playMove(A, id, [x, y], u, att, mir, pos);
+          if (A && A.t === 'shot' && id === A.p) { const sp = this.shotSpot(A.k, [x, y], att, A.corner); const k = clamp(u / 0.45, 0, 1);
+            if ((A.play === 'roll' || A.play === 'pop') && u < 0.3) { const bh = pos(A.ps ?? A.p); const kk = clamp(u / 0.2, 0, 1); x += (bh[0] + (att === 0 ? 2 : -2) - x) * kk; y += (bh[1] - y) * kk; } // screen first
+            else if (A.play === 'cut' && u < 0.45) { const wp = mir(85, y > 25 ? 42 : 8); if (u < 0.22) { const kk = u / 0.22; x += (wp[0] - x) * kk; y += (wp[1] - y) * kk; } else { const kk = (u - 0.22) / 0.23; x = wp[0] + (sp[0] - wp[0]) * kk; y = wp[1] + (sp[1] - wp[1]) * kk; } } // baseline cut
+            else { x += (sp[0] - x) * k; y += (sp[1] - y) * k; }
+            this.rush = { id, by: A.ts + (A.te - A.ts) * 0.5, snap: u >= 0.5 }; }
           if (A && A.t === 'reb' && A.off && id === A.p) { const k = clamp(u / 0.6, 0, 1); [x, y] = lerp([x, y], mir(84, y > 25 ? 28 : 22), k); }
         }
         targets[id] = [x, y]; sideOf[id] = so;
@@ -166,9 +197,11 @@ const Court = {
         else {
           const o = this.dots[offIds[i]] || { x: targets[offIds[i]]?.[0] ?? 47, y: targets[offIds[i]]?.[1] ?? 25 };
           x = o.x + (bx - o.x) * 0.3; y = o.y + (25 - o.y) * 0.22;
+          if (P.fb && (!A || (A.t === 'shot' && A.play === 'fast' && u < 0.7))) { x = o.x + (att === 0 ? -9 : 9) - i * (att === 0 ? 2 : -2); y = o.y + (i % 2 ? 3 : -3); } // beaten down the floor
           if (A && A.t === 'reb' && !A.off && id === A.p) { const k = clamp(u / 0.6, 0, 1); [x, y] = lerp([x, y], mir(83, y > 25 ? 27 : 23), k); }
           if (A && A.t === 'shot' && A.b === id) { const k = clamp((u - 0.5) / 0.3, 0, 1); [x, y] = lerp([x, y], pos(A.p), k * 0.7); }
-          if (A && A.t === 'to' && A.st === id && u > 0.5) { const k = clamp((u - 0.5) / 0.5, 0, 1); x = x + ((att === 0 ? 40 : 54) - x) * k; }
+          if (A && A.t === 'to' && A.st != null && A.st !== id && u > 0.62) { const k = clamp((u - 0.62) / 0.38, 0, 1); x = x + ((att === 0 ? 40 : 54) - x) * k * 0.6; }
+          if (A && A.t === 'to' && A.st === id && u > 0.5) { const k = clamp((u - 0.62) / 0.38, 0, 1); x = x + ((att === 0 ? 30 : 64) - x) * k; y = y + (25 - y) * k * 0.5; } // picks it and runs
         }
         targets[id] = [x, y]; sideOf[id] = 1 - so;
       });
@@ -178,10 +211,13 @@ const Court = {
       const prev = ai > 0 ? acts[ai - 1] : null;
       if (!A) hold(pg);
       else if (A.t === 'shot') {
-        const from = A.a && offIds.includes(A.a) ? A.a : prev && prev.t === 'reb' && prev.p === A.p ? A.p : pg;
-        if (u < 0.15 || from === A.p) { if (u < 0.6) hold(from === A.p || u >= 0.15 ? A.p : from); }
-        if (from !== A.p && u >= 0.15 && u < 0.3) { ballT = lerp(pos(from), pos(A.p), (u - 0.15) / 0.15); ballZ = 0.2; ballExact = true; }
-        else if (u >= 0.3 && u < 0.6) hold(A.p);
+        const passer = A.ps != null ? A.ps : A.a;
+        const from = passer != null && offIds.includes(passer) && passer !== A.p ? passer : prev && prev.t === 'reb' && prev.p === A.p ? A.p : A.play === 'pnr' || A.play === 'iso' || A.play === 'putback' ? A.p : A.play === 'fast' ? A.p : pg;
+        const [p0, p1] = { kick: [0.3, 0.42], roll: [0.34, 0.46], cut: [0.32, 0.44], post: [0.08, 0.2], pop: [0.3, 0.42], fast: [0.12, 0.24] }[A.play] || [0.15, 0.3];
+        if (from === A.p) { if (u < 0.6) hold(A.p); }
+        else if (u < p0) hold(from);
+        else if (u < p1) { ballT = lerp(pos(from), pos(A.p), (u - p0) / (p1 - p0)); ballZ = 0.2; ballExact = true; }
+        else if (u < 0.6) hold(A.p);
         if (u >= 0.6) {
           const k = (u - 0.6) / 0.4, stop = A.b != null ? 0.45 : 1, kk = Math.min(k, stop);
           ballT = lerp(pos(A.p), rim, kk); ballZ = Math.sin(kk * Math.PI) * (A.k === 'thr' ? 1.3 : A.k === 'in' ? 0.5 : 0.9); ballExact = true;
@@ -205,7 +241,7 @@ const Court = {
       const done = acts.filter((a) => a.te <= L.t && L.t - a.te < 1.6).pop();
       if (done) this.flash = { txt: this.resultText(done), col: this.resultCol(done), at: done.t === 'ft' || done.t === 'shot' ? [done.s === 0 ? 88.75 : 5.25, 25] : pos(done.st ?? done.p), k: (L.t - done.te) / 1.6 };
       else this.flash = null;
-      this.caption = A && L.t < A.te + 0.3 ? this.stepText(A, m) : !A ? `${m.sides[so].team.abbr} bring it up` : null;
+      this.caption = A && L.t < A.te + 0.3 ? this.stepText(A, m) : !A ? (P.fb ? `${m.sides[so].team.abbr} on the fast break!` : `${m.sides[so].team.abbr} bring it up`) : null;
     }
     // bench for everyone else
     const rate = L.curRate || 6;
@@ -253,10 +289,14 @@ const Court = {
   },
   who(id) { const p = S.players[id]; return p ? `#${p.num ?? ''} ${p.last}` : '?'; },
   stepText(a) {
-    if (a.t === 'shot') return `${this.who(a.p)} · ${a.k === 'thr' ? '3-point attempt' : a.k === 'mid' ? '2-point jumper' : '2-point drive at the rim'}`;
+    if (a.t === 'shot') {
+      const z = a.k === 'thr' ? (a.corner ? 'corner 3' : '3-point attempt') : a.k === 'mid' ? '2-point jumper' : '2 at the rim';
+      const pl = { fast: 'Fast break', pnr: 'Pick & roll', roll: 'Pick & roll — the roll man', pop: 'Pick & pop', kick: 'Drive & kick', cut: 'Backdoor cut', post: 'Post-up', iso: 'Isolation', putback: 'Putback', spot: 'Ball movement' }[a.play];
+      return `${this.who(a.p)} · ${pl ? pl + ' · ' : ''}${z}`;
+    }
     if (a.t === 'ft') return `${this.who(a.p)} · ${a.tech ? 'Technical free throw' : a.and1 ? 'And-one free throw' : `Free throw ${a.n} of ${a.of}`}`;
     if (a.t === 'reb') return `${this.who(a.p)} · ${a.off ? 'Offensive rebound' : 'Defensive rebound'}`;
-    if (a.t === 'to') return a.st != null ? `${this.who(a.st)} · Steal` : `${this.who(a.p)} · Turnover`;
+    if (a.t === 'to') return a.st != null ? `${this.who(a.st)} · Steal — and he's off!` : `${this.who(a.p)} · Turnover`;
     return '';
   },
   resultText(a) {

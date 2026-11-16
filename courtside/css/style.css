@@ -508,3 +508,17 @@ body.live-on main { padding-bottom: 80px; }
 .rotrow .slot { width: 44px; }
 .rotrow .stars { transform: scale(.85); transform-origin: right center; margin-left: -8px; }
 .iconbtn.snd.blocked { width: auto; padding: 0 8px; font-size: 12px; font-weight: 700; color: #ffb26b; border-color: #ffb26b; }
+.inp.err { border-color: #f06a6a !important; box-shadow: 0 0 0 2px rgba(240,106,106,.25); }
+.btn[aria-disabled="true"] { opacity: .45; filter: grayscale(.4); }
+/* live player card */
+.lpc-head { display: flex; gap: 12px; align-items: center; padding: 4px 0 10px; border-bottom: 3px solid var(--pc); margin-bottom: 8px; }
+.lpc-face svg { border-radius: 50%; display: block; }
+.lpc-name { font-size: 18px; line-height: 1.2; }
+.lsgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 6px 0; }
+.lsc { background: var(--panel2); border-radius: 9px; padding: 7px 4px; text-align: center; display: flex; flex-direction: column; gap: 1px; }
+.lsc b { font-size: 15px; font-variant-numeric: tabular-nums; } .lsc span { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.lsgrid.big .lsc b { font-size: 24px; }
+.en.wide { flex: 1; width: auto; height: 6px; margin: 0 10px; align-self: center; }
+.lpc-ev { font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.boxsw { margin: 8px 12px; }
+.tbl.box tr[data-act] { cursor: pointer; }

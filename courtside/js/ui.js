@@ -151,7 +151,7 @@ VIEWS.newgame = () => {
   if (NG.step === 1) {
     return `${header('New Career', { back: false, right: `<button class="btn sm" data-act="go" data-v="title">Cancel</button>` })}
     <div class="pad">
-      <div class="card"><label class="lbl">Coach name</label><input class="inp" id="ngName" maxlength="28" placeholder="Your name" value="${esc(NG.name)}" data-chg="ngName"></div>
+      <div class="card"><label class="lbl">Coach name</label><input class="inp ${NG.nameErr ? 'err' : ''}" id="ngName" maxlength="28" placeholder="Your name" value="${esc(NG.name)}" data-chg="ngName"><p class="hint ${NG.nameErr ? 'neg' : ''}" id="ngNameHint">${NG.nameErr ? 'Enter your name to continue.' : 'Required — this is how players, the board and the press will know you.'}</p></div>
       <h2 class="sec">Your look</h2>
       ${lookEditor(NG.look = NG.look || randomCoachLook(), 'ng')}
       <h2 class="sec">Career path</h2>
@@ -173,7 +173,7 @@ VIEWS.newgame = () => {
       <div class="seg">${[['short', 'Short (~30 games)'], ['long', 'Long (~60 games)']].map(([v, l]) => `<button class="${NG.length === v ? 'on' : ''}" data-act="ngSet" data-k="length" data-v="${v}">${l}</button>`).join('')}</div>
       <p class="hint">${db.leagues.length} leagues · ${db.teams.length} clubs${NG.custom ? ' · custom database' : ''}</p>
     </div>
-    <div class="sticky-cta"><button class="btn primary big" data-act="ngNext">Next: Choose Club</button></div>`;
+    <div class="sticky-cta"><button class="btn primary big" data-act="ngNext" id="ngNextBtn" ${(NG.name || '').trim().length >= 2 ? '' : 'aria-disabled="true"'}>Next: Choose Club</button></div>`;
   }
   let list;
   if (NG.mode === 'journey') {
@@ -687,6 +687,23 @@ const Live = {
     if (!m.brk && !m.done) simUntil(m, this.t + 0.01);
     Sound.tick(m, t0, this.t, false);
   },
+  // box score built only from what has been shown on the court so far (the engine runs a possession ahead)
+  shownBox() {
+    const m = this.m, t = this.t; if (this._bx && this._bx.t === t && this._bx.n === m.plog.length) return this._bx.b;
+    const b = {}, B = (id) => b[id] || (b[id] = { min: 0, pts: 0, reb: 0, oreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0 });
+    for (const P of m.plog) {
+      if (P.g0 > t) break;
+      const dur = Math.min(t, P.g1) - P.g0; for (const side of P.on || []) for (const id of side) B(id).min += dur;
+      for (const a of P.acts || []) {
+        if (a.te > t) break;
+        if (a.t === 'shot') { const x = B(a.p); if (a.made || !a.foul) { x.fga++; if (a.k === 'thr') x.tpa++; } if (a.made) { x.fgm++; x.pts += a.pts; if (a.k === 'thr') x.tpm++; if (a.a != null) B(a.a).ast++; } if (a.b != null) B(a.b).blk++; }
+        else if (a.t === 'ft') { const x = B(a.p); x.fta++; if (a.made) { x.ftm++; x.pts++; } }
+        else if (a.t === 'reb' && !a.tr) { const x = B(a.p); x.reb++; if (a.off) x.oreb++; }
+        else if (a.t === 'to') { B(a.p).tov++; if (a.st != null) B(a.st).stl++; }
+      }
+    }
+    this._bx = { t, n: m.plog.length, b }; return b;
+  },
   shownScore() {
     const m = this.m;
     for (let i = m.plog.length - 1; i >= 0; i--) {
@@ -723,12 +740,13 @@ const Live = {
     const s = m.sides[m.us], P = m.plog.filter((x) => x.g0 <= this.t).pop();
     const ids = P ? P.on[m.us] : ordered(s.on).map((p) => p.id);
     const rx = this.react && this.t - this.react.g < 150 ? this.react.map : {};
-    const parts = ids.map((id) => { const p = S.players[id], en = Math.round(s.en[id] ?? 100), h = s.heat[id] || 0, r = rx[id], b = m.box[id] || {};
+    const SB = this.shownBox();
+    const parts = ids.map((id) => { const p = S.players[id], en = Math.round(s.en[id] ?? 100), h = s.heat[id] || 0, r = rx[id], b = SB[id] || {};
       return { k: [id, Math.round(en / 5), h > 0.45 ? 1 : h < -0.45 ? -1 : 0, r ? r.cls : '', b.pts, m.techs[id] || 0].join(':'),
-        h: `<button class="oc ${r ? r.cls : ''}" data-act="liveSubs"><span class="ocf">${playerFace(p, 40)}${r ? `<span class="remo">${REACT_EMO[r.cls] || ''}</span>` : h > 0.45 ? '<span class="remo">🔥</span>' : h < -0.45 ? '<span class="remo">🧊</span>' : ''}</span><span class="ocn">${p.num ?? ''} ${esc(p.last)}</span><span class="ocs">${b.pts || 0} pts${m.techs[id] ? ' · T' : ''}</span><span class="en"><i style="width:${en}%;background:${en > 70 ? '#4cc38a' : en > 50 ? '#e8b94a' : '#f06a6a'}"></i></span>${r ? `<span class="ocr ${r.cls}">${r.label}</span>` : ''}</button>` }; });
+        h: `<button class="oc ${r ? r.cls : ''}" data-act="livePlayer" data-id="${id}"><span class="ocf">${playerFace(p, 40)}${r ? `<span class="remo">${REACT_EMO[r.cls] || ''}</span>` : h > 0.45 ? '<span class="remo">🔥</span>' : h < -0.45 ? '<span class="remo">🧊</span>' : ''}</span><span class="ocn">${p.num ?? ''} ${esc(p.last)}</span><span class="ocs">${b.pts || 0} pts${m.techs[id] ? ' · T' : ''}</span><span class="en"><i style="width:${en}%;background:${en > 70 ? '#4cc38a' : en > 50 ? '#e8b94a' : '#f06a6a'}"></i></span>${r ? `<span class="ocr ${r.cls}">${r.label}</span>` : ''}</button>` }; });
     const key = parts.map((x) => x.k).join('|') + (s.asst ? 'A' : '');
     if (el._k === key) return; el._k = key;
-    el.innerHTML = `<div class="ochead"><span>On court</span><span class="muted sm">${s.asst ? '🧑‍💼 Assistant is handling subs' : 'You are handling subs'}</span></div><div class="ocrow">${parts.map((x) => x.h).join('')}</div>`;
+    el.innerHTML = `<div class="ochead"><span>On court <span class="sm muted">· tap a player for his stats</span></span><span class="muted sm">${s.asst ? '🧑‍💼 Assistant is handling subs' : 'You are handling subs'}</span></div><div class="ocrow">${parts.map((x) => x.h).join('')}</div>`;
   },
   paint(force) {
     const m = this.m; const root = $('#live'); if (!root || !m) return;
@@ -757,12 +775,31 @@ const Live = {
     if (this.tab === 'feed') {
       $('#feed').innerHTML = m.events.filter((e) => e.g <= this.t).reverse().slice(0, 60).map((e) => { const tm = e.side >= 0 ? m.sides[e.side].team : null; return `<div class="ev ${e.type}${e.hl ? ' hl' : ''}" style="--ec:${tm ? tm.c1 : 'transparent'}"><span class="evt">${e.q <= 4 ? 'Q' + e.q : 'OT'} ${Math.floor(e.c / 60)}:${String(e.c % 60).padStart(2, '0')}</span><span class="evx">${esc(e.text)}</span><span class="evs">${e.as}-${e.hs}</span></div>`; }).join('');
     } else {
-      const s = m.sides[m.us];
-      $('#feed').innerHTML = `<table class="tbl box"><thead><tr><th class="l">Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>Mood</th><th>Form</th></tr></thead><tbody>${s.list.map((p) => { const b = m.box[p.id]; const md = s.mood[p.id] || 0; const h = s.heat[p.id] || 0; return `<tr class="${s.on.includes(p) ? 'oncourt' : ''}"><td class="l nm">${s.on.includes(p) ? '<i class="st-dot"></i>' : ''}<span class="jn">${p.num ?? ''}</span>${esc(pname(p, true))}${m.ej[p.id] ? ' <span class="neg">EJ</span>' : m.techs[p.id] ? ' <span class="warn-t">T</span>' : ''}</td><td>${Math.round(b.min / 60)}</td><td class="b">${b.pts}</td><td>${b.reb}</td><td>${b.ast}</td><td>${b.fgm}-${b.fga}</td><td>${moodIcon(md)}</td><td>${h > 0.45 ? '🔥' : h < -0.45 ? '🧊' : h > 0.2 ? '<span class="pos">↑</span>' : h < -0.2 ? '<span class="neg">↓</span>' : '<span class="muted">·</span>'}</td></tr>`; }).join('')}</tbody></table>`;
+      const s = m.sides[this.boxSide ?? m.us], SB = this.shownBox(), z = { min: 0, pts: 0, reb: 0, ast: 0, fgm: 0, fga: 0 };
+      $('#feed').innerHTML = `<div class="seg mini boxsw">${[m.us, 1 - m.us].map((si) => `<button class="${(this.boxSide ?? m.us) === si ? 'on' : ''}" data-act="liveBoxSide" data-v="${si}">${esc(m.sides[si].team.abbr)}</button>`).join('')}</div><table class="tbl box"><thead><tr><th class="l">Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>Mood</th><th>Form</th></tr></thead><tbody>${s.list.map((p) => { const b = SB[p.id] || z; const md = s.mood[p.id] || 0; const h = s.heat[p.id] || 0; return `<tr class="${s.on.includes(p) ? 'oncourt' : ''}" data-act="livePlayer" data-id="${p.id}"><td class="l nm">${s.on.includes(p) ? '<i class="st-dot"></i>' : ''}<span class="jn">${p.num ?? ''}</span>${esc(pname(p, true))}${m.ej[p.id] ? ' <span class="neg">EJ</span>' : m.techs[p.id] ? ' <span class="warn-t">T</span>' : ''}</td><td>${Math.round(b.min / 60)}</td><td class="b">${b.pts}</td><td>${b.reb}</td><td>${b.ast}</td><td>${b.fgm}-${b.fga}</td><td>${moodIcon(md)}</td><td>${h > 0.45 ? '🔥' : h < -0.45 ? '🧊' : h > 0.2 ? '<span class="pos">↑</span>' : h < -0.2 ? '<span class="neg">↓</span>' : '<span class="muted">·</span>'}</td></tr>`; }).join('')}</tbody></table>`;
     }
   },
 };
 const moodIcon = (v) => v > 0.35 ? '<span class="pos">▲▲</span>' : v > 0.1 ? '<span class="pos">▲</span>' : v < -0.35 ? '<span class="neg">▼▼</span>' : v < -0.1 ? '<span class="neg">▼</span>' : '<span class="muted">●</span>';
+function livePlayerCard(id) {
+  const m = Live.m, p = S.players[id]; if (!m || !p) return;
+  const si = m.sides.findIndex((s) => s.list.some((x) => x.id === id)), s = m.sides[si], t = s.team, mine = si === m.us;
+  const b = Live.shownBox()[id] || { min: 0, pts: 0, reb: 0, oreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0 };
+  const P = m.plog.filter((x) => x.g0 <= Live.t).pop(), on = P ? P.on[si].includes(id) : s.on.some((x) => x.id === id);
+  const en = Math.round(s.en[id] ?? 100), h = s.heat[id] || 0, md = s.mood[id] || 0;
+  const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '–');
+  const cell = (v, l) => `<div class="lsc"><b>${v}</b><span>${l}</span></div>`;
+  const lastPlays = m.events.filter((e) => e.g <= Live.t && (e.p === id || e.a === id || e.v === id)).slice(-3).reverse();
+  modal(`<div class="lpc-head" style="--pc:${t.c1}"><span class="lpc-face">${playerFace(p, 64)}</span><div class="grow"><div class="lpc-name">${p.num != null ? `<span class="jbig">#${p.num}</span> ` : ''}${esc(p.first)} <b>${esc(p.last)}</b></div>
+      <div class="muted sm">${p.pos} · ${esc(t.city)} ${esc(t.nick)} · ${on ? '<span class="pos">On court</span>' : m.ej[id] ? '<span class="neg">Ejected</span>' : 'On the bench'}${h > 0.45 ? ' · 🔥 On fire' : h < -0.45 ? ' · 🧊 Cold' : ''}${m.techs[id] ? ' · <span class="warn-t">Technical</span>' : ''}</div></div>${badge(t)}</div>
+    <h3 class="sec">This game</h3>
+    <div class="lsgrid big">${cell(b.pts, 'PTS')}${cell(b.reb, 'REB')}${cell(b.ast, 'AST')}${cell(Math.floor(b.min / 60) + "'", 'MIN')}</div>
+    <div class="lsgrid">${cell(`${b.fgm}-${b.fga}`, 'FG ' + pct(b.fgm, b.fga))}${cell(`${b.tpm}-${b.tpa}`, '3PT ' + pct(b.tpm, b.tpa))}${cell(`${b.ftm}-${b.fta}`, 'FT ' + pct(b.ftm, b.fta))}${cell(b.oreb, 'OREB')}${cell(b.stl, 'STL')}${cell(b.blk, 'BLK')}${cell(b.tov, 'TOV')}${cell(p.st && p.st.gp ? (p.st.pts / p.st.gp).toFixed(1) : '–', 'Season PPG')}</div>
+    <div class="kv"><span>Energy</span><span class="en wide"><i style="width:${en}%;background:${en > 70 ? '#4cc38a' : en > 50 ? '#e8b94a' : '#f06a6a'}"></i></span><b>${en}%</b></div>
+    ${mine ? `<div class="kv"><span>Mood</span><b>${moodIcon(md)}</b></div>` : ''}
+    ${lastPlays.length ? `<h3 class="sec">Latest</h3>${lastPlays.map((e) => `<div class="lpc-ev"><span class="muted sm">${e.q <= 4 ? 'Q' + e.q : 'OT'} ${Math.floor(e.c / 60)}:${String(e.c % 60).padStart(2, '0')}</span> ${esc(e.text)}</div>`).join('')}` : ''}
+    <div class="row-btns">${mine ? `<button class="btn" data-act="liveSubs">Subs</button>` : ''}<button class="btn primary big" data-act="${m.brk ? 'liveBreakBack' : 'closeModal'}">Back to the game</button></div>`, { tall: true });
+}
 function scoreLine() { const m = Live.m; return `<p class="b">${esc(m.sides[1].team.abbr)} ${m.sides[1].pts} – ${m.sides[0].pts} ${esc(m.sides[0].team.abbr)}</p>`; }
 function talkModal(title, isBreak) {
   modal(`<h2>${title}</h2>${Live.m.gt > 0 ? scoreLine() : '<p class="hint">Set the tone before tip-off.</p>'}
@@ -845,13 +882,18 @@ const ACT = {
   loadGame: () => { if (load()) { UI.stack = []; if (ironmanResolve() || IRON_RESOLVED) { IRON_RESOLVED = false; toast('🛡️ Ironman: the match you left was played to the finish.'); UI.tab.rside = null; return go('result'); } go(S.pending ? 'prematch' : S.phase === 'sacked' ? 'sacked' : 'inbox'); } },
   toTitle: () => { save(); UI.stack = []; UI.view = 'title'; render(); },
   ngSet: (d) => { NG.name = ($('#ngName')?.value ?? NG.name); NG[d.k] = d.k === 'ironman' ? !!d.v : d.v; if (d.k === 'mode') { NG.team = null; NG.offers = null; } render(); },
-  ngNext: () => { NG.name = ($('#ngName')?.value || NG.name || '').trim(); NG.step = 2; render(); window.scrollTo(0, 0); },
+  ngNext: () => {
+    NG.name = ($('#ngName')?.value || NG.name || '').trim();
+    if (NG.name.length < 2) { NG.nameErr = true; render(); const el = $('#ngName'); if (el) { el.focus(); el.scrollIntoView({ block: 'center' }); } toast('Enter your manager name first.', 'bad'); return; }
+    NG.nameErr = false; NG.step = 2; render(); window.scrollTo(0, 0);
+  },
   ngBack: () => { NG.step = 1; render(); },
   ngLg: (d) => { NG.lg = d.v; NG.team = null; render(); },
   ngTeam: (d) => { NG.team = +d.id; render(); },
   ngStart: () => {
     if (!NG.team) return;
-    newGame({ look: NG.look, name: NG.name || 'The Coach', style: NG.style, mode: NG.mode, teamId: NG.team, db: NG.db, length: NG.length, diff: NG.diff, ironman: !!NG.ironman && !NG.custom });
+    if ((NG.name || '').trim().length < 2) { NG.step = 1; NG.nameErr = true; render(); return toast('Enter your manager name first.', 'bad'); }
+    newGame({ look: NG.look, name: NG.name.trim(), style: NG.style, mode: NG.mode, teamId: NG.team, db: NG.db, length: NG.length, diff: NG.diff, ironman: !!NG.ironman && !NG.custom });
     NG = null; UI.tab = {};
     go('inbox');
   },
@@ -990,6 +1032,8 @@ const ACT = {
   talkDone: () => { closeModal(); Live.m.brk = 0; Live.paused = false; Live.paint(true); },
   liveResume: () => { closeModal(); Live.m.brk = 0; Live.paused = false; Live.paint(true); },
   liveSound: () => { Sound.setPref(!Sound.on); if (Sound.on) { Sound.unlock(); Sound.test(); } toast(Sound.on ? '🔊 Crowd sound on — you should hear a cheer. Nothing? Check the volume and silent switch.' : 'Sound off'); Live.paint(true); },
+  liveBoxSide: (d) => { Live.boxSide = +d.v; Live.paint(true); },
+  livePlayer: (d) => livePlayerCard(+d.id),
   liveSoundOn: () => { Sound.unlock(); Sound.test(); setTimeout(() => Live.paint(true), 400); },
   liveSpeed: (d) => { Live.speed = +d.v; Live.paint(true); },
   livePause: () => { Live.paused = !Live.paused; Live.paint(true); },
@@ -1100,7 +1144,7 @@ function modalSubs() {
     <div class="row-btns"><button class="btn primary big" data-act="${back}">Done</button></div>`, { tall: true });
 }
 const CHG = {
-  ngName: (el) => { NG.name = el.value; },
+  ngName: (el) => { NG.name = el.value; const ok = el.value.trim().length >= 2, b = $('#ngNextBtn'); if (b) { if (ok) b.removeAttribute('aria-disabled'); else b.setAttribute('aria-disabled', 'true'); } if (ok && NG.nameErr) { NG.nameErr = false; el.classList.remove('err'); const h = $('#ngNameHint'); if (h) { h.classList.remove('neg'); h.textContent = 'Required — this is how players, the board and the press will know you.'; } } },
   importDbNew: (el) => readFile(el, (db) => { try { if (S && UI.view !== 'title') save(); startWithDb(db); } catch (e) { toast(esc(e.message), 'bad'); } }),
   importSave: (el) => readFile(el, (obj) => { if (!obj || !(obj.v >= 2) || !obj.teams || !obj.players) return toast('Not a Courtside save file.', 'bad'); if (obj.ironman || (S && S.ironman)) return toast('Ironman careers cannot be restored from backups.', 'bad'); obj = migrateSave(obj); S = sanitizeSave(obj); save(); UI.stack = []; toast('Career restored'); go('inbox'); }),
   asstSubs: (el) => { S.asstSubs = el.checked; const s = liveSide(); s.asst = el.checked; if (s.asst) pickLineup(Live.m, s, true); save(); modalSubs(); Live.paint(true); },
