@@ -2,7 +2,7 @@
 'use strict';
 
 const Court = {
-  cv: null, ctx: null, W: 0, H: 0, raf: 0, dots: {}, ball: null, lastNow: 0, m: null,
+  cv: null, ctx: null, floor: null, floorKey: '', W: 0, H: 0, raf: 0, dots: {}, ball: null, lastNow: 0, m: null,
   attach(cv, m) {
     if (this.m !== m) { this.dots = {}; this.ball = null; }
     this.cv = cv; this.m = m;
@@ -19,6 +19,7 @@ const Court = {
       for (const id in this.dots) { const d = this.dots[id]; if (d.a < 0.5 || d.y > 50) continue; const dd = Math.hypot(d.x - fx, Math.min(d.y, 49.5) - fy); if (dd < bd) { bd = dd; best = +id; } }
       if (best != null && typeof livePlayerCard === 'function') livePlayerCard(best);
     }); }
+    if (!this.fontHook && document.fonts) { this.fontHook = true; document.fonts.load('italic 800 20px "Barlow Condensed"').then(() => { this.floorKey = ''; }).catch(() => {}); }
     if (!this.raf) { this.lastNow = performance.now(); this.loop(); }
   },
   loop() {
@@ -31,33 +32,79 @@ const Court = {
   X(x) { return (x / 94) * this.W; }, Y(y) { return (y / 50) * this.H; },
 
   /* ---------- drawing primitives ---------- */
+  /* The home team's floor: their colour in the paint and centre circle, their logo at centre court and their
+     name in each half. Rendered once per match/size into an offscreen canvas, then copied every frame. */
   drawCourt() {
-    const c = this.ctx, W = this.W, H = this.H;
-    // dark hardwood: warm gradient + faint floorboards
-    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#33251a'); g.addColorStop(1, '#261b13');
+    const c = this.ctx, W = this.W, H = this.H, t = this.m && this.m.home;
+    const key = `${W}x${H}:${t ? t.id + t.c1 + t.c2 + t.abbr + t.nick : '-'}`;
+    if (!this.floor || this.floorKey !== key) {
+      const dpr = window.devicePixelRatio || 1, off = document.createElement('canvas');
+      off.width = Math.round(W * dpr); off.height = Math.round(H * dpr);
+      const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
+      this.paintFloor(o, W, H, t);
+      this.floor = off; this.floorKey = key;
+    }
+    c.drawImage(this.floor, 0, 0, W, H);
+  },
+  paintFloor(c, W, H, t) {
+    const X = (x) => this.X(x), Y = (y) => this.Y(y);
+    const hex = (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+    const wood = '#2e2117', ok = (col) => hex(col) && typeof contrast === 'function' && contrast(col, wood) >= 1.7;
+    const c1 = t && hex(t.c1) ? t.c1 : '#ff6b1a', c2 = t && hex(t.c2) ? t.c2 : '#fff4e6';
+    const paint = ok(c1) ? c1 : ok(c2) ? c2 : '#ff6b1a';   // colour that shows up on dark wood
+    const ring = paint === c1 ? c2 : c1;
+    const rgba = (h, a) => `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`;
+    // hardwood with a faint wash of the home colour
+    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#36271b'); g.addColorStop(1, '#271c14');
     c.fillStyle = g; c.fillRect(0, 0, W, H);
+    c.fillStyle = rgba(c1, 0.07); c.fillRect(0, 0, W, H);
     c.fillStyle = 'rgba(0,0,0,.10)'; const bw = H / 14; for (let i = 1; i < 14; i += 2) c.fillRect(0, i * bw, W, bw);
-    c.fillStyle = 'rgba(255,255,255,.025)'; for (let i = 0; i < 14; i++) c.fillRect(((i * 37) % 11) / 11 * W * 0.5, i * bw, W * 0.18, 1);
-    c.strokeStyle = 'rgba(255,240,222,.36)'; c.lineWidth = 1.2;
+    c.fillStyle = 'rgba(255,255,255,.03)'; for (let i = 0; i < 14; i++) c.fillRect(((i * 37) % 11) / 11 * W * 0.5, i * bw, W * 0.18, 1);
+    // team name in each half, reading toward centre court
+    if (t) {
+      const name = String(t.nick || t.abbr || '').toUpperCase();
+      let fs = H * 0.17; c.font = `italic 800 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+      const wN = c.measureText(name).width; if (wN > H * 0.74) { fs *= H * 0.74 / wN; c.font = `italic 800 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`; }
+      c.fillStyle = rgba(paint, 0.2); c.textAlign = 'center'; c.textBaseline = 'middle';
+      for (const side of [0, 1]) { c.save(); c.translate(X(side ? 59.5 : 34.5), H / 2); c.rotate(side ? -Math.PI / 2 : Math.PI / 2); c.fillText(name, 0, 0); c.restore(); }
+    }
+    // painted lanes and centre circle
+    c.fillStyle = rgba(paint, 0.42);
+    c.fillRect(0, Y(17), X(19), Y(16)); c.fillRect(X(75), Y(17), X(19), Y(16));
+    c.beginPath(); c.arc(W / 2, H / 2, X(6), 0, Math.PI * 2); c.fillStyle = rgba(paint, 0.35); c.fill();
+    // lines
+    c.strokeStyle = 'rgba(255,240,222,.5)'; c.lineWidth = 1.2;
     c.strokeRect(1, 1, W - 2, H - 2);
     c.beginPath(); c.moveTo(W / 2, 0); c.lineTo(W / 2, H); c.stroke();
-    c.beginPath(); c.arc(W / 2, H / 2, this.X(6), 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.arc(W / 2, H / 2, X(6), 0, Math.PI * 2); c.stroke();
     for (const side of [0, 1]) {
       const bx = side ? 88.75 : 5.25, dir = side ? -1 : 1, base = side ? 94 : 0;
-      c.fillStyle = 'rgba(255,107,26,.16)';
-      const px = side ? this.X(94 - 19) : 0;
-      c.fillRect(px, this.Y(17), this.X(19), this.Y(16)); c.strokeRect(px, this.Y(17), this.X(19), this.Y(16));
-      c.beginPath(); c.arc(this.X(base + dir * 19), this.Y(25), this.X(6), 0, Math.PI * 2); c.stroke();
+      const px = side ? X(94 - 19) : 0;
+      c.strokeRect(px, Y(17), X(19), Y(16));
+      c.beginPath(); c.arc(X(base + dir * 19), Y(25), X(6), 0, Math.PI * 2); c.stroke();
       const ang = Math.asin(22 / 23.75);
       c.beginPath();
-      c.moveTo(this.X(base), this.Y(3)); c.lineTo(this.X(bx + dir * Math.cos(ang) * 23.75), this.Y(3));
-      if (side) c.arc(this.X(bx), this.Y(25), this.X(23.75), Math.PI + ang, Math.PI - ang, true);
-      else c.arc(this.X(bx), this.Y(25), this.X(23.75), -ang, ang);
-      c.lineTo(this.X(base), this.Y(47)); c.stroke();
-      c.beginPath(); c.moveTo(this.X(base + dir * 4), this.Y(22)); c.lineTo(this.X(base + dir * 4), this.Y(28)); c.stroke();
-      c.strokeStyle = '#ff8c2a'; c.beginPath(); c.arc(this.X(bx), this.Y(25), Math.max(2.5, this.X(0.9)), 0, Math.PI * 2); c.stroke();
-      c.strokeStyle = 'rgba(255,240,222,.36)';
+      c.moveTo(X(base), Y(3)); c.lineTo(X(bx + dir * Math.cos(ang) * 23.75), Y(3));
+      if (side) c.arc(X(bx), Y(25), X(23.75), Math.PI + ang, Math.PI - ang, true);
+      else c.arc(X(bx), Y(25), X(23.75), -ang, ang);
+      c.lineTo(X(base), Y(47)); c.stroke();
+      c.beginPath(); c.moveTo(X(base + dir * 4), Y(22)); c.lineTo(X(base + dir * 4), Y(28)); c.stroke();
+      c.strokeStyle = '#ff8c2a'; c.beginPath(); c.arc(X(bx), Y(25), Math.max(2.5, X(0.9)), 0, Math.PI * 2); c.stroke();
+      c.strokeStyle = 'rgba(255,240,222,.5)';
     }
+    // centre-court logo: the club badge
+    if (t) {
+      const r = X(4.6), cx = W / 2, cy = H / 2;
+      c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.fillStyle = c1; c.fill();
+      c.lineWidth = Math.max(2, r * 0.16); c.strokeStyle = ring; c.stroke();
+      c.lineWidth = 1; c.strokeStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.arc(cx, cy, r + c.lineWidth * 0 + Math.max(2, r * 0.16) / 2 + 0.5, 0, Math.PI * 2); c.stroke();
+      const ab = String(t.abbr || '').toUpperCase(); let fs = r * 0.95;
+      c.font = `italic 800 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+      const w = c.measureText(ab).width; if (w > r * 1.55) { fs *= r * 1.55 / w; c.font = `italic 800 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`; }
+      c.fillStyle = typeof readableOn === 'function' ? readableOn(c1, ring) : '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(ab, cx, cy + fs * 0.04);
+    }
+    c.lineWidth = 1.2;
   },
   dot(x, y, team, label, heat, opts = {}) {
     const c = this.ctx, r = Math.max(7, this.W / 48);

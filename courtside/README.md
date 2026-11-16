@@ -136,7 +136,7 @@ Every player gets a generated face that stays the same all career.
 - **Colour:** a warm "arena at night" palette: dark walnut panels, cream text and ball orange (`--brand`). In-game screens still pick up your club's colours.
 - **Logo:** an orange tile with a ball on the move (`icon.svg`, `brandMark()` in `ui.js`). Home-screen icons are `icon-192.png` and `icon-512.png`.
 - **Icons:** one hand-drawn line icon set (`IC` in `ui.js`). The game uses no emoji. Nationalities show as small drawn flags (`FLAG_DEF`).
-- **Court:** dark hardwood with orange-painted lanes.
+- **Court:** dark hardwood painted for the home club: its colour in the lanes and centre circle, its badge at centre court and its name in each half. At home it's your court; away it's theirs. Clubs whose main colour is too dark for the wood use their second colour.
 
 ## Code map
 
