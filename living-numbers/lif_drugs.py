@@ -48,10 +48,10 @@ GRID = np.round(np.arange(-4.0, 4.01, 0.2), 2)          # values of gamma we try
 
 
 # ---------------------------------------------------------------- data
-def load_blocks():
+def load_blocks(path=DATA):
     blocks = defaultdict(list)
     meta = {}
-    with open(DATA) as f:
+    with open(path) as f:
         for r in csv.DictReader(f):
             b = int(r["block"])
             blocks[b].append((float(r["dose_a"]), float(r["dose_b"]), float(r["inhibition"])))

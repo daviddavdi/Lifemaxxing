@@ -11,8 +11,10 @@ Output: data/gammas.csv   (used by lif_power.py)
 Run:    python3 lif_gamma_table.py      (about 7 minutes on 4 cores)
 """
 
+import argparse
 import csv
 import os
+import random
 from collections import defaultdict
 from multiprocessing import Pool
 
@@ -58,12 +60,21 @@ def init(blocks):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", default=os.path.join(os.path.dirname(OUT), "oneil.csv"))
+    ap.add_argument("--out", default=OUT)
+    ap.add_argument("--sample", type=int, default=0, help="use a random sample of this many combinations (seed 0)")
+    args = ap.parse_args()
     print("loading real data...")
-    blocks, meta = L.load_blocks()
+    blocks, meta = L.load_blocks(args.data)
     groups = defaultdict(list)
     for b, m in meta.items():
         groups[m].append(b)
-    items = [(k, sorted(v)[:2]) for k, v in groups.items()]
+    # keep only complete dose grids (at least 4x4); skips a few malformed experiments
+    items = [(k, [b for b in sorted(v) if len(blocks[b]) >= 16][:2]) for k, v in sorted(groups.items())]
+    items = [it for it in items if it[1]]
+    if args.sample:
+        items = random.Random(0).sample(items, min(args.sample, len(items)))
     print(f"fitting {len(items):,} drug-pair x cell-line combinations on 4 cores...")
     rows = []
     with Pool(4, initializer=init, initargs=(blocks,)) as pool:
@@ -71,11 +82,11 @@ def main():
             rows.append(r)
             if n % 2000 == 0:
                 print(f"  {n:,}/{len(items):,}")
-    with open(OUT, "w", newline="") as f:
+    with open(args.out, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["drug_a", "drug_b", "cell_line", "g_ab", "g_ba", "fake_g_ab", "fake_g_ba", "repeats"])
         w.writerows(rows)
-    print(f"saved {len(rows):,} rows to {OUT}")
+    print(f"saved {len(rows):,} rows to {args.out}")
 
 
 if __name__ == "__main__":
