@@ -229,14 +229,18 @@ opposites attract?"). A version where *different* mechanisms interact more is a 
 hypothesis now, so it must be tested on **new data** (e.g. NCI-ALMANAC), not on this data
 we've already looked at.
 
-## Scorecard so far
+## Scorecard (after Experiment 5)
 
 | LIF claim | status |
 |---|---|
 | interactions change both participants, unevenly (direction is real) | **supported** (Exp. 2: repeats agree 78%, well above the artifact level) |
 | each thing has its own power / openness that carries to new partners | **supported** (Exp. 3: beats the best symmetric model by ~10 standard errors) |
-| power and openness **multiply** (`p·o`), not add | **undecided** (ties with additive) |
+| power and openness **multiply** (`p·o`), not add | **rejected** (Exp. 5: additive is significantly better on unseen pairs) |
 | more similar things interact more strongly | **not supported** (Exp. 4) |
+| opposites interact more | **not supported** (Exp. 5: β ≈ 0) |
+| the bond depends on the type pairing | **weakly supported** (Exp. 5: just significant) |
+| direction carries to new pairs on new data | **supported** (Exp. 5: replicated on NCI-ALMANAC) |
+| useful for predicting real doses of untested pairs | **supported** (Exp. 5: 15% lower error than symmetric) |
 | effects build over time (`τ`) | **untested** (no time data) |
 | polls/predictions change outcomes (Exp. 1) | shown in simulation only |
 
@@ -262,6 +266,27 @@ a ⊕ b (t) = a + b + [effect A→B + effect B→A] · a · b · (1 − e^(−t/
 
 "Opposites interact more" was chosen **after** Experiment 4, so it may only be tested on
 new data (NCI-ALMANAC), with predictions written down first.
+
+## Experiment 5: Version 3 on new data (pre-registered; `lif_v3.py`, `PREREGISTRATION_v3.md`)
+
+Predictions were committed before any NCI-ALMANAC interaction was computed. 54,298
+experiments, 4,642 drug pairs, 97 drugs, 60 cell lines; held out by drug pair.
+
+| hypothesis | result | verdict |
+|---|---|---|
+| H1 direction carries to unseen pairs | corr +0.118 vs fake +0.034 | **PASS** |
+| H2 power × openness beats power + openness | multiply is slightly *worse* | **FAIL** |
+| H3 opposites interact more (β > 0) | β = −0.04 [−0.17, +0.08] | **FAIL** |
+| H4 bond depends on the type pairing | small gain, interval just excludes 0 | **PASS** (borderline) |
+| H5 useful for dose prediction | error 9.68 → 8.21 | **PASS** |
+
+**What this means.** The core idea, that each thing has its *own* character which shows up
+with partners it has never met, replicated on a second, independent dataset and makes real
+predictions better. Two of the author's specific choices did not hold: "multiply" lost to
+"add", and similarity (either way round) does not matter here. H5 shows the whole formula is
+useful, but most of that comes from per-drug power/openness, which Experiment 3 already had.
+The direction signal is real but small (correlation 0.12): most of each interaction is still
+unexplained.
 
 ## Ways to improve LIF next
 

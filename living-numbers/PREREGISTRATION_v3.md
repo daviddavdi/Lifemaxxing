@@ -38,3 +38,19 @@
 
 Each hypothesis is reported as PASS or FAIL exactly by the rule above. The formula is
 **not** changed after seeing these results; any change becomes Version 4 and needs new data.
+
+## Results (appended after the run; the predictions above are unchanged)
+
+Run: `python3 lif_v3.py` on 54,298 usable experiments (of the 60,000 sampled), 4,642 drug
+pairs, 97 drugs, 60 cell lines. Full output in `data/v3_results.txt` (not committed).
+
+| # | result | verdict |
+|---|---|---|
+| H1 | held-out direction corr **+0.118** [+0.106, +0.129]; fake +0.034; real − fake [+0.068, +0.097] | **PASS** |
+| H2 | MSE(mult) − MSE(add) = **+0.0149** [+0.0025, +0.0279] (multiply is *worse*) | **FAIL** |
+| H3 | β = **−0.044** [−0.171, +0.078] | **FAIL** |
+| H4 | MSE(k[fam,fam]) − MSE(single k) = **−0.0101** [−0.0201, −0.0000] | **PASS** (barely; upper bound touches 0) |
+| H5 | dose error 9.683 (symmetric) vs **8.207** (v3 prior), diff −1.476 [−1.745, −1.219], λ = 100 | **PASS** |
+
+Held-out γ error by model: none 2.4586, **add 2.4296**, mult 2.4327, v3-singlek 2.4328, v3 2.4307.
+All family bonds `k` came out positive; the largest is protein-handling → growth-signalling (+7.3).
