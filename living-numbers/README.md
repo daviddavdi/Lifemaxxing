@@ -7,7 +7,7 @@ Start with **[FOUNDATIONS.md](FOUNDATIONS.md)**: the principles, the first resul
 
 ## Run it
 
-Plain Python 3, nothing to install.
+Experiment 1 needs only plain Python 3. Experiment 2 also needs numpy and scipy.
 
 ```bash
 cd living-numbers
