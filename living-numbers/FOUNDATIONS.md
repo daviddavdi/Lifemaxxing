@@ -100,3 +100,81 @@ Publishing polls moved results by **2.9%** on average, compared with the same to
 4. **Real data:** test against historical polls and election results.
 5. **Beyond elections:** markets, AI recommendation feeds, public health messaging, and
    school testing (Goodhart).
+
+---
+
+# The Living Interaction Formula (LIF)
+
+*(working name; rename it anytime)*
+
+## Version 2: two-way and uneven
+
+Each living number has its own parameters: value `x`, **power** `p` (how strongly it
+affects others), **openness** `o` (how easily it is changed; naive = high), and each
+direction has its own bond `k_ab` (what a does to b) and `k_ba`.
+
+```
+a ⊕ b (t) = a + b + [ k_ab·p_a·o_b + k_ba·p_b·o_a ] · S(a,b) · a · b · (1 − e^(−t/τ))
+
+a → a + ε · o_a · p_b · S · (b − a)
+b → b + ε · o_b · p_a · S · (a − b)
+```
+
+- At `t = 0` it is ordinary addition.
+- With everything equal it reduces to Version 1 (Mom + Dad goes 2 → 3.26 after 10 years → 3.90 after 30).
+- A naive `a` (high `o_a`) next to a powerful `b` (high `p_b`) changes a lot while `b` barely moves.
+
+## Experiment 2: LIF on real drug data (`lif_drugs.py`)
+
+**Data:** O'Neil et al. 2016 (Merck), via DrugComb on Zenodo. 92,208 real experiments, each
+a 5×5 grid of doses of two cancer drugs, measuring % of cancer cells inhibited. We used
+6,000 experiments (1,485 drug pair and cell line combinations, each run more than once).
+
+**LIF in drug terms:** each drug changes the other's effective dose, unevenly:
+`dose_B → dose_B · exp(γ_AB · presence_A)`, where `γ_AB = k_AB · p_A · o_B`. With this data
+only the product `γ` can be measured, not `k`, `p` and `o` separately.
+
+### Test 1: predicting doses the model never saw (error in % inhibition, lower = better)
+
+| model | params | error |
+|---|---|---|
+| Bliss (standard, no interaction) | 0 | 11.61 |
+| symmetric boosting | 1 | **10.84** |
+| symmetric + synergy term | 2 | 11.19 |
+| **LIF (uneven)** | 2 | 11.05 |
+
+**Result: LIF beats the standard Bliss model, but does NOT beat the simpler symmetric model at prediction.**
+
+### Test 2: is the direction (who changes whom) real?
+
+If LIF's direction were noise, repeated experiments wouldn't agree on it.
+
+- correlation of direction between repeats: **+0.48** (chance: −0.08)
+- when both repeats show a clear direction, they agree **78%** of the time (898 cases; chance = 50%)
+
+### Test 3: artifact check
+
+Fake repeats built from a truth with **no** direction, at the same doses, curve shapes
+and noise, then refit from scratch: correlation **+0.12**.
+
+**Result: real data shows much more repeatable direction (+0.48) than the method produces
+by itself (+0.12). This is evidence that real drug interactions are uneven, as LIF says.**
+
+### Honest limitations
+
+- **No time data.** These experiments are snapshots, so the time part `(1 − e^(−t/τ))` is untested.
+- **Prediction didn't improve.** Knowing the direction exists isn't yet the same as using it to predict better.
+- **The artifact check assumes single-drug curves have the standard Hill shape.** If real
+  curves are shaped differently, part of the "direction" could still come from that.
+- **No pair was tested in both orders** (A,B) and (B,A), so that cross-check isn't possible with this data.
+- **Prior work:** directional drug interaction parameters exist, notably **MuSyC (Meyer et al.
+  2019)**, which has separate α₁₂ and α₂₁. Our result is consistent with theirs; it isn't a first.
+
+### Next step: test power and openness
+
+LIF says `γ_AB = k · p_A · o_B`: each **drug** has its own power and openness. If that's
+true, a drug's power should be **the same across all its partners and cell lines**. So:
+fit one `p` and one `o` per drug from part of the data, then predict the direction for drug
+pairs never seen together. Success would mean LIF's parameters are real properties of
+drugs and not just curve-fitting, and it would be a genuine prediction that symmetric
+models cannot make.
