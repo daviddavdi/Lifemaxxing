@@ -229,7 +229,7 @@ opposites attract?"). A version where *different* mechanisms interact more is a 
 hypothesis now, so it must be tested on **new data** (e.g. NCI-ALMANAC), not on this data
 we've already looked at.
 
-## Scorecard (after Experiment 5)
+## Scorecard (after Experiment 6)
 
 | LIF claim | status |
 |---|---|
@@ -240,7 +240,10 @@ we've already looked at.
 | opposites interact more | **not supported** (Exp. 5: β ≈ 0) |
 | the bond depends on the type pairing | **weakly supported** (Exp. 5: just significant) |
 | direction carries to new pairs on new data | **supported** (Exp. 5: replicated on NCI-ALMANAC) |
-| useful for predicting real doses of untested pairs | **supported** (Exp. 5: 15% lower error than symmetric) |
+| useful for predicting real doses of untested pairs | **mixed**: beats a symmetric fit (Exp. 5) but not "no interaction" (Exp. 6) |
+| each pair has its own bond | **strongly supported** (Exp. 6: 11.5% lower error) |
+| a pair's direction carries to new environments | **supported** (Exp. 6: 2.7% lower error than without direction) |
+| the environment changes each thing's power/openness | **not supported** (Exp. 6) |
 | effects build over time (`τ`) | **untested** (no time data) |
 | polls/predictions change outcomes (Exp. 1) | shown in simulation only |
 
@@ -310,6 +313,26 @@ Lessons:
    two characters (29% vs 13%). This is closer to "Bonnie & Clyde" than family types are.
 3. **The environment changes each drug** (13% → 19%), as the author predicted.
 4. About two-thirds of the reachable signal is still unexplained.
+
+## Experiment 6: Version 4 fitted on raw measurements (pre-registered; `lif_v4.py`, `PREREGISTRATION_v4.md`)
+
+Version 4: `γ_AB,c = μ + p_A + o_B + p_A,c + o_B,c + K[family_A, family_B] + d_AB`, fitted to every
+experiment's raw wells (no noisy one-number summaries), and tested once on 227,354 NCI-ALMANAC
+experiments no model had seen.
+
+| hypothesis | verdict |
+|---|---|
+| G1 drug characters predict direction for never-tested pairs | **FAIL** (the symmetric twin was slightly better) |
+| G2 each pair has its own bond | **PASS** (11.5% lower error) |
+| G3 the environment changes each drug | **FAIL** (no gain; tuning switched it off) |
+| G4 beats "no interaction" (Bliss) for never-tested pairs | **FAIL** (no model did) |
+| G5 a pair's direction carries to new cell lines | **PASS** (2.7% lower error than the same model without direction) |
+
+**What this means.** Direction is real and stable, but it belongs to the **relationship**, not to
+each thing alone: once a pair has been seen together, who-changes-whom carries into new
+environments and improves predictions. From individual characters alone, neither direction nor
+strength could be predicted well enough to beat "no interaction". The small character signal of
+Experiments 3 and 5 is real but too weak to be useful on its own.
 
 ## Ways to improve LIF next
 

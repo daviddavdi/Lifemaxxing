@@ -77,3 +77,24 @@ So a precise experiment counts more than a noisy one, and no information is thro
 
 Each hypothesis is PASS or FAIL exactly by the rule above. The formula and procedure are not
 changed after seeing results; any change becomes Version 5 and needs new data.
+
+## Results (appended after the run; everything above is unchanged)
+
+Run: `python3 lif_v4.py` (full output in `data/v4_results.txt`, not committed). Ridges chosen on the
+tuning set: cell 1000 for every model (environment terms shrunk almost to nothing), pair 1.
+
+| model | held-out RMSE, new pairs | held-out RMSE, known pair |
+|---|---|---|
+| Bliss (no interaction) | 10.157 | 10.157 |
+| S4 symmetric | 10.117 | 9.483 |
+| V4 − cell | 10.162 | |
+| V4 − pair | | 9.941 |
+| **V4** | 10.170 | **9.353** |
+
+| # | difference in mean held-out error (95% CI) | verdict |
+|---|---|---|
+| G1 direction, new pairs (V4 − S4) | +1.085 [+0.576, +1.589] (V4 worse) | **FAIL** |
+| G2 pair's own bond (V4 − V4-pair) | −11.339 [−13.150, −9.704] (−11.5%) | **PASS** |
+| G3 environment (V4 − V4-cell) | +0.165 [−0.078, +0.409] | **FAIL** |
+| G4 useful vs Bliss, new pairs | +0.268 [−0.664, +1.213] | **FAIL** |
+| G5 direction, known pairs (V4 − S4) | −2.434 [−2.855, −2.016] (−2.7%) | **PASS** |

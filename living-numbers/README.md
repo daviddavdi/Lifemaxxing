@@ -26,6 +26,10 @@ python3 fetch_almanac.py    # streams the 2 GB file, keeps 5.1 M ALMANAC rows (~
 python3 lif_gamma_table.py --data data/almanac.csv --out data/almanac_gammas.csv --sample 60000
 python3 lif_v3.py           # tests H1-H5 (bootstrap of 2,000 refits; can take an hour or more)
 python3 lif_where.py        # exploratory: where the interaction signal lives (seconds)
+
+# Experiment 6 - Version 4 on raw measurements, pre-registered
+python3 lif_v4_table.py     # error table for every experiment (~30 minutes, 4 cores)
+python3 lif_v4.py           # tests G1-G5 (~20 minutes)
 ```
 
 ## Files
@@ -42,5 +46,6 @@ python3 lif_where.py        # exploratory: where the interaction signal lives (s
 | `fetch_almanac.py`, `almanac_labels.py` | NCI-ALMANAC download and drug family/mechanism labels |
 | `lif_v3.py` | Experiment 5: Version 3 tested against pre-registered hypotheses H1-H5 |
 | `lif_where.py` | Exploratory: how much of the interaction drugs, pairs and cell lines explain |
+| `lif_v4_table.py`, `lif_v4.py` | Experiment 6: Version 4 fitted on every raw measurement, tested on 227,354 unseen experiments |
 | `PREREGISTRATION_*.md` | Predictions written before results, with results appended after |
 | `FOUNDATIONS.md` | The theory, results, honest limitations, prior work, and next questions |
