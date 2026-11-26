@@ -240,6 +240,29 @@ we've already looked at.
 | effects build over time (`τ`) | **untested** (no time data) |
 | polls/predictions change outcomes (Exp. 1) | shown in simulation only |
 
+## Version 3 (chosen by the author after Experiments 1-4)
+
+**Core hypothesis:** when two things interact, the result depends on each one's own
+character: how strongly it acts on others (**power**) and how easily it is changed
+(**openness**). These belong to the thing itself, so pairings that have never happened can
+be predicted.
+
+```
+effect of A on B  =  k[type_A, type_B] · (p_A + e_env) · (o_B + f_env) · (1 + β · (1 − S_AB))
+
+a ⊕ b (t) = a + b + [effect A→B + effect B→A] · a · b · (1 − e^(−t/τ))
+```
+
+| choice | author's answer | consequence |
+|---|---|---|
+| power and openness | **multiply** | a fully closed thing (openness 0) is unchanged by anything, however powerful |
+| environment | **changes both** | each environment shifts power (`e_env`) and openness (`f_env`) |
+| bond sign `k` | **depends on the type pairing** | e.g. DNA-damage drug × growth-signal drug has its own `k`, which can be negative |
+| similarity | **opposites interact more** | predicts `β > 0` |
+
+"Opposites interact more" was chosen **after** Experiment 4, so it may only be tested on
+new data (NCI-ALMANAC), with predictions written down first.
+
 ## Ways to improve LIF next
 
 1. **Revise similarity** (done once, failed; see Exp. 4). Test "opposites interact more" on new data only.
