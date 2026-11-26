@@ -288,6 +288,29 @@ useful, but most of that comes from per-drug power/openness, which Experiment 3 
 The direction signal is real but small (correlation 0.12): most of each interaction is still
 unexplained.
 
+## Where does the interaction live? (exploratory, `lif_where.py`)
+
+Not pre-registered, so these results only suggest where to look. Shares are of the
+**reachable** signal: the fake twins show that about 81% of the spread in each measured γ is
+fitting noise from the small 4×4 dose grid, so even a perfect formula could explain only ~19%.
+
+| what the predictor knows | share of reachable signal |
+|---|---|
+| cell line only | 1% |
+| each drug's power + openness (pair never seen) | 13% |
+| + how each drug changes in this cell line | 19% |
+| this exact pair, seen in other cell lines | 29% |
+| pair + cell line | 31% |
+| pair + how each drug changes in this cell line | 36% |
+
+Lessons:
+1. **Noise is the main enemy.** The two-step method (fit γ per experiment, then model it)
+   throws most of the information away.
+2. **Character is real but not everything:** a specific pair has a bond of its own beyond its
+   two characters (29% vs 13%). This is closer to "Bonnie & Clyde" than family types are.
+3. **The environment changes each drug** (13% → 19%), as the author predicted.
+4. About two-thirds of the reachable signal is still unexplained.
+
 ## Ways to improve LIF next
 
 1. **Revise similarity** (done once, failed; see Exp. 4). Test "opposites interact more" on new data only.

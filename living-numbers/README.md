@@ -25,6 +25,7 @@ python3 lif_power.py        # do drugs have their own power and openness? (about
 python3 fetch_almanac.py    # streams the 2 GB file, keeps 5.1 M ALMANAC rows (~15 minutes)
 python3 lif_gamma_table.py --data data/almanac.csv --out data/almanac_gammas.csv --sample 60000
 python3 lif_v3.py           # tests H1-H5 (bootstrap of 2,000 refits; can take an hour or more)
+python3 lif_where.py        # exploratory: where the interaction signal lives (seconds)
 ```
 
 ## Files
@@ -40,5 +41,6 @@ python3 lif_v3.py           # tests H1-H5 (bootstrap of 2,000 refits; can take a
 | `lif_similarity.py` | Experiment 4: does similarity change interaction strength? (pre-registered) |
 | `fetch_almanac.py`, `almanac_labels.py` | NCI-ALMANAC download and drug family/mechanism labels |
 | `lif_v3.py` | Experiment 5: Version 3 tested against pre-registered hypotheses H1-H5 |
+| `lif_where.py` | Exploratory: how much of the interaction drugs, pairs and cell lines explain |
 | `PREREGISTRATION_*.md` | Predictions written before results, with results appended after |
 | `FOUNDATIONS.md` | The theory, results, honest limitations, prior work, and next questions |
