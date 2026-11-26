@@ -36,3 +36,20 @@ P2 is also computed on the fake (no-direction) data as an artifact check.
 
 If P2 doesn't pass, LIF's claim that similarity scales the *directional* interaction is not
 supported by this data, and that will be reported as a failure, whatever P1 and P3 show.
+
+---
+
+## Results (added after running; predictions above unchanged)
+
+583 drug pairs: 12 same mechanism, 69 same family, 502 different.
+
+| # | result | verdict |
+|---|---|---|
+| P1 strength vs S | Spearman +0.018, p = 0.22 (averages 2.67 / 2.74 / 3.36 for S = 0 / 0.5 / 1) | **FAIL** |
+| P2 direction vs S | Spearman −0.053, p = 0.82 (averages 2.12 / 2.08 / 1.89): slightly the **opposite** way | **FAIL** |
+| P3 S in the model | error 1.8056 → 1.8050 (−0.0024 ± 0.0009); β per fold +0.15, −0.13, +0.15, +0.15, −0.21 | technically **PASS** under the rule, but the gain is 0.1% and β flips sign between folds, so we treat it as **no real effect** |
+
+**Conclusion: the claim that similarity scales interactions is not supported by this data.**
+The key test (P2) failed, and it leaned toward what standard pharmacology expects: same-mechanism
+pairs are slightly *more* symmetric. The same-mechanism group is small (12 pairs), so a weak
+effect can't be ruled out, but there is no evidence for it here.

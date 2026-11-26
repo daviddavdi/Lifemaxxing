@@ -214,11 +214,35 @@ a new experiment. λ (how strongly) was chosen on fold 0 only; numbers are folds
 - most open: cyclophosphamide, BEZ-235, MK-8669, dasatinib, temozolomide
 - least open: oxaliplatin, methotrexate, vinorelbine, carboplatin, doxorubicin
 
+## Experiment 4: similarity (pre-registered; `lif_similarity.py`)
+
+Predictions were committed **before** running (`PREREGISTRATION_similarity.md`). Each drug
+was labelled by mechanism; `S` = 1 for the same mechanism, 0.5 for the same family, 0 otherwise.
+
+- P1 strength grows with S: **FAIL** (p = 0.22)
+- P2 direction grows with S (the test only LIF makes): **FAIL** (p = 0.82; slightly the opposite way)
+- P3 S improves held-out prediction: technically passes, but the gain is 0.1% and the sign is unstable: **no real effect**
+
+**LIF's similarity term is not supported in drug data.** Note that this was LIF's
+*untested choice* "more similar = stronger" (open question 3 in the early design: "or do
+opposites attract?"). A version where *different* mechanisms interact more is a **new**
+hypothesis now, so it must be tested on **new data** (e.g. NCI-ALMANAC), not on this data
+we've already looked at.
+
+## Scorecard so far
+
+| LIF claim | status |
+|---|---|
+| interactions change both participants, unevenly (direction is real) | **supported** (Exp. 2: repeats agree 78%, well above the artifact level) |
+| each thing has its own power / openness that carries to new partners | **supported** (Exp. 3: beats the best symmetric model by ~10 standard errors) |
+| power and openness **multiply** (`p·o`), not add | **undecided** (ties with additive) |
+| more similar things interact more strongly | **not supported** (Exp. 4) |
+| effects build over time (`τ`) | **untested** (no time data) |
+| polls/predictions change outcomes (Exp. 1) | shown in simulation only |
+
 ## Ways to improve LIF next
 
-1. **Test similarity `S`.** LIF says similar things interact more strongly. Label each of the
-   38 drugs by mechanism (DNA damage, kinase inhibitor, …) and test whether interaction
-   strength depends on similarity. That would be the first test of `S` on real data.
+1. **Revise similarity** (done once, failed; see Exp. 4). Test "opposites interact more" on new data only.
 2. **Bigger data to tell power × openness from additive.** NCI-ALMANAC (104 drugs, 60 cell
    lines) has many more pairs; the two forms make different predictions there.
 3. **Time (`τ`).** Requires time-course combination data (measurements at several hours or days).
