@@ -178,7 +178,7 @@ def fit_with_prior(da, db, y, pa, pb, ua, ub, train, g_ab_hat, g_ba_hat, lam):
     return S[i, j]
 
 
-def part2(rows, per_fold=400):
+def part2(rows, per_fold=1000):
     print("\nloading dose data for part 2...")
     blocks, meta = L.load_blocks()
     by_key = defaultdict(list)
@@ -216,19 +216,31 @@ def part2(rows, per_fold=400):
                 for lam in lams:
                     pred = fit_with_prior(da, db, y, pa, pb, ua, ub, tr, gab, gba, lam)
                     scores[(f, f"{name}-prior λ={lam}")].append(err(pred))
+                    if name == "LIF":
+                        # control: same prior, but with the DIRECTION removed (both = average)
+                        gm = 0.5 * (gab + gba)
+                        diag = np.diag(sse) + 2 * lam * (L.GRID - gm) ** 2
+                        kk = int(np.argmin(diag))
+                        scores[(f, f"sym-prior λ={lam}")].append(err(S[kk, kk]))
     # choose λ on fold 0 only, report folds 1..4 (no peeking at the test folds)
     best = {}
-    for name in ("LIF", "additive"):
+    for name in ("LIF", "additive", "sym"):
         best[name] = min(lams, key=lambda lam: np.mean(scores[(0, f"{name}-prior λ={lam}")]))
     report = {"sym-1 (best model so far)": "sym-1",
               "LIF, no prior (λ=0)": "LIF-prior λ=0",
+              f"symmetric prior, no direction (λ={best['sym']})": f"sym-prior λ={best['sym']}",
               f"additive prior (λ={best['additive']})": f"additive-prior λ={best['additive']}",
               f"LIF power x openness prior (λ={best['LIF']})": f"LIF-prior λ={best['LIF']}"}
     print("\n=== PART 2: predicting unseen doses, for drug pairs the power/openness model never saw ===")
     print("(λ chosen on fold 0; numbers below are folds 1-4 only)")
+    ref = np.array([x for f in range(1, FOLDS) for x in scores[(f, f"LIF-prior λ={best['LIF']}")]])
     for shown, key in report.items():
-        e = [x for f in range(1, FOLDS) for x in scores[(f, key)]]
-        print(f"  {shown:<40} error {np.mean(e):.2f}")
+        e = np.array([x for f in range(1, FOLDS) for x in scores[(f, key)]])
+        d = e - ref
+        se = d.std(ddof=1) / np.sqrt(len(d)) if d.std() > 0 else 0.0
+        vs = f"   vs LIF prior: {d.mean():+.3f} ± {se:.3f}" if d.std() > 0 else "   (reference)"
+        print(f"  {shown:<44} error {e.mean():.2f}{vs}")
+    print("  ('vs LIF prior' > 0 means LIF prior is better; difference is meaningful if > about 2x the ± value)")
     return best
 
 

@@ -170,11 +170,59 @@ by itself (+0.12). This is evidence that real drug interactions are uneven, as L
 - **Prior work:** directional drug interaction parameters exist, notably **MuSyC (Meyer et al.
   2019)**, which has separate α₁₂ and α₂₁. Our result is consistent with theirs; it isn't a first.
 
-### Next step: test power and openness
+## Experiment 3: do drugs have their own power and openness? (`lif_gamma_table.py`, `lif_power.py`)
 
-LIF says `γ_AB = k · p_A · o_B`: each **drug** has its own power and openness. If that's
-true, a drug's power should be **the same across all its partners and cell lines**. So:
-fit one `p` and one `o` per drug from part of the data, then predict the direction for drug
-pairs never seen together. Success would mean LIF's parameters are real properties of
-drugs and not just curve-fitting, and it would be a genuine prediction that symmetric
-models cannot make.
+LIF says `γ_AB = k · power_A · openness_B`. If each drug really carries one power and one
+openness, then **we can predict how two drugs interact before they are ever tested
+together.** We fitted the direction for all 22,737 drug pair × cell line combinations,
+then held out whole drug pairs (5-fold) and predicted them from the other pairs. Every
+test was repeated on fake data with no direction built in.
+
+### Part 1: predicting the direction for pairs never seen together
+
+| model | direction correlation | direction right | FAKE: corr | FAKE: right |
+|---|---|---|---|---|
+| no drug knowledge | +0.00 | 50% | +0.00 | 50% |
+| additive (`μ + u_A + v_B`) | +0.21 | 58% | +0.11 | 54% |
+| **LIF (`μ + p_A · o_B`)** | **+0.20** | **59%** | +0.10 | 54% |
+| (+cell versions) | +0.20 to +0.21 | 58% | +0.11 | 54% |
+
+**Result:** the direction of unseen pairs is predictable above the artifact level, but only
+modestly: about half of the apparent skill also appears in fake data. LIF's power ×
+openness does **not** beat the simpler additive form.
+
+### Part 2: using power and openness to predict real doses
+
+The direction predicted from *other* pairs is used as a gentle starting guess when fitting
+a new experiment. λ (how strongly) was chosen on fold 0 only; numbers are folds 1–4, about 4,000 experiments.
+
+| method | error | vs LIF prior (± std. error) |
+|---|---|---|
+| symmetric (previous winner) | 10.86 | +0.365 ± 0.037 |
+| LIF with no prior | 10.94 | +0.445 ± 0.046 |
+| same prior with direction removed | 10.58 | +0.093 ± 0.021 |
+| additive prior | 10.50 | +0.011 ± 0.010 |
+| **LIF power × openness prior** | **10.49** | reference |
+
+**Result: for the first time, LIF beats the symmetric model** (by 0.37, about 10 standard errors).
+- Most of the gain (~0.28) comes from **learning from other drug pairs**: drugs carry their own interaction habits.
+- An extra, statistically clear gain (~0.09, about 4 standard errors) comes from the **direction**, i.e. who changes whom.
+- The **multiplicative** power × openness form ties with the additive form, so the data doesn't yet tell them apart.
+
+**Learned values** (all data, cell-line version):
+- most powerful: MK-8669, AZD1775, MRK-003, SN-38, MK-2206
+- most open: cyclophosphamide, BEZ-235, MK-8669, dasatinib, temozolomide
+- least open: oxaliplatin, methotrexate, vinorelbine, carboplatin, doxorubicin
+
+## Ways to improve LIF next
+
+1. **Test similarity `S`.** LIF says similar things interact more strongly. Label each of the
+   38 drugs by mechanism (DNA damage, kinase inhibitor, …) and test whether interaction
+   strength depends on similarity. That would be the first test of `S` on real data.
+2. **Bigger data to tell power × openness from additive.** NCI-ALMANAC (104 drugs, 60 cell
+   lines) has many more pairs; the two forms make different predictions there.
+3. **Time (`τ`).** Requires time-course combination data (measurements at several hours or days).
+4. **Better single-drug curves.** Part of the artifact level comes from fitting each drug's
+   curve; a more flexible curve should lower the fake signal and sharpen the real one.
+5. **Sign of the bond `k`.** Allow `k` to depend on drug classes (some pairs help, some harm),
+   which is the Bonnie & Clyde part of LIF.
