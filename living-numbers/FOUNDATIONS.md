@@ -234,12 +234,12 @@ we've already looked at.
 | LIF claim | status |
 |---|---|
 | interactions change both participants, unevenly (direction is real) | **supported** (Exp. 2: repeats agree 78%, well above the artifact level) |
-| each thing has its own power / openness that carries to new partners | **supported** (Exp. 3: beats the best symmetric model by ~10 standard errors) |
+| each thing has its own power / openness that carries to new partners | **weak**: real signal (Exp. 3, 5) but too small to improve predictions of new pairs (Exp. 6, G1) |
 | power and openness **multiply** (`p·o`), not add | **rejected** (Exp. 5: additive is significantly better on unseen pairs) |
 | more similar things interact more strongly | **not supported** (Exp. 4) |
 | opposites interact more | **not supported** (Exp. 5: β ≈ 0) |
 | the bond depends on the type pairing | **weakly supported** (Exp. 5: just significant) |
-| direction carries to new pairs on new data | **supported** (Exp. 5: replicated on NCI-ALMANAC) |
+| direction of never-tested pairs predictable from characters | **weak**: correlation 0.12 (Exp. 5); no gain in dose prediction (Exp. 6) |
 | useful for predicting real doses of untested pairs | **mixed**: beats a symmetric fit (Exp. 5) but not "no interaction" (Exp. 6) |
 | each pair has its own bond | **strongly supported** (Exp. 6: 11.5% lower error) |
 | a pair's direction carries to new environments | **supported** (Exp. 6: 2.7% lower error than without direction) |
